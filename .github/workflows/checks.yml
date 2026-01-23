@@ -1,0 +1,153 @@
+name: Code Quality Checks & Tests
+
+# develop, main 브랜치를 상대로 풀 리퀘스트가 생성될 때 CI가 실행됩니다.
+on:
+  pull_request:
+    branches:
+      - "main"
+      - "develop"
+
+jobs:
+  # 1. 린트 및 정적 분석 (Linting)
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Cache Poetry dependencies
+        id: cache-venv
+        uses: actions/cache@v3
+        with:
+          # pyproject.toml과 poetry.lock 해시를 키로 사용하여 캐싱
+          path: ~/.cache/pypoetry/virtualenvs
+          key: python-3.12-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            python-3.12-poetry-
+
+      - name: Install dependencies
+        # 캐시가 없거나 변경되었을 때만 설치
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: poetry install --no-root
+
+      # settings.py가 루트의 .env를 바라보도록 설정했으므로 루트에 생성해야 합니다.
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.DJANGO_ENVS }}" > .env
+
+      # isort 제거 -> Ruff가 대신 함
+      # Ruff 실행 (Lint + Import Sorting)
+      - name: Run Ruff (Lint & Import Sorting)
+        run: |
+          poetry run ruff check .
+
+      # Black 실행 (Code Formatting Check)
+      - name: Run Black (Code Formatting)
+        run: |
+          poetry run black . --check
+
+      - name: Run Mypy (Type Checking)
+        run: poetry run mypy .
+
+  # 2. 테스트 (Tests)
+  test:
+    needs: ci # 린트 검사가 통과해야 테스트를 실행함 (자원 절약)
+    runs-on: ubuntu-latest
+    services:
+      # DB 설정을 프로젝트(.env)와 일치시킴
+      db:
+        image: postgres:15 # 버전 15로 변경
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: oz_playtype_user
+          POSTGRES_PASSWORD: oz_playtype_pass
+          POSTGRES_DB: oz_playtype_db
+          TZ: Asia/Seoul
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      # Redis는 필요 없다면 주석 처리해도 되지만, 일단 유지합니다.
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Cache Poetry dependencies
+        id: cache-venv
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: python-3.12-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            python-3.12-poetry-
+
+      - name: Install dependencies
+        run: poetry install --no-root
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.DJANGO_ENVS }}" > .env
+
+      - name: Run Django Migration
+        run: |
+          poetry run python manage.py migrate
+
+      # Coverage 패키지가 필요하므로 없는 경우를 대비해 설치 확인
+      # (pyproject.toml에 coverage가 없다면 추가해야 합니다)
+      - name: Run Tests & Coverage
+        run: |
+          # 1. 전체 테스트 병렬 실행 및 커버리지 수집
+          # (multiprocessing 등 복잡한 옵션은 초기엔 에러가 날 수 있어 단순화했습니다)
+          poetry run coverage run --source='.' manage.py test
+          
+          # 2. 결과 리포트 출력
+          echo "======================="
+          echo "📊 Total Coverage Report:"
+          poetry run coverage report -m
+
+          # 3. (선택 사항) apps 폴더 내부 앱별 커버리지 출력 로직은 유지
+          apps=$(find apps -maxdepth 1 -mindepth 1 -type d ! -name "__pycache__" -exec basename {} \;)
+          
+          for app_name in $apps; do
+            app_path="apps/$app_name"
+            # __init__.py가 있는 폴더만 파이썬 패키지로 간주
+            if [ -f "$app_path/__init__.py" ]; then
+                echo "🔍 Checking coverage for apps.$app_name..."
+                # 해당 앱에 대한 리포트만 필터링해서 출력
+                poetry run coverage report -m --include="$app_path/*" || echo "  - No executed code found in $app_name"
+                echo ""
+            fi
+          done
