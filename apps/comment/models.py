@@ -13,3 +13,4 @@ class Comment(TimeStampedModel):
 
     class Meta:
         db_table = "comments"
+
