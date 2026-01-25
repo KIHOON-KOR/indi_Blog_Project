@@ -1,10 +1,9 @@
 from django.db import models
 
-from apps.post.models.post import Post
 from apps.tags.models.tag import Tag
 
 class PostTag(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     
 

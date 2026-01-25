@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from apps.core.models import TimeStampedModel
 from apps.series.models import Series
-from apps.tags.models.post_tag import PostTag
 from apps.tags.models.tag import Tag
 
 class Post(TimeStampedModel):
@@ -33,7 +32,7 @@ class Post(TimeStampedModel):
     # Tag와의 M:N 관계 (Through 설정)
     tags = models.ManyToManyField(
         Tag,
-        through=PostTag,
+        through='tags.PostTag',
         related_name="posts"
     )
 
