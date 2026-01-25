@@ -20,3 +20,4 @@ class SocialAccount(models.Model):
                 fields=["provider", "social_id"], name="uk_social_provider_id"
             )
         ]
+
