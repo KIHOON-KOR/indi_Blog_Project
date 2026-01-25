@@ -70,9 +70,9 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_USER: oz_playtype_user
-          POSTGRES_PASSWORD: oz_playtype_pass
-          POSTGRES_DB: oz_playtype_db
+          POSTGRES_USER: blog_user
+          POSTGRES_PASSWORD: blog_password
+          POSTGRES_DB: blog_db_dev
           TZ: Asia/Seoul
         options: >-
           --health-cmd pg_isready
