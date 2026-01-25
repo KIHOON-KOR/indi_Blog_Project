@@ -85,30 +85,30 @@ DATABASES = {
 }
 
 
-# Redis 사용 여부
-USE_REDIS: bool = env.bool("USE_REDIS", default=False)
+# # Redis 사용 여부
+# USE_REDIS: bool = env.bool("USE_REDIS", default=False)
 
-# Redis Cache 설정
-if USE_REDIS:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": env(
-                "REDIS_URL",
-                default="redis://redis:6379/0",
-            ),
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            },
-            "KEY_PREFIX": "playtype",
-        }
-    }
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        }
-    }
+# # Redis Cache 설정
+# if USE_REDIS:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django_redis.cache.RedisCache",
+#             "LOCATION": env(
+#                 "REDIS_URL",
+#                 default="redis://redis:6379/0",
+#             ),
+#             "OPTIONS": {
+#                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#             },
+#             "KEY_PREFIX": "playtype",
+#         }
+#     }
+# else:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#         }
+#     }
 
 # 세션을 Redis에 저장
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -125,9 +125,9 @@ VERIFICATION_CODE_LENGTH: int = int(os.getenv("VERIFICATION_CODE_LENGTH", "6"))
 VERIFICATION_TOKEN_BYTES: int = int(os.getenv("VERIFICATION_TOKEN_BYTES", "32"))
 VERIFICATION_CODE_CHARS: str = os.getenv("VERIFICATION_CODE_CHARS", "1234567890")
 
-# Telnyx (SMS)
-TELNYX_API_KEY: str = env("TELNYX_API_KEY", default="")
-TELNYX_FROM_NUMBER: str = env("TELNYX_FROM_NUMBER", default="")
+# # Telnyx (SMS)
+# TELNYX_API_KEY: str = env("TELNYX_API_KEY", default="")
+# TELNYX_FROM_NUMBER: str = env("TELNYX_FROM_NUMBER", default="")
 
 WSGI_APPLICATION = "config.wsgi.application"
 
@@ -159,12 +159,12 @@ USE_I18N = True
 USE_TZ = True
 
 # 6. Ai 설정(.env)
-GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
-AI_SUMMARY_MIN_REVIEW_COUNT = 10  # 요약 생성 최소 리뷰 수
-AI_SUMMARY_UPDATE_INTERVAL_DAYS = 30  # 요약 갱신 주기 (일)
-AI_REVIEW_MIN_LENGTH = 10  # 요약에 사용할 리뷰의 최소 글자 수
-AI_SUMMARY_MIN_VALID_REVIEWS = 3  # 유효한 리뷰의 개수
-AI_SUMMARY_REVIEW_COUNT = 5  # AI에게 요약 자료로 보낼 최대 리뷰 개수
+# GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+# AI_SUMMARY_MIN_REVIEW_COUNT = 10  # 요약 생성 최소 리뷰 수
+# AI_SUMMARY_UPDATE_INTERVAL_DAYS = 30  # 요약 갱신 주기 (일)
+# AI_REVIEW_MIN_LENGTH = 10  # 요약에 사용할 리뷰의 최소 글자 수
+# AI_SUMMARY_MIN_VALID_REVIEWS = 3  # 유효한 리뷰의 개수
+# AI_SUMMARY_REVIEW_COUNT = 5  # AI에게 요약 자료로 보낼 최대 리뷰 개수
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
