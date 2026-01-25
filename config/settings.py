@@ -15,7 +15,7 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = ["*"]
 
-AUTH_USER_MODEL = "user.User"
+# AUTH_USER_MODEL = "user.User"
 
 
 # Application definition
@@ -35,10 +35,11 @@ THIRD_PARTY_APPS = [
 ]
 
 CUSTOM_APPS: list[str] = [
-    # "apps.user",
-    # "apps.game",
-    # "apps.ai",
-    # "apps.community",
+    "apps.user",
+    "apps.post",
+    "apps.series",
+    "apps.tags",
+    "apps.comment",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
