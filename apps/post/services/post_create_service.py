@@ -5,6 +5,7 @@ from apps.tags.models import Tag, PostTag
 from apps.post.models import Post
 from apps.user.models import User
 
+
 @transaction.atomic
 def create_post(*, author: User, validated_data: dict[str, Any]):
     """
