@@ -4,7 +4,9 @@ from apps.core.models import TimeStampedModel
 
 
 class Comment(TimeStampedModel):
-    post = models.ForeignKey('post.Post', on_delete=models.CASCADE, related_name="comments")
+    post = models.ForeignKey(
+        "post.Post", on_delete=models.CASCADE, related_name="comments"
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
     )
@@ -12,4 +14,3 @@ class Comment(TimeStampedModel):
 
     class Meta:
         db_table = "comments"
-

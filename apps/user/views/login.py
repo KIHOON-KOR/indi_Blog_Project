@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny
 from apps.user.serializers.login_serializer import LoginSerializer
 from apps.user.services.login_service import UserService
 
+
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -16,19 +17,22 @@ class LoginAPIView(APIView):
 
         # 2. 서비스 레이어 호출
         login_data = UserService.authenticate_user(
-            email=serializer.validated_data['email'],
-            password=serializer.validated_data['password']
+            email=serializer.validated_data["email"],
+            password=serializer.validated_data["password"],
         )
 
         # 3. 최종 성공 응답을 반환합니다.
-        return Response({
-            "message": "로그인에 성공하였습니다.",
-            "token": {
-                "access": login_data["access_token"],
-                "refresh": login_data["refresh_token"],
+        return Response(
+            {
+                "message": "로그인에 성공하였습니다.",
+                "token": {
+                    "access": login_data["access_token"],
+                    "refresh": login_data["refresh_token"],
+                },
+                "user": {
+                    "email": login_data["user"].email,
+                    "nickname": login_data["user"].nickname,
+                },
             },
-            "user": {
-                "email": login_data["user"].email,
-                "nickname": login_data["user"].nickname
-            }
-        }, status=status.HTTP_200_OK)
+            status=status.HTTP_200_OK,
+        )
