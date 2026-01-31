@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.post.models import Post
+
 
 class PostCreateSerializer(serializers.ModelSerializer):
     tags = serializers.ListField(
@@ -8,6 +10,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
         write_only=True  # 저장할 때만 사용 (응답에는 포함 X)
     )
     class Meta:
+        model = Post
         fields = [
             "title",
             "content",
