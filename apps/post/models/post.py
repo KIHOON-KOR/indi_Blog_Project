@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from apps.core.models import TimeStampedModel
 from apps.series.models import Series
-from apps.tags.models.tag import Tag
 
 
 class Post(TimeStampedModel):
@@ -25,7 +24,9 @@ class Post(TimeStampedModel):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     # Tag와의 M:N 관계 (Through 설정)
-    tags = models.ManyToManyField(Tag, through="tags.PostTag", related_name="posts")
+    tags = models.ManyToManyField(
+        "tags.Tag", through="tags.PostTag", related_name="posts"
+    )
 
     class Meta:
         db_table = "posts"
