@@ -1,9 +1,8 @@
-from django.urls import include, path
+# from django.urls import include, path
 
 
-app_name = "user"
+# app_name = "user"
 
-urlpatterns = [
-    path("", include("apps.user.urls")),
-
-]
+# urlpatterns = [
+    
+# ]
