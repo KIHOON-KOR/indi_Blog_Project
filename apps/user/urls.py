@@ -1,8 +1,9 @@
-# from django.urls import include, path
+from django.urls import path
+
+from apps.user.views.login import LoginAPIView
 
 
-# app_name = "user"
 
-# urlpatterns = [
-    
-# ]
+urlpatterns = [
+    path("login", LoginAPIView.as_view(), name="login"),
+    ]
