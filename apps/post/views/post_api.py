@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from typing import cast
@@ -12,7 +12,7 @@ from apps.post.serializers.post_create import PostCreateSerializer
 
 
 class PostAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     @extend_schema(
         tags=["포스트"],
