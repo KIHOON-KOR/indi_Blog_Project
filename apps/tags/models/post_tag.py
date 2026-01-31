@@ -1,7 +1,6 @@
 from django.db import models
 
 
-
 class PostTag(models.Model):
     post = models.ForeignKey("post.Post", on_delete=models.CASCADE)
     tag = models.ForeignKey("tags.Tag", on_delete=models.CASCADE)
