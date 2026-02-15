@@ -3,18 +3,19 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
-        style={'input_type': 'password'},
-        min_length=8  # 최소 8자 이상
+        style={"input_type": "password"},
+        min_length=8,  # 최소 8자 이상
     )
 
     class Meta:
         model = User
         # 클라이언트로부터 입력받을 필드
-        fields = ['email', 'nickname', 'password']
+        fields = ["email", "nickname", "password"]
 
     def validate_email(self, value):
         """
