@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import environ  # type: ignore
+from datetime import timedelta
+
 
 # 1. BASE_DIR 설정
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +34,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "drf_spectacular",
+    "rest_framework_simplejwt",
 ]
 
 CUSTOM_APPS: list[str] = [
@@ -125,9 +128,6 @@ VERIFICATION_CODE_LENGTH: int = int(os.getenv("VERIFICATION_CODE_LENGTH", "6"))
 VERIFICATION_TOKEN_BYTES: int = int(os.getenv("VERIFICATION_TOKEN_BYTES", "32"))
 VERIFICATION_CODE_CHARS: str = os.getenv("VERIFICATION_CODE_CHARS", "1234567890")
 
-# # Telnyx (SMS)
-# TELNYX_API_KEY: str = env("TELNYX_API_KEY", default="")
-# TELNYX_FROM_NUMBER: str = env("TELNYX_FROM_NUMBER", default="")
 
 WSGI_APPLICATION = "config.wsgi.application"
 
@@ -158,14 +158,6 @@ TIME_ZONE = "Asia/Seoul"
 USE_I18N = True
 USE_TZ = True
 
-# 6. Ai 설정(.env)
-# GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
-# AI_SUMMARY_MIN_REVIEW_COUNT = 10  # 요약 생성 최소 리뷰 수
-# AI_SUMMARY_UPDATE_INTERVAL_DAYS = 30  # 요약 갱신 주기 (일)
-# AI_REVIEW_MIN_LENGTH = 10  # 요약에 사용할 리뷰의 최소 글자 수
-# AI_SUMMARY_MIN_VALID_REVIEWS = 3  # 유효한 리뷰의 개수
-# AI_SUMMARY_REVIEW_COUNT = 5  # AI에게 요약 자료로 보낼 최대 리뷰 개수
-
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # 프로젝트 루트의 'static' 폴더를 정적 파일 경로로 인식시킴
@@ -182,11 +174,18 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        # "rest_framework.authentication.BasicAuthentication",
-        # "rest_framework.authentication.SessionAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "EXCEPTION_HANDLER": "apps.core.exceptions.handler.custom_exception_handler",
+}
+# JWT 설정
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),  # 액세스 토큰 유효 기간
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  # 리프레시 토큰 유효 기간
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
 }
 
 MEDIA_URL = "/media/"
