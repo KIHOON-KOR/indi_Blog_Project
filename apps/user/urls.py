@@ -9,4 +9,3 @@ urlpatterns = [
     path("signup/", SignupAPIView.as_view(), name="signup"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
-
