@@ -13,6 +13,7 @@ from apps.post.serializers.post_create import PostCreateSerializer
 
 class PostAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = PostCreateSerializer
 
     @extend_schema(
         tags=["포스트"],
