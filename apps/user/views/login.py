@@ -10,6 +10,7 @@ from apps.user.services.login_service import UserService
 
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = LoginSerializer
 
     @extend_schema(
         tags=["회원관리"],

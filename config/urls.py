@@ -10,28 +10,26 @@ from drf_spectacular.views import (
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("admin/", admin.site.urls),
-    path("api/v1/user", include("apps.user.urls")),
-    path("api/v1/post", include("apps.post.urls")),
+    path("api/v1/user/", include("apps.user.urls")),
+    path("api/v1/post/", include("apps.post.urls")),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-    if "debug_toolbar" in settings.INSTALLED_APPS:
-        urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]
     if "drf_spectacular" in settings.INSTALLED_APPS:
         urlpatterns += [
             # 1. 코드를 읽고 자동으로 스키마를 생성하는 뷰
-            path("api/schema", SpectacularAPIView.as_view(), name="schema"),
+            path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
             # 2. Swagger UI 설정 수정
             path(
-                "api/schema/swagger-ui",
+                "api/schema/swagger-ui/",
                 SpectacularSwaggerView.as_view(url_name="schema"),
                 name="swagger-ui",
             ),
             path(
-                "api/schema/redoc",
+                "api/schema/redoc/",
                 SpectacularRedocView.as_view(url_name="schema"),
                 name="redoc",
             ),
