@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -10,6 +11,11 @@ from apps.user.services.login_service import UserService
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["회원관리"],
+        summary="이메일 로그인",
+        request=LoginSerializer,
+    )
     def post(self, request):
         # 1. 입력 데이터 검증
         serializer = LoginSerializer(data=request.data)
