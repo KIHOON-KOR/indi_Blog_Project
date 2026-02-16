@@ -1,58 +1,36 @@
 import logging
-from typing import Any, Optional
-
-from rest_framework import status
-from rest_framework.exceptions import (
-    ValidationError,
-    NotAuthenticated,
-    AuthenticationFailed,
-)
-from rest_framework.response import Response
 from rest_framework.views import exception_handler
+from rest_framework.response import Response
+from apps.core.exceptions.messages import ErrorMessage
 
 logger = logging.getLogger("django")
 
 
-def custom_exception_handler(
-    exc: Exception, context: dict[str, Any]
-) -> Optional[Response]:
-    # 1. 핸들러 호출
+def custom_exception_handler(exc, context):
+    # 1. DRF 기본 핸들러 호출
     response = exception_handler(exc, context)
 
-    # 2. 시스템 에러 (500)
+    # 2. 처리되지 않은 500 에러 처리
     if response is None:
-        logger.error(f"[System Error] {exc}", exc_info=True)
+        logger.error(f"[System Error] {exc}", exc_info=True)  #
         return Response(
-            {"error_detail": "서버 내부 오류가 발생했습니다.", "code": "server_error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            {
+                "error_detail": ErrorMessage.SYSTEM_ERROR.message,
+                "code": ErrorMessage.SYSTEM_ERROR.code,
+            },
+            status=ErrorMessage.SYSTEM_ERROR.status_code,
         )
 
-    # 3. 에러 메시지 포맷 통일 (Detail -> Error Detail)
+    # 3. 응답 포맷 통일: {"error_detail": "...", "code": "...", "errors": {...}}
+    custom_data = {
+        "error_detail": response.data.get("detail", "유효하지 않은 요청입니다."),
+        # BaseCustomException이면 코드가 들어가고, 아니면 "error"
+        "code": getattr(exc, "default_code", "error"),
+    }
 
-    # 유효성 검사 실패 (400)
-    if isinstance(exc, ValidationError):
-        view = context.get("view")
-        # 뷰에 설정된 메시지 or 기본 메시지 가져오기
-        message = getattr(
-            view, "validation_error_message", "유효하지 않은 데이터입니다."
-        )
+    # 유효성 검사(400) 실패 시 상세 정보 유지
+    if response.status_code == 400 and "detail" not in response.data:
+        custom_data["errors"] = response.data
 
-        response.data = {"error_detail": message, "errors": response.data}
-
-    # 4. 그 외 에러 처리 (데이터가 딕셔너리인 경우)
-    if isinstance(response.data, dict):
-        # 401 인증 에러 (로그인 안 함)
-        if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
-            response.data = {"error_detail": "로그인이 필요한 서비스입니다."}
-
-        # 그 외 모든 에러 (403, 404, 409 등)
-        else:
-            # 'detail' 키가 있으면 'error_detail'로 이름표 바꿔달기
-            if "detail" in response.data:
-                response.data = {"error_detail": str(response.data["detail"])}
-
-            # 커스텀 예외에 code가 있다면 추가
-            if hasattr(exc, "default_code"):
-                response.data["code"] = exc.default_code
-
+    response.data = custom_data
     return response

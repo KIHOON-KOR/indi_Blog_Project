@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import exceptions
+from apps.core.exceptions.base import BaseCustomException
+from apps.core.exceptions.messages import ErrorMessage
 
 
 class UserService:
@@ -15,13 +16,11 @@ class UserService:
 
         # 2. 인증 실패 시(user가 None일 경우) 예외를 발생시킵니다.
         if not user:
-            raise exceptions.AuthenticationFailed(
-                "이메일 또는 비밀번호가 일치하지 않습니다."
-            )
+            raise BaseCustomException(ErrorMessage.LOGIN_FAILED)
 
         # 3. 계정 활성화 여부를 확인
         if not user.is_active:
-            raise exceptions.PermissionDenied("해당 계정은 비활성화 상태입니다.")
+            raise BaseCustomException(ErrorMessage.USER_INACTIVE)
 
         # 4. JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
