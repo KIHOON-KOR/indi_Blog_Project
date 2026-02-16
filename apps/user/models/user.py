@@ -18,7 +18,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
 
     profile_img = models.CharField(max_length=255, null=True, blank=True)
 
-    bio = models.CharField(max_length=150, null=True, blank=True)
+    bio = models.CharField(max_length=150, null=True, blank=True)  # 간단 자기소개
 
     # 활성화 여부: True면 로그인 가능, False면 계정 정지 등의 상태(기본값은 True)
     is_active = models.BooleanField(default=True)
