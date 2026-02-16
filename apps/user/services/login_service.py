@@ -3,6 +3,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
 
+
 class UserService:
     @staticmethod
     def authenticate_user(email, password):
