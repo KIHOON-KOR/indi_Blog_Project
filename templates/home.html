@@ -15,7 +15,6 @@
                     개발, 일상, 취미 무엇이든 좋습니다. <br>
                     나만의 공간에 이야기를 쌓아가세요.
                 </p>
-
                 <a href="/api/v1/post/write/" class="btn btn-primary btn-lg px-4 fs-6 shadow-sm">
                     게시글 작성하기
                 </a>
@@ -28,9 +27,11 @@
             <div class="card-body p-4">
                 <h5 class="fw-bold mb-3">Recent Posts</h5>
 
-                <div class="list-group list-group-flush text-center py-5">
-                    <p class="text-muted mb-0">아직 작성된 게시글이 없습니다.</p>
-                    <small class="text-muted opacity-50">첫 번째 글의 주인공이 되어보세요!</small>
+                <div id="post-list-container" class="list-group list-group-flush py-2">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="text-muted mt-2">글을 불러오는 중입니다...</p>
+                    </div>
                 </div>
 
                 <div class="mt-3 text-center">
@@ -40,4 +41,74 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 페이지가 로드되면 바로 실행되는 함수입니다.
+    document.addEventListener("DOMContentLoaded", function() {
+        fetchRecentPosts(); // 최근 게시글을 불러오는 함수 호출
+    });
+
+    /**
+     * 서버 API로부터 게시글 목록을 가져와서 화면에 그리는 함수입니다.
+     */
+    async function fetchRecentPosts() {
+        // 게시글이 삽입될 HTML 요소를 변수에 할당합니다.
+        const container = document.getElementById('post-list-container');
+
+        try {
+            // DRF의 PostAPIView(GET)로 요청을 보냅니다.
+            const response = await fetch('/api/v1/post/');
+
+            // 응답 데이터를 JSON 형태로 파싱합니다.
+            const data = await response.json();
+
+            // 응답이 성공(200 OK)인지 확인합니다.
+            if (response.ok) {
+                // 페이지네이션이 적용된 경우 실제 목록은 'results' 안에 들어있습니다.
+                const posts = data.results || data;
+
+                // 게시글이 하나도 없는 경우 처리입니다.
+                if (posts.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <p class="text-muted mb-0">아직 작성된 게시글이 없습니다.</p>
+                            <small class="text-muted opacity-50">첫 번째 글의 주인공이 되어보세요!</small>
+                        </div>`;
+                    return;
+                }
+
+                // 기존 로딩 스피너를 지우고 목록을 비웁니다.
+                container.innerHTML = '';
+
+                // 받아온 게시글 배열을 순회하며 HTML 코드를 생성합니다.
+                posts.forEach(post => {
+                    // 날짜 형식을 보기 좋게 변환합니다 (예: 2024-01-25).
+                    const date = new Date(post.created_at).toLocaleDateString();
+
+                    // 각 게시글을 나타낼 HTML 문자열을 생성합니다.
+                    const postHtml = `
+                        <a href="/post/${post.id}/" class="list-group-item list-group-item-action border-0 px-0 py-3 bg-transparent">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h6 class="mb-1 fw-bold text-truncate" style="max-width: 70%;">${post.title}</h6>
+                                <small class="text-muted">${date}</small>
+                            </div>
+                            <small class="text-success">${post.author_nickname || '익명 사용자'}</small>
+                        </a>
+                    `;
+                    // 생성된 HTML을 컨테이너에 차곡차곡 추가합니다.
+                    container.insertAdjacentHTML('beforeend', postHtml);
+                });
+            } else {
+                // 서버 응답이 에러일 경우 에러 메시지를 표시합니다.
+                container.innerHTML = '<p class="text-danger text-center">목록을 불러오지 못했습니다.</p>';
+            }
+        } catch (error) {
+            // 네트워크 오류 등 예상치 못한 에러 발생 시 로그를 남기고 알립니다.
+            console.error('Error fetching posts:', error);
+            container.innerHTML = '<p class="text-danger text-center">서버와의 통신에 문제가 발생했습니다.</p>';
+        }
+    }
+</script>
 {% endblock %}
