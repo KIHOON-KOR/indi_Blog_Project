@@ -5,11 +5,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
+
 class ReviewPageNumberPagination(PageNumberPagination):
     """
     프로젝트 전역에서 사용할 커스텀 페이지네이션 클래스입니다.
     페이지 범위를 벗어난 요청 시 에러 대신 빈 리스트를 반환하도록 설계되었습니다.
     """
+
     page_size = 10  # 기본 페이지 당 데이터 개수
     page_size_query_param = "size"  # 클라이언트가 size 파라미터로 개수 조절 가능
     max_page_size = 50  # 최대 페이지 당 데이터 개수 제한
