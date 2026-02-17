@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}My Blog{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-dark-green: #0a2e1a;
+            --brand-accent-green: #1e8754;
+            --brand-hover-green: #156b41;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(
+                rgba(10, 46, 26, 0.85),
+                rgba(10, 46, 26, 0.95)
+            ), url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar { background-color: transparent !important; }
+        .navbar-brand { color: rgba(255,255,255,0.9) !important; font-weight: 700; }
+        .nav-link { color: rgba(255,255,255,0.8) !important; font-weight: 500; }
+        .nav-link:hover { color: #fff !important; }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .auth-card {
+            border: none;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-accent-green);
+            border-color: var(--brand-accent-green);
+            padding: 0.5rem 1.2rem; /* 버튼 크기 조정 */
+            font-weight: 600;
+            border-radius: 2rem; /* 둥근 버튼 */
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: var(--brand-hover-green) !important;
+            border-color: var(--brand-hover-green) !important;
+            transform: translateY(-2px);
+        }
+
+        .form-control:focus {
+            border-color: var(--brand-accent-green);
+            box-shadow: 0 0 0 0.25rem rgba(30, 135, 84, 0.15);
+        }
+
+        a.text-brand { color: var(--brand-accent-green); text-decoration: none; font-weight: 600; }
+        a.text-brand:hover { text-decoration: underline; color: var(--brand-hover-green); }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-tree-fill me-2" viewBox="0 0 16 16">
+                  <path d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.735A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.765L10.902 5.5h.098a.5.5 0 0 0 .416-.777l-3-4.5z"/>
+                </svg>
+                My Blog
+            </a>
+
+            <button class="navbar-toggler bg-white opacity-75" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto align-items-center">
+
+                    <div id="guest-menu" class="d-flex align-items-center">
+                        <li class="nav-item">
+                            <a class="nav-link me-2" href="/api/v1/user/login-page/">로그인</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm" href="/api/v1/user/signup-page/">회원가입</a>
+                        </li>
+                    </div>
+
+                    <div id="user-menu" class="d-flex align-items-center" style="display: none !important;">
+                        <li class="nav-item me-3">
+                            <span class="text-white opacity-75 small">안녕하세요, <strong id="user-nickname" class="text-white">User</strong>님</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="#" onclick="handleLogout()">로그아웃</a>
+                        </li>
+                    </div>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            checkLoginStatus();
+        });
+
+        function checkLoginStatus() {
+            const token = localStorage.getItem('access_token');
+            // [수정됨] 저장된 닉네임 가져오기 (없으면 기본값 'User')
+            const nickname = localStorage.getItem('nickname');
+
+            const guestMenu = document.getElementById('guest-menu');
+            const userMenu = document.getElementById('user-menu');
+            const nicknameElement = document.getElementById('user-nickname');
+
+            if (token) {
+                // 로그인 상태
+                guestMenu.style.setProperty('display', 'none', 'important');
+                userMenu.style.setProperty('display', 'flex', 'important');
+
+                // [수정됨] 화면에 닉네임 표시
+                if(nickname && nicknameElement) {
+                    nicknameElement.innerText = nickname;
+                }
+            } else {
+                // 비로그인 상태
+                guestMenu.style.setProperty('display', 'flex', 'important');
+                userMenu.style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        function handleLogout() {
+            if(confirm("정말 로그아웃 하시겠습니까?")) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('nickname'); // [수정됨] 닉네임도 함께 삭제
+
+                alert("로그아웃 되었습니다.");
+                window.location.href = "/";
+            }
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

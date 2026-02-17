@@ -69,7 +69,7 @@ ROOT_URLCONF = "config.urls"  # 최상위 URL 설정 파일의 경로를 지정�
 TEMPLATES = [  # HTML 템플릿 엔진 관련 설정입니다.
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
