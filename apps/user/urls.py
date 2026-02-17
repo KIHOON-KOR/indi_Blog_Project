@@ -9,7 +9,6 @@ urlpatterns = [
     path("login/", LoginAPIView.as_view(), name="login"),
     path("signup/", SignupAPIView.as_view(), name="signup"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-
     # 브라우저 접속용
     path("login-page/", login_page, name="login_page"),
     path("signup-page/", signup_page, name="signup_page"),
