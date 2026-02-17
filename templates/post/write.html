@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}글쓰기 - My Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center w-100">
+    <div class="col-lg-8">
+        <div class="text-center text-white mb-4">
+            <h2 class="fw-bold">New Story</h2>
+            <p class="opacity-75">당신의 지식과 경험을 공유해주세요.</p>
+        </div>
+
+        <div class="card auth-card shadow-lg border-0">
+            <div class="card-body p-5">
+                <form id="postForm">
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-bold text-secondary">제목</label>
+                        <input type="text" class="form-control form-control-lg" id="title" placeholder="매력적인 제목을 입력하세요" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="content" class="form-label fw-bold text-secondary">내용</label>
+                        <textarea class="form-control" id="content" rows="12" placeholder="자유롭게 이야기를 풀어보세요..." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="tags" class="form-label fw-bold text-secondary">태그</label>
+                        <input type="text" class="form-control" id="tags" placeholder="예: Python, Django, 일상 (쉼표로 구분)">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-5">
+                        <a href="/" class="btn btn-light rounded-pill px-4">취소</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5">발행하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 1. 페이지 로드 시 로그인 체크 (비로그인 시 튕겨내기)
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            alert("로그인이 필요한 서비스입니다.");
+            window.location.href = "/api/v1/user/login-page/";
+        }
+    });
+
+    // 2. 글 발행하기
+    document.getElementById('postForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+        const tagsInput = document.getElementById('tags').value;
+
+        // 태그 처리: "Python, Django" -> ["Python", "Django"] 리스트로 변환
+        const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+
+        try {
+            const token = localStorage.getItem('access_token'); // 토큰 꺼내기
+
+            const response = await fetch('/api/v1/post/', { // PostAPIView 주소
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token // [중요] 인증 토큰 헤더에 추가
+                },
+                body: JSON.stringify({
+                    title: title,
+                    content: content,
+                    tags: tags
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert("게시글이 성공적으로 발행되었습니다!");
+                window.location.href = "/"; // 메인으로 이동
+            } else {
+                alert("발행 실패: " + (data.detail || JSON.stringify(data)));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert("서버 통신 중 오류가 발생했습니다.");
+        }
+    });
+</script>
+{% endblock %}
