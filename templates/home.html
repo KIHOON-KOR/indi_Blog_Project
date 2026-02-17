@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}홈 - My Blog{% endblock %}
+
+{% block content %}
+<div class="row w-100">
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: white;">
+            <div class="card-body p-5 d-flex flex-column justify-content-center align-items-start">
+                <span class="badge bg-success bg-opacity-10 text-success mb-3 px-3 py-2 rounded-pill">Today's Pick</span>
+                <h1 class="fw-bold mb-3 display-5" style="color: var(--brand-dark-green);">
+                    당신의 일상을 <br> 기록해보세요.
+                </h1>
+                <p class="text-muted mb-4 lead">
+                    개발, 일상, 취미 무엇이든 좋습니다. <br>
+                    나만의 공간에 이야기를 쌓아가세요.
+                </p>
+
+                <a href="/api/v1/post/write/" class="btn btn-primary btn-lg px-4 fs-6 shadow-sm">
+                    게시글 작성하기
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.9);">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">Recent Posts</h5>
+
+                <div class="list-group list-group-flush text-center py-5">
+                    <p class="text-muted mb-0">아직 작성된 게시글이 없습니다.</p>
+                    <small class="text-muted opacity-50">첫 번째 글의 주인공이 되어보세요!</small>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <a href="#" class="text-decoration-none text-brand small fw-bold">모든 글 보기 →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

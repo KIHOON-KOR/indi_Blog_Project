@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}로그인 - My Blog{% endblock %}
+
+{% block content %}
+<div class="col-md-6 col-lg-4 col-xl-3" style="min-width: 380px; max-width: 480px;">
+
+    <div class="text-center text-white mb-4">
+        <h2 class="fw-bold">Welcome Back!</h2>
+        <p class="opacity-75">나만의 공간으로 로그인하세요.</p>
+    </div>
+
+    <div class="card auth-card p-4 p-sm-5 bg-white">
+        <div class="card-body p-0">
+
+            <h4 class="fw-bold text-center mb-4" style="color: var(--brand-dark-green);">로그인</h4>
+
+            <form id="loginForm">
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                    <label for="email">이메일 주소</label>
+                </div>
+
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                    <label for="password">비밀번호</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-3 fs-6 mb-3">
+                    로그인 하기
+                </button>
+            </form>
+
+            <div class="text-center text-muted mt-4">
+                아직 계정이 없으신가요? <br>
+                <a href="/api/v1/user/signup-page/" class="text-brand">3초 만에 회원가입 하기</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            // 버튼 로딩 처리
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = '로그인 중...';
+            submitBtn.disabled = true;
+
+            const response = await fetch('/api/v1/user/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                // [수정됨] 토큰과 함께 '닉네임'도 저장합니다!
+                localStorage.setItem('access_token', data.token.access);
+                localStorage.setItem('refresh_token', data.token.refresh);
+                localStorage.setItem('nickname', data.user.nickname); // <--- 여기 추가됨
+
+                window.location.href = "/";
+            } else {
+                alert("로그인 실패: " + (data.detail || data.message || "정보를 확인하세요."));
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert("서버 통신 중 오류가 발생했습니다.");
+            submitBtn.innerText = originalBtnText;
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}
