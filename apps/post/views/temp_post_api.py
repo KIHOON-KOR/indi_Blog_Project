@@ -12,13 +12,14 @@ from apps.post.services.post_list_service import (
 from apps.post.services.post_manage_service import restore_temp_post, soft_delete_post
 from apps.user.models import User
 from apps.post.serializers.post_list import PostListSerializer
-from apps.core.pagination import PageNumberPagination
+from apps.core.pagination import PostPageNumberPagination
+
 
 class MyTempAPIView(APIView):
     """임시 저장글 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    pagination_class = PostPageNumberPagination
 
     @extend_schema(tags=["임시저장"], summary="임시 저장글 목록 조회")
     def get(self, request: Request):
@@ -36,11 +37,12 @@ class MyTempAPIView(APIView):
 
         return Response(PostListSerializer(posts, many=True).data)
 
+
 class MyTempManageAPIView(APIView):
     """임시 저장글 관리(복구/삭제)를 담당합니다."""
 
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    pagination_class = PostPageNumberPagination
 
     @extend_schema(tags=["임시저장"], summary="임시 저장글 복구")
     def patch(self, request: Request, post_id: int):

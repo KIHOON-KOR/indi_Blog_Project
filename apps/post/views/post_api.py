@@ -14,14 +14,14 @@ from apps.post.services.post_list_service import (
 from apps.user.models import User
 from apps.post.serializers.post_create import PostCreateSerializer
 from apps.post.serializers.post_list import PostListSerializer
-from apps.core.pagination import PageNumberPagination
+from apps.core.pagination import PostPageNumberPagination
 
 
 class PostAPIView(APIView):
     """포스트 등록 및 전체 목록 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
-    pagination_class = PageNumberPagination
+    pagination_class = PostPageNumberPagination
 
     @extend_schema(tags=["포스트"], summary="전체 포스트 피드 조회")
     def get(self, request: Request):
@@ -56,7 +56,7 @@ class MyPostAPIView(APIView):
     """내 블로그(공개글만) 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    pagination_class = PostPageNumberPagination
 
     @extend_schema(tags=["포스트"], summary="내 블로그 공개글 조회")
     def get(self, request: Request):
