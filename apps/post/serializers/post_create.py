@@ -16,5 +16,15 @@ class PostCreateSerializer(serializers.ModelSerializer):
             "title",
             "content",
             "thumbnail",
+            "summary",
+            "is_temp",
             "tags",
         ]
+        # 특정 필드에 대한 추가 설정을 지정
+        extra_kwargs = {
+            "summary": {
+                "required": False,
+                "allow_blank": True,
+            },  # 요약은 필수가 아니며 빈 값도 허용
+            "is_temp": {"default": False},  # 기본적으로는 정식 발행(False) 상태로 처리
+        }
