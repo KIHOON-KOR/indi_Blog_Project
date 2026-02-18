@@ -1,10 +1,10 @@
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 
 from apps.core.exceptions.base import BaseCustomException
 from apps.post.models import Post
 from apps.user.models import User
 from apps.core.exceptions.messages import ErrorMessage
+
 
 def restore_temp_post(post_id: int, user: User):
     """임시글을 공개글로 전환(복구)합니다."""
@@ -14,7 +14,7 @@ def restore_temp_post(post_id: int, user: User):
         raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
     post.is_temp = False
-    post.save(update_fields=['is_temp'])
+    post.save(update_fields=["is_temp"])
 
 
 def soft_delete_post(post_id: int, user: User):
@@ -25,4 +25,4 @@ def soft_delete_post(post_id: int, user: User):
         raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
     post.deleted_at = timezone.now()
-    post.save(update_fields=['deleted_at'])
+    post.save(update_fields=["deleted_at"])

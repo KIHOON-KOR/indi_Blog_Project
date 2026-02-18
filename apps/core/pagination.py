@@ -6,7 +6,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 
-class PageNumberPagination(PageNumberPagination):
+class PostPageNumberPagination(PageNumberPagination):
     """
     프로젝트 전역에서 사용할 커스텀 페이지네이션 클래스입니다.
     페이지 범위를 벗어난 요청 시 에러 대신 빈 리스트를 반환하도록 설계되었습니다.

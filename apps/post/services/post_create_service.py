@@ -25,7 +25,7 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
         content=content,
         summary=summary,
         thumbnail=validated_data.get("thumbnail"),
-        is_temp=validated_data.get("is_temp", False)
+        is_temp=validated_data.get("is_temp", False),
     )
 
     # 4. 태그 최적화 처리 (N+1 문제 해결)
@@ -43,8 +43,6 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
         all_tags = Tag.objects.filter(name__in=tags_names)
 
         # 4-4. PostTag(중간 테이블) 데이터도 bulk_create로 한 번에 저장합니다.
-        PostTag.objects.bulk_create([
-            PostTag(post=post, tag=tag) for tag in all_tags
-        ])
+        PostTag.objects.bulk_create([PostTag(post=post, tag=tag) for tag in all_tags])
 
     return post
