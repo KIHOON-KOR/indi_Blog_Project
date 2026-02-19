@@ -37,7 +37,7 @@ class Post(TimeStampedModel):
         max_length=10,
         choices=Visibility.choices,
         default=Visibility.PUBLIC,  # 기본값: 전체 공개
-        help_text="게시글의 공개 범위를 설정합니다."
+        help_text="게시글의 공개 범위를 설정합니다.",
     )
 
     class Meta:
