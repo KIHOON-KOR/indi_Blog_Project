@@ -26,6 +26,7 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
         summary=summary,
         thumbnail=validated_data.get("thumbnail"),
         is_temp=validated_data.get("is_temp", False),
+        visibility=validated_data.get("visibility", Post.Visibility.PUBLIC),
     )
 
     # 4. 태그 최적화 처리 (N+1 문제 해결)

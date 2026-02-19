@@ -26,3 +26,4 @@ def soft_delete_post(post_id: int, user: User):
 
     post.deleted_at = timezone.now()
     post.save(update_fields=["deleted_at"])
+

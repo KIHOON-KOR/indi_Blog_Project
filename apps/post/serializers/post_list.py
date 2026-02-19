@@ -15,4 +15,5 @@ class PostListSerializer(serializers.ModelSerializer):
             "thumbnail",
             "author_nickname",
             "created_at",
+            "visibility",
         ]
