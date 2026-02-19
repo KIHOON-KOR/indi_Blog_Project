@@ -10,11 +10,12 @@ def get_global_posts() -> QuerySet[Post]:
     return (
         Post.objects.filter(
             is_temp=False,  # 임시 저장글은 제외합니다.
+            visibility=Post.Visibility.PUBLIC,  # 전체 공개만 필터링
             deleted_at__isnull=True,  # 삭제되지 않은 글만 필터링합니다.
         )
         .select_related("user")
         .order_by("-created_at")
-    )  # 작성자 정보를 JOIN하고 최신순으로 정렬합니다.
+    )
 
 
 def get_my_published_posts(*, user: User) -> QuerySet[Post]:
