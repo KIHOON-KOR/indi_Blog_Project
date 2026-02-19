@@ -11,6 +11,7 @@ from apps.post.services.post_list_service import (
     get_global_posts,
     get_my_published_posts,
 )
+from apps.post.services.post_manage_service import update_post, delete_post
 from apps.user.models import User
 from apps.post.serializers.post_create import PostCreateSerializer
 from apps.post.serializers.post_list import PostListSerializer
@@ -73,3 +74,42 @@ class MyPostAPIView(APIView):
             )
 
         return Response(PostListSerializer(posts, many=True).data)
+
+
+class PostDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(tags=["포스트"], summary="게시글 수정", request=PostCreateSerializer)
+    def put(self, request: Request, post_id: int):
+        serializer = PostCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = cast(User, request.user)
+
+        # 서비스 레이어 호출
+        updated_post = update_post(
+            post_id=post_id,
+            user=user,
+            validated_data=serializer.validated_data
+        )
+
+        return Response(PostCreateSerializer(updated_post).data, status=status.HTTP_200_OK)
+
+    @extend_schema(tags=["포스트"], summary="게시글 삭제(Soft Delete)")
+    def delete(self, request: Request, post_id: int):
+        user = cast(User, request.user)
+
+        delete_post(post_id=post_id, user=user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+
+
+
+
+
+
