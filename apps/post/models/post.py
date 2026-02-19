@@ -5,6 +5,10 @@ from apps.series.models import Series
 
 
 class Post(TimeStampedModel):
+    class Visibility(models.TextChoices):
+        PUBLIC = "PUBLIC", "전체 공개"
+        PRIVATE = "PRIVATE", "비공개"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts"
     )
@@ -26,6 +30,14 @@ class Post(TimeStampedModel):
     # Tag와의 M:N 관계 (Through 설정)
     tags = models.ManyToManyField(
         "tags.Tag", through="tags.PostTag", related_name="posts"
+    )
+
+    # 공개 범위 설정
+    visibility = models.CharField(
+        max_length=10,
+        choices=Visibility.choices,
+        default=Visibility.PUBLIC,  # 기본값: 전체 공개
+        help_text="게시글의 공개 범위를 설정합니다.",
     )
 
     class Meta:

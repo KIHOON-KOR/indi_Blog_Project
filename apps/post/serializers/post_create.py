@@ -19,6 +19,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
             "summary",
             "is_temp",
             "tags",
+            "visibility",
         ]
         # 특정 필드에 대한 추가 설정을 지정
         extra_kwargs = {
