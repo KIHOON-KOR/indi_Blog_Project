@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}임시 저장 관리 - My Blog{% endblock %}
+
+{% block content %}
+<div class="row w-100 justify-content-center">
+    <div class="col-lg-10">
+        <div class="text-white mb-4">
+            <h2 class="fw-bold">임시 저장 관리</h2>
+            <p class="opacity-75">작성 중인 글을 발행하거나 삭제할 수 있습니다.</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">제목</th>
+                            <th>작성일</th>
+                            <th class="text-center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="temp-post-list">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", fetchTempPosts);
+
+    // 내 임시 저장글 목록을 가져오는 함수입니다.
+    async function fetchTempPosts() {
+        const container = document.getElementById('temp-post-list');
+        const token = localStorage.getItem('access_token');
+
+        try {
+            const response = await fetch('/api/v1/post/my/temp/', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await response.json();
+            const posts = data.results || data;
+
+            if (posts.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="text-center py-5 text-muted">임시 저장된 글이 없습니다.</td></tr>';
+                return;
+            }
+
+            // 목록 생성
+            container.innerHTML = posts.map(post => `
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-dark">${post.title}</div>
+                    </td>
+                    <td class="text-muted small">${new Date(post.created_at).toLocaleDateString()}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-success rounded-pill px-3 me-1" onclick="managePost(${post.id}, 'PATCH')">발행</button>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="managePost(${post.id}, 'DELETE')">삭제</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    /**
+     * 임시글의 상태를 변경하거나 삭제합니다.
+     * @param {number} postId - 처리할 포스트 ID
+     * @param {string} method - 'PATCH'(발행) 또는 'DELETE'(삭제)
+     */
+    async function managePost(postId, method) {
+        const actionText = method === 'PATCH' ? "발행" : "삭제";
+        if (!confirm(`이 글을 ${actionText}하시겠습니까?`)) return;
+
+        const token = localStorage.getItem('access_token');
+        try {
+            const response = await fetch(`/api/v1/post/my/temp/${postId}/`, {
+                method: method,
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (response.ok) {
+                alert(`${actionText}되었습니다.`);
+                fetchTempPosts(); // 목록 새로고침
+            } else {
+                alert(`${actionText} 실패하였습니다.`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+</script>
+{% endblock %}

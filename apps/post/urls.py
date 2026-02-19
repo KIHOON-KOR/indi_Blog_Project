@@ -1,6 +1,11 @@
 from django.urls import path
 
-from apps.post.views.page_views import post_write_page
+from apps.post.views.page_views import (
+    post_write_page,
+    temp_post_list_page,
+    my_post_list_page,
+    global_post_list_page,
+)
 
 from apps.post.views.post_api import PostAPIView, MyPostAPIView
 from apps.post.views.temp_post_api import MyTempManageAPIView, MyTempAPIView
@@ -17,4 +22,7 @@ urlpatterns = [
     ),
     # [화면(UI)]
     path("write/", post_write_page, name="post_write_page"),
+    path("my/page/", my_post_list_page, name="my_post_list_page"),
+    path("all/page/", global_post_list_page, name="global_post_list_page"),
+    path("my/temp/page/", temp_post_list_page, name="temp_post_list_page"),
 ]

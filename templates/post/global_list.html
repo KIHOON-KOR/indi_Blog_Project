@@ -1,0 +1,82 @@
+{% extends 'base.html' %} {% block title %}전체 피드 - My Blog{% endblock %} {% block content %}
+<div class="row w-100 justify-content-center">
+    <div class="col-lg-10">
+        <div class="text-white mb-4">
+            <h2 class="fw-bold">전체 피드</h2>
+            <p class="opacity-75">모든 블로거들의 새로운 소식을 만나보세요.</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-0">
+                <div id="global-post-list" class="list-group list-group-flush">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="text-muted mt-2">글을 불러오는 중입니다...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pagination-container" class="d-flex justify-content-center mt-4"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetchGlobalPosts(); // 페이지 로드 시 전체 글 조회 함수 실행
+    });
+
+    /**
+     * 전체 공개 게시글 목록을 가져와서 화면에 렌더링합니다.
+     */
+    async function fetchGlobalPosts() {
+        const container = document.getElementById('global-post-list'); // 목록 컨테이너 선택
+
+        try {
+            // 전체 피드 API(/api/v1/post/)를 호출합니다.
+            // 이 API는 로그인하지 않아도 조회가 가능합니다.
+            const response = await fetch('/api/v1/post/');
+            const data = await response.json();
+
+            if (response.ok) {
+                const posts = data.results || data; // 페이지네이션 유무에 따른 데이터 추출
+
+                if (posts.length === 0) { // 게시글이 아예 없는 경우
+                    container.innerHTML = '<div class="text-center py-5 text-muted">아직 등록된 게시글이 없습니다.</div>';
+                    return;
+                }
+
+                container.innerHTML = ''; // 로딩 메시지 삭제
+
+                posts.forEach(post => {
+                    const date = new Date(post.created_at).toLocaleDateString(); // 날짜 포맷팅
+
+                    const postHtml = `
+                        <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div class="text-truncate" style="max-width: 75%;">
+                                    <a href="/post/${post.id}/" class="text-decoration-none text-dark">
+                                        <h5 class="mb-1 fw-bold">${post.title}</h5>
+                                    </a>
+                                    <small class="text-muted">
+                                        by <span class="text-success fw-bold">${post.author_nickname || '익명'}</span> | ${date}
+                                    </small>
+                                </div>
+                                ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', postHtml); // 리스트에 추가
+                });
+            } else {
+                container.innerHTML = '<p class="text-danger text-center py-5">목록을 불러오지 못했습니다.</p>';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            container.innerHTML = '<p class="text-danger text-center py-5">서버 통신 오류가 발생했습니다.</p>';
+        }
+    }
+</script>
+{% endblock %}
