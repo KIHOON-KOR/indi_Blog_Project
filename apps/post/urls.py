@@ -7,7 +7,7 @@ from apps.post.views.page_views import (
     global_post_list_page,
 )
 
-from apps.post.views.post_api import PostAPIView, MyPostAPIView
+from apps.post.views.post_api import PostAPIView, MyPostAPIView, PostDetailAPIView
 from apps.post.views.temp_post_api import MyTempManageAPIView, MyTempAPIView
 
 urlpatterns = [
@@ -15,6 +15,8 @@ urlpatterns = [
     path("", PostAPIView.as_view(), name="post_list_create"),
     # [내 블로그]
     path("my/", MyPostAPIView.as_view(), name="post_my_list"),
+    path("<int:post_id>/", PostDetailAPIView.as_view(), name="post_detail_manage"),
+
     # [임시글 관리]
     path("my/temp/", MyTempAPIView.as_view(), name="post_temp_list"),
     path(
