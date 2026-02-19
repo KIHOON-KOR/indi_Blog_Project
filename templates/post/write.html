@@ -30,6 +30,7 @@
 
                     <div class="d-flex justify-content-end gap-2 mt-5">
                         <a href="/" class="btn btn-light rounded-pill px-4">취소</a>
+                        <button type="button" id="tempSaveBtn" class="btn btn-outline-secondary rounded-pill px-4">임시저장</button>
                         <button type="submit" class="btn btn-primary rounded-pill px-5">발행하기</button>
                     </div>
                 </form>
@@ -41,7 +42,7 @@
 
 {% block extra_js %}
 <script>
-    // 1. 페이지 로드 시 로그인 체크 (비로그인 시 튕겨내기)
+    // 1. 페이지 로드 시 로그인 체크 (기존 로직 유지)
     document.addEventListener("DOMContentLoaded", function() {
         const token = localStorage.getItem('access_token');
         if (!token) {
@@ -50,45 +51,67 @@
         }
     });
 
-    // 2. 글 발행하기
-    document.getElementById('postForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
+    /**
+     * 게시글 저장을 처리하는 통합 함수입니다.
+     * @param {boolean} isTemp - true면 임시저장, false면 정식발행입니다.
+     */
+    async function savePost(isTemp = false) {
+        // DOM 요소로부터 입력값을 가져옵니다.
         const title = document.getElementById('title').value;
         const content = document.getElementById('content').value;
         const tagsInput = document.getElementById('tags').value;
 
-        // 태그 처리: "Python, Django" -> ["Python", "Django"] 리스트로 변환
+        // 필수 값 검증
+        if (!title || !content) {
+            alert("제목과 내용을 입력해주세요.");
+            return;
+        }
+
+        // 태그 문자열을 배열로 변환합니다. (기존 로직 활용)
         const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
 
         try {
-            const token = localStorage.getItem('access_token'); // 토큰 꺼내기
+            const token = localStorage.getItem('access_token');
 
-            const response = await fetch('/api/v1/post/', { // PostAPIView 주소
+            // PostAPIView로 데이터를 전송합니다.
+            const response = await fetch('/api/v1/post/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token // [중요] 인증 토큰 헤더에 추가
+                    'Authorization': 'Bearer ' + token
                 },
                 body: JSON.stringify({
                     title: title,
                     content: content,
-                    tags: tags
+                    tags: tags,
+                    is_temp: isTemp  // [핵심] Serializer의 is_temp 필드에 값을 전달합니다.
                 })
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                alert("게시글이 성공적으로 발행되었습니다!");
-                window.location.href = "/"; // 메인으로 이동
+                // 성공 시 알림 후 각각 지정된 페이지로 이동합니다.
+                alert(isTemp ? "임시 저장되었습니다." : "게시글이 성공적으로 발행되었습니다!");
+                window.location.href = isTemp ? "/api/v1/post/my/temp/page/" : "/";
             } else {
-                alert("발행 실패: " + (data.detail || JSON.stringify(data)));
+                alert("처리 실패: " + (data.detail || JSON.stringify(data)));
             }
         } catch (error) {
             console.error('Error:', error);
             alert("서버 통신 중 오류가 발생했습니다.");
         }
+    }
+
+    // [이벤트] 발행하기 버튼 클릭 시 (Form Submit)
+    document.getElementById('postForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // 기본 폼 제출 동작을 막습니다.
+        savePost(false);    // 정식 발행으로 처리합니다.
+    });
+
+    // [이벤트] 임시저장 버튼 클릭 시
+    document.getElementById('tempSaveBtn').addEventListener('click', function() {
+        savePost(true);     // 임시 저장으로 처리합니다.
     });
 </script>
 {% endblock %}

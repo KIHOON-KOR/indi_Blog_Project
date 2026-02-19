@@ -106,8 +106,18 @@
 
                     <div id="user-menu" class="d-flex align-items-center" style="display: none !important;">
                         <li class="nav-item me-3">
-                            <span class="text-white opacity-75 small">안녕하세요, <strong id="user-nickname" class="text-white">User</strong>님</span>
+                            <a class="nav-link text-white-50 small" href="/api/v1/post/my/page/">내 블로그</a>
                         </li>
+
+                        <li class="nav-item me-3">
+                            <a class="nav-link text-white-50 small" href="/api/v1/post/my/temp/page/">임시 저장함</a>
+                        </li>
+
+                        <li class="nav-item me-3">
+                            <span class="text-white opacity-75 small">안녕하세요, <strong id="user-nickname"
+                                                                                     class="text-white">User</strong>님</span>
+                        </li>
+
                         <li class="nav-item">
                             <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="#" onclick="handleLogout()">로그아웃</a>
                         </li>
