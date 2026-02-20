@@ -19,3 +19,13 @@ def global_post_list_page(request):
 def temp_post_list_page(request):
     """임시 저장글 관리 화면을 렌더링합니다."""
     return render(request, "post/temp_list.html")
+
+
+def post_detail_page(request, post_id):
+    """게시글 상세 화면(HTML)을 렌더링합니다."""
+    return render(request, "post/detail.html")
+
+
+def post_edit_page(request, post_id):
+    """게시글 수정 화면(HTML)을 렌더링합니다."""
+    return render(request, "post/edit.html")

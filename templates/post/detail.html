@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}게시글 상세 - My Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center w-100">
+    <div class="col-lg-9">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+            <div id="post-thumbnail-wrapper" class="d-none">
+                <img id="post-thumbnail" src="" class="w-100" style="height: 350px; object-fit: cover;">
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="mb-4 border-bottom pb-4">
+                    <h1 id="post-title" class="fw-bold display-6 mb-3" style="color: var(--brand-dark-green);"></h1>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            by <span id="post-author" class="text-success fw-bold"></span> |
+                            <span id="post-date"></span>
+                            <span id="post-visibility-badge" class="ms-2"></span>
+                        </div>
+                        <div id="author-actions" class="d-none">
+                            <a id="edit-btn" href="#" class="btn btn-outline-secondary btn-sm rounded-pill px-3">수정</a>
+                            <button onclick="handleDelete()" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                삭제
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="post-tags" class="mt-3"></div>
+                </div>
+
+                <div id="post-content" class="text-dark lh-lg mb-5"
+                     style="white-space: pre-wrap; font-size: 1.1rem;"></div>
+
+                <div class="text-center mt-5 border-top pt-4">
+                    <a href="/" class="btn btn-light rounded-pill px-4 shadow-sm">← 목록으로</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // [수정] URL 경로에서 'post' 다음 세그먼트를 ID로 안전하게 추출합니다.
+    const pathSegments = window.location.pathname.split('/');
+    const postId = pathSegments[pathSegments.indexOf('post') + 1];
+
+    document.addEventListener("DOMContentLoaded", fetchPostDetail);
+
+    async function fetchPostDetail() {
+        try {
+            const response = await fetch(`/api/v1/post/${postId}/`);
+            const post = await response.json();
+
+            if (response.ok) {
+                // 1. 데이터 매핑
+                document.getElementById('post-title').innerText = post.title;
+                document.getElementById('post-author').innerText = post.author_nickname || '익명';
+                document.getElementById('post-date').innerText = new Date(post.created_at).toLocaleDateString();
+                document.getElementById('post-content').innerText = post.content;
+
+                // 2. 썸네일 처리
+                if (post.thumbnail) {
+                    const thumbWrapper = document.getElementById('post-thumbnail-wrapper');
+                    thumbWrapper.classList.remove('d-none');
+                    document.getElementById('post-thumbnail').src = post.thumbnail;
+                }
+
+                // 3. 태그 렌더링
+                if (post.tags && post.tags.length > 0) {
+                    const tagContainer = document.getElementById('post-tags');
+                    tagContainer.innerHTML = post.tags.map(tag =>
+                            `<span class="badge bg-light text-success border me-1 rounded-pill">#${tag}</span>`
+                    ).join('');
+                }
+
+                // 4. 작성자 전용 UI 처리
+                const currentNickname = localStorage.getItem('nickname');
+                if (currentNickname && currentNickname === post.author_nickname) {
+                    document.getElementById('author-actions').classList.remove('d-none');
+                    document.getElementById('edit-btn').href = `/api/v1/post/${postId}/edit/page/`;
+                }
+            } else {
+                alert(post.error_detail || "게시글을 찾을 수 없습니다.");
+                window.location.href = "/";
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function handleDelete() {
+        if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/v1/post/${postId}/`, {
+            method: 'DELETE',
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        if (response.status === 204) {
+            alert("삭제되었습니다.");
+            window.location.href = "/";
+        }
+    }
+</script>
+{% endblock %}
