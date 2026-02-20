@@ -5,11 +5,14 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from typing import cast
-
+from apps.core.exceptions.messages import ErrorMessage
+from apps.core.exceptions.base import BaseCustomException
+from apps.post.serializers.post_detail import PostDetailSerializer
 from apps.post.services.post_create_service import create_post
 from apps.post.services.post_list_service import (
     get_global_posts,
     get_my_published_posts,
+    get_post_detail,
 )
 from apps.post.services.post_manage_service import update_post, delete_post
 from apps.user.models import User
@@ -86,7 +89,18 @@ class MyPostAPIView(APIView):
 
 
 class PostDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    @extend_schema(tags=["포스트"], summary="게시글 상세 조회")
+    def get(self, request: Request, post_id: int):
+        # 1. 서비스 레이어를 호출
+        post = get_post_detail(post_id)
+
+        # 2. 게시글이 없는 경우(None), 커스텀 예외를 발생
+        if not post:
+            raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
+
+        return Response(PostDetailSerializer(post).data)
 
     @extend_schema(tags=["포스트"], summary="게시글 수정", request=PostCreateSerializer)
     def put(self, request: Request, post_id: int):

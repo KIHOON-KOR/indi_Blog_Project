@@ -44,3 +44,14 @@ def get_my_temp_posts(*, user: User) -> QuerySet[Post]:
     ).order_by(
         "-created_at"
     )  # 최신순으로 정렬합니다.
+
+
+def get_post_detail(post_id: int) -> Post:
+    """
+    특정 ID의 게시글을 상세 조회합니다. (삭제되지 않은 글만)
+    """
+    return (
+        Post.objects.select_related("user")  # type: ignore
+        .filter(id=post_id, deleted_at__isnull=True)
+        .first()
+    )
