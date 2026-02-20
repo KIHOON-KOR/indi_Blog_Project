@@ -23,10 +23,13 @@ class MyTempAPIView(APIView):
 
     @extend_schema(tags=["임시저장"], summary="임시 저장글 목록 조회")
     def get(self, request: Request):
+        # 1. User 타입 지정
         user = cast(User, request.user)
-        # 임시글 관리 페이지를 위해 is_temp=True인 글만 가져옵니다.
+
+        # 2. 서비스 레이어 호출
         posts = get_my_temp_posts(user=user)
 
+        # 3. 페이지 네이션 적용
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
 
@@ -46,13 +49,16 @@ class MyTempManageAPIView(APIView):
 
     @extend_schema(tags=["임시저장"], summary="임시 저장글 복구")
     def patch(self, request: Request, post_id: int):
-        # 임시글 상태를 해제하여 공개글로 전환합니다.
+        # 1. 서비스 레이어 호출
         restore_temp_post(post_id=post_id, user=cast(User, request.user))
+
         return Response(
             {"message": "포스트가 발행되었습니다."}, status=status.HTTP_200_OK
         )
 
     @extend_schema(tags=["임시저장"], summary="임시 저장글 삭제")
     def delete(self, request: Request, post_id: int):
+        # 1. 서비스 레이어 호출
         soft_delete_post(post_id=post_id, user=cast(User, request.user))
+
         return Response(status=status.HTTP_204_NO_CONTENT)

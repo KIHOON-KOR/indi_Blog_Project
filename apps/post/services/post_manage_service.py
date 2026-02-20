@@ -6,6 +6,7 @@ from apps.user.models import User
 from apps.core.exceptions.messages import ErrorMessage
 from django.db import transaction
 
+
 def restore_temp_post(post_id: int, user: User):
     """임시글을 공개글로 전환(복구)합니다."""
     post = Post.objects.filter(id=post_id, user=user, is_temp=True).first()
@@ -55,17 +56,28 @@ def update_post(*, post_id: int, user: User, validated_data: dict):
         post.posttag_set.all().delete()  # 기존의 PostTag 중간 테이블 관계를 모두 삭제
 
         # 신규 태그 생성 및 연결
-        existing_tags = Tag.objects.filter(name__in=tag_names)  # 이미 DB에 있는 태그를 조회
-        existing_names = {t.name for t in existing_tags}  # 조회된 태그 이름들을 셋(Set)으로 만듬
+        existing_tags = Tag.objects.filter(
+            name__in=tag_names
+        )  # 이미 DB에 있는 태그를 조회
+        existing_names = {
+            t.name for t in existing_tags
+        }  # 조회된 태그 이름들을 셋(Set)으로 만듬
 
-        new_names = set(tag_names) - existing_names  # DB에 없는 새로운 태그 이름들만 골라냅니다.
+        new_names = (
+            set(tag_names) - existing_names
+        )  # DB에 없는 새로운 태그 이름들만 골라냅니다.
         if new_names:  # 새로 추가할 태그가 있다면 한 번에 생성
             Tag.objects.bulk_create([Tag(name=name) for name in new_names])
 
-        all_tags = Tag.objects.filter(name__in=tag_names)  # 전체 태그 객체들을 다시 가져옴
-        PostTag.objects.bulk_create([PostTag(post=post, tag=tag) for tag in all_tags])  # 게시글과 연결
+        all_tags = Tag.objects.filter(
+            name__in=tag_names
+        )  # 전체 태그 객체들을 다시 가져옴
+        PostTag.objects.bulk_create(
+            [PostTag(post=post, tag=tag) for tag in all_tags]
+        )  # 게시글과 연결
 
     return post
+
 
 def delete_post(post_id: int, user: User):
     # 1. 본인의 게시글 중 삭제되지 않은 글을 찾음
@@ -76,5 +88,5 @@ def delete_post(post_id: int, user: User):
         raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
     # 2. 삭제 일시를 현재 시간으로 설정하여 논리적 삭제 처리
-    post.deleted_at = timezone.now() # deleted_at 필드에 현재 시각을 기록
+    post.deleted_at = timezone.now()  # deleted_at 필드에 현재 시각을 기록
     post.save(update_fields=["deleted_at"])

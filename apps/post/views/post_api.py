@@ -26,9 +26,10 @@ class PostAPIView(APIView):
 
     @extend_schema(tags=["포스트"], summary="전체 포스트 피드 조회")
     def get(self, request: Request):
-        # 1. 서비스 레이어에서 전체 공개글 쿼리셋을 가져옵니다.
+        # 1. 서비스 레이어 호출
         posts = get_global_posts()
-        # 2. 커스텀 페이지네이션을 적용합니다.
+
+        # 2. 페이지네이션을 적용
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
 
@@ -42,11 +43,16 @@ class PostAPIView(APIView):
         tags=["포스트"], summary="포스트 등록 API", request=PostCreateSerializer
     )
     def post(self, request: Request):
-        """기존 작성하신 등록 로직 유지"""
+        # 1. 입력 데이터 검증
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # 2. User 타입 지정
         user = cast(User, request.user)
+
+        # 3. 서비스 레이어 호출
         post = create_post(author=user, validated_data=serializer.validated_data)
+
         return Response(
             {"id": post.id, "message": "성공적으로 등록되었습니다."},
             status=status.HTTP_201_CREATED,
@@ -61,10 +67,13 @@ class MyPostAPIView(APIView):
 
     @extend_schema(tags=["포스트"], summary="내 블로그 공개글 조회")
     def get(self, request: Request):
+        # 1. User 타입 지정
         user = cast(User, request.user)
-        # 내 블로그에서는 내가 쓴 '공개된' 글만 필터링합니다.
+
+        # 2. 서비스 레이어 호출
         posts = get_my_published_posts(user=user)
 
+        # 3. 페이지 네이션 적용
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
 
@@ -81,35 +90,28 @@ class PostDetailAPIView(APIView):
 
     @extend_schema(tags=["포스트"], summary="게시글 수정", request=PostCreateSerializer)
     def put(self, request: Request, post_id: int):
+        # 1. 입력 데이터 검증
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        # 2. User 타입 지정
         user = cast(User, request.user)
 
-        # 서비스 레이어 호출
+        # 3. 서비스 레이어 호출
         updated_post = update_post(
-            post_id=post_id,
-            user=user,
-            validated_data=serializer.validated_data
+            post_id=post_id, user=user, validated_data=serializer.validated_data
         )
 
-        return Response(PostCreateSerializer(updated_post).data, status=status.HTTP_200_OK)
+        return Response(
+            PostCreateSerializer(updated_post).data, status=status.HTTP_200_OK
+        )
 
     @extend_schema(tags=["포스트"], summary="게시글 삭제(Soft Delete)")
     def delete(self, request: Request, post_id: int):
+        # 1. User 타입 지정
         user = cast(User, request.user)
 
+        # 2. 서비스 레이어 호출
         delete_post(post_id=post_id, user=user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-
-
-
-
-
-
-
-
-
