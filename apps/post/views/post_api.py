@@ -11,7 +11,8 @@ from apps.post.serializers.post_detail import PostDetailSerializer
 from apps.post.services.post_create_service import create_post
 from apps.post.services.post_list_service import (
     get_global_posts,
-    get_my_published_posts, get_post_detail,
+    get_my_published_posts,
+    get_post_detail,
 )
 from apps.post.services.post_manage_service import update_post, delete_post
 from apps.user.models import User

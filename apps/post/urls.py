@@ -4,7 +4,9 @@ from apps.post.views.page_views import (
     post_write_page,
     temp_post_list_page,
     my_post_list_page,
-    global_post_list_page, post_detail_page, post_edit_page,
+    global_post_list_page,
+    post_detail_page,
+    post_edit_page,
 )
 
 from apps.post.views.post_api import PostAPIView, MyPostAPIView, PostDetailAPIView
