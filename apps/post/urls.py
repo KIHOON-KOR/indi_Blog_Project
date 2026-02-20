@@ -16,7 +16,6 @@ urlpatterns = [
     # [내 블로그]
     path("my/", MyPostAPIView.as_view(), name="post_my_list"),
     path("<int:post_id>/", PostDetailAPIView.as_view(), name="post_detail_manage"),
-
     # [임시글 관리]
     path("my/temp/", MyTempAPIView.as_view(), name="post_temp_list"),
     path(
