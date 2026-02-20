@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}글 수정 - My Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center w-100">
+    <div class="col-lg-8">
+        <div class="text-center text-white mb-4">
+            <h2 class="fw-bold">Edit Story</h2>
+            <p class="opacity-75">내용을 다듬어 더 멋진 글을 완성해보세요.</p>
+        </div>
+
+        <div class="card auth-card shadow-lg border-0 bg-white">
+            <div class="card-body p-5">
+                <form id="editForm">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-secondary">제목</label>
+                        <input type="text" class="form-control form-control-lg border-2" id="title" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-secondary">본문 내용</label>
+                        <textarea class="form-control border-2" id="content" rows="12" required></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-secondary">공개 설정</label>
+                            <select class="form-select" id="visibility">
+                                <option value="PUBLIC">전체 공개</option>
+                                <option value="PRIVATE">비공개 (나만 보기)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-5 border-top pt-4">
+                        <button type="button" onclick="history.back()" class="btn btn-light rounded-pill px-4">취소</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 shadow">수정 완료</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // [수정] 동일한 안전한 ID 추출 로직 사용
+    const segments = window.location.pathname.split('/');
+    const currentPostId = segments[segments.indexOf('post') + 1];
+    const token = localStorage.getItem('access_token');
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const res = await fetch(`/api/v1/post/${currentPostId}/`);
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('title').value = data.title;
+                document.getElementById('content').value = data.content;
+                document.getElementById('visibility').value = data.visibility;
+            }
+        } catch (e) { console.error(e); }
+    });
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById('title').value,
+            content: document.getElementById('content').value,
+            visibility: document.getElementById('visibility').value
+        };
+
+        const res = await fetch(`/api/v1/post/${currentPostId}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            alert("성공적으로 수정되었습니다.");
+            window.location.href = `/api/v1/post/${currentPostId}/page/`;
+        } else {
+            alert("수정에 실패했습니다.");
+        }
+    });
+</script>
+{% endblock %}

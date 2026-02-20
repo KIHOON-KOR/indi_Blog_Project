@@ -4,7 +4,7 @@ from apps.post.views.page_views import (
     post_write_page,
     temp_post_list_page,
     my_post_list_page,
-    global_post_list_page,
+    global_post_list_page, post_detail_page, post_edit_page,
 )
 
 from apps.post.views.post_api import PostAPIView, MyPostAPIView, PostDetailAPIView
@@ -26,4 +26,6 @@ urlpatterns = [
     path("my/page/", my_post_list_page, name="my_post_list_page"),
     path("all/page/", global_post_list_page, name="global_post_list_page"),
     path("my/temp/page/", temp_post_list_page, name="temp_post_list_page"),
+    path("<int:post_id>/page/", post_detail_page, name="post_detail_page"),
+    path("<int:post_id>/edit/page/", post_edit_page, name="post_edit_page"),
 ]
