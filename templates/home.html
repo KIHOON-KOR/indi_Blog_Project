@@ -1,24 +1,96 @@
-{% extends 'base.html' %} {% block title %}홈 - My Blog{% endblock %} {% block content %} <div class="container-fluid px-0"> <div class="row g-4 w-100 m-0"> <div class="col-lg-5 col-xl-4"> <div class="card border-0 shadow-lg rounded-4 mb-4 text-white"
+{% extends 'base.html' %}
+
+{% block title %}홈 - My Blog{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-4 w-100 m-0">
+
+        <div class="col-lg-5 col-xl-4">
+
+            <div class="card border-0 shadow-lg rounded-4 mb-4 text-white"
                  style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2);">
-                <div class="card-body p-4"> <span class="badge bg-light text-dark mb-2 rounded-pill px-3">Dashboard</span> <h2 class="fw-bold mb-1">환영합니다!</h2> <p class="opacity-75 mb-4">오늘도 당신의 정원을 가꿔보세요.</p> <a href="/api/v1/post/write/" class="btn btn-light btn-lg w-100 rounded-pill fw-bold shadow-sm"> <i class="bi bi-pencil-fill me-2"></i>새로운 기록 남기기
+                <div class="card-body p-4">
+                    <span class="badge bg-light text-dark mb-2 rounded-pill px-3">Dashboard</span>
+                    <h2 class="fw-bold mb-1">환영합니다!</h2>
+                    <p class="opacity-75 mb-4">오늘도 당신의 정원을 가꿔보세요.</p>
+                    <a href="/api/v1/post/write/" class="btn btn-light btn-lg w-100 rounded-pill fw-bold shadow-sm">
+                        <i class="bi bi-pencil-fill me-2"></i>새로운 기록 남기기
                     </a>
                 </div>
             </div>
 
             <div id="grade-card" class="card border-0 shadow-lg rounded-4 overflow-hidden"
-                 style="background: white; display: none; transition: transform 0.3s ease;"> <div class="card-header bg-transparent border-0 pt-4 px-4"> <h5 class="fw-bold mb-0" style="color: var(--brand-dark-green);">나의 성장 정원</h5> </div>
-                <div class="card-body p-4 text-center"> <div id="grade-animation-container" class="mb-3 d-flex align-items-center justify-content-center"
-                         style="height: 160px; background: #f8f9fa; border-radius: 1rem;"> <div class="spinner-border text-success spinner-border-sm" role="status"></div> </div>
-                    <h4 id="grade-label" class="fw-bold text-success mb-2"></h4> <div class="px-3">
-                        <p id="grade-message" class="text-muted small mb-0 p-2 bg-light rounded-3"></p> </div>
+                 style="background: white; display: none; transition: transform 0.3s ease;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold mb-0" style="color: var(--brand-dark-green);">나의 코딩 정원</h5>
+                </div>
+
+                <div class="card-body p-4 text-center">
+
+                    <div id="svg-plant-container" class="level-0 mb-3"
+                         style="height: 140px; display: flex; align-items: flex-end; justify-content: center;">
+                        <svg viewBox="0 0 100 120" style="width: 100px; height: 120px; overflow: visible;">
+                            <ellipse cx="50" cy="115" rx="7" ry="5" fill="#8d6e63"/>
+
+                            <path class="plant-path stem" d="M50,115 Q40,60 50,15" fill="none"
+                                  stroke="var(--brand-accent-green)" stroke-width="5" stroke-linecap="round"/>
+                            <path class="plant-path branch branch-1" d="M47,70 Q20,60 15,40" fill="none"
+                                  stroke="var(--brand-accent-green)" stroke-width="3" stroke-linecap="round"/>
+                            <path class="plant-path branch branch-2" d="M48,40 Q75,35 85,25" fill="none"
+                                  stroke="var(--brand-accent-green)" stroke-width="3" stroke-linecap="round"/>
+
+                            <circle class="plant-leaf leaf-group-1" cx="50" cy="10" r="6"
+                                    fill="var(--brand-accent-green)" style="transform-origin: 50px 10px;"/>
+                            <circle class="plant-leaf leaf-group-1" cx="88" cy="23" r="5"
+                                    fill="var(--brand-accent-green)" style="transform-origin: 88px 23px;"/>
+                            <circle class="plant-leaf leaf-group-2" cx="12" cy="38" r="5"
+                                    fill="var(--brand-accent-green)" style="transform-origin: 12px 38px;"/>
+                            <circle class="plant-leaf leaf-group-2" cx="30" cy="62" r="4"
+                                    fill="var(--brand-accent-green)" style="transform-origin: 30px 62px;"/>
+                            <circle class="plant-leaf leaf-group-2" cx="65" cy="45" r="4"
+                                    fill="var(--brand-accent-green)" style="transform-origin: 65px 45px;"/>
+                        </svg>
+                    </div>
+
+                    <h4 id="grade-label" class="fw-bold text-success mb-1"></h4>
+                    <p id="grade-message" class="text-muted small mb-2"></p>
+
+                    <div class="mb-2">
+                        <span id="next-grade-info"
+                              class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-medium"
+                              style="display: none; font-size: 0.75rem;">
+                        </span>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top text-start">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <span class="fw-bold text-dark" style="font-size: 0.85rem;">1년 간의 발자취 (365일)</span>
+                            <span class="text-muted" style="font-size: 0.7rem;">초록색 = 글 작성일</span>
+                        </div>
+
+                        <div class="heatmap-scroll-wrapper">
+                            <div id="heatmap-grid" class="d-grid gap-1"
+                                 style="grid-template-rows: repeat(7, 1fr); grid-auto-flow: column;">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-7 col-xl-8"> <div class="card border-0 shadow-lg rounded-4 h-100" style="background: rgba(255, 255, 255, 0.95);">
-                <div class="card-body p-4 p-md-5"> <div class="d-flex justify-content-between align-items-center mb-4"> <h4 class="fw-bold m-0" style="color: var(--brand-dark-green);">최근 소식</h4> <a href="/api/v1/post/all/page/" class="btn btn-outline-success btn-sm rounded-pill px-3">전체보기</a> </div>
+        <div class="col-lg-7 col-xl-8">
+            <div class="card border-0 shadow-lg rounded-4 h-100" style="background: rgba(255, 255, 255, 0.95);">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0" style="color: var(--brand-dark-green);">최근 소식</h4>
+                        <a href="/api/v1/post/page/" class="btn btn-outline-success btn-sm rounded-pill px-3">전체보기</a>
+                    </div>
 
-                    <div id="post-list-container"> <div class="text-center py-5"> <div class="spinner-border text-success" role="status"></div>
+                    <div id="post-list-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-success" role="status"></div>
                             <p class="text-muted mt-2">이야기를 불러오고 있습니다...</p>
                         </div>
                     </div>
@@ -32,82 +104,131 @@
 
 {% block extra_js %}
 <script>
-    /**
-     * 페이지 로드 완료 시 초기화 함수를 호출합니다.
-     */
     document.addEventListener("DOMContentLoaded", function () {
-        fetchRecentPosts(); // 최근 게시글 로드 함수 호출
-        fetchMyGrade();      // 내 성장 등급 로드 함수 호출
+        fetchRecentPosts();
+        fetchMyGardenStats();
     });
 
-    /**
-     * 등급 데이터를 관리하는 상수 배열입니다. (기존 데이터 유지)
-     */
     const GRADE_SETTINGS = [
-        { min: 30, label: '울창한 숲', msg: '당신의 정원이 숲이 되었네요!', img: 'https://cdn.pixabay.com/animation/2023/04/19/18/10/18-10-14-118_512.gif' },
-        { min: 20, label: '커다란 나무', msg: '정말 듬직한 나무가 자랐어요.', img: 'https://cdn.pixabay.com/animation/2022/10/26/12/32/12-32-03-343_512.gif' },
-        { min: 10, label: '어린 묘목', msg: '이제 제법 나무다운 모습이네요!', img: 'https://cdn.pixabay.com/animation/2023/10/25/11/49/11-49-14-124_512.gif' },
-        { min: 5,  label: '파릇한 새싹', msg: '와! 싹이 틔었어요. 더 키워보세요!', img: 'https://cdn.pixabay.com/animation/2023/03/26/01/15/01-15-42-612_512.gif' },
-        { min: 0,  label: '희망찬 씨앗', msg: '첫 글을 써서 성장을 시작하세요.', img: 'https://cdn.pixabay.com/animation/2023/05/02/09/11/09-11-06-654_512.gif' },
+        {min: 50, label: '울창한 숲', msg: '완벽하게 피어난 아름다운 정원입니다.', level: 6},
+        {min: 40, label: '풍성한 나무', msg: '잎사귀가 아주 풍성하게 열렸어요!', level: 5},
+        {min: 30, label: '커다란 나무', msg: '가지가 무성한 듬직한 나무가 자랐어요.', level: 4},
+        {min: 20, label: '튼튼한 묘목', msg: '새로운 가지가 힘차게 뻗어나갑니다.', level: 3},
+        {min: 10, label: '어린 묘목', msg: '어엿한 줄기가 형태를 잡았어요.', level: 2},
+        {min: 5, label: '파릇한 새싹', msg: '흙을 뚫고 예쁜 줄기가 올라왔어요!', level: 1},
+        {min: 0, label: '희망찬 씨앗', msg: '글을 작성해서 씨앗을 틔워주세요.', level: 0},
     ];
 
-    /**
-     * 사용자의 포스트 개수에 따라 등급 카드를 업데이트합니다.
-     */
-    async function fetchMyGrade() {
-        const token = localStorage.getItem('access_token'); // 로컬 스토리지에서 토큰 획득
-        if (!token) return; // 미로그인 시 중단
+    async function fetchMyGardenStats() {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
 
-        const gradeCard = document.getElementById('grade-card'); // 등급 카드 선택
-        const animContainer = document.getElementById('grade-animation-container'); // 이미지 영역 선택
-        const label = document.getElementById('grade-label'); // 등급 이름 영역 선택
-        const message = document.getElementById('grade-message'); // 메시지 영역 선택
+        const gradeCard = document.getElementById('grade-card');
+        const svgContainer = document.getElementById('svg-plant-container');
+        const label = document.getElementById('grade-label');
+        const message = document.getElementById('grade-message');
+        const nextInfo = document.getElementById('next-grade-info');
 
         try {
-            const response = await fetch('/api/v1/post/my/', { // 내 포스트 API 호출
-                headers: {'Authorization': 'Bearer ' + token}
-            });
-            const data = await response.json(); // 결과 파싱
+            let allPosts = [];
+            let totalCount = 0;
+            let nextUrl = '/api/v1/post/my/';
 
-            if (response.ok) {
-                const posts = data.results || data; // 포스트 데이터 추출
-                const count = posts.length; // 개수 산출
+            while (nextUrl) {
+                const response = await fetch(nextUrl, {
+                    headers: {'Authorization': 'Bearer ' + token}
+                });
+                const data = await response.json();
 
-                const currentGrade = GRADE_SETTINGS.find(g => count >= g.min); // 현재 등급 찾기
-
-                gradeCard.style.display = 'block'; // 카드 보이기
-                animContainer.innerHTML = `<img src="${currentGrade.img}" style="width: 140px; height: 140px; object-fit: contain;">`; // 이미지 교체
-                label.innerText = currentGrade.label; // 라벨 교체
-                message.innerText = `${currentGrade.msg} (현재 ${count}개의 열매)`; // 메시지 구성
+                if (response.ok) {
+                    const posts = data.results || data;
+                    allPosts = allPosts.concat(posts);
+                    if (totalCount === 0) totalCount = data.count !== undefined ? data.count : posts.length;
+                    nextUrl = data.next || null;
+                } else {
+                    break;
+                }
             }
+
+            const currentGrade = GRADE_SETTINGS.find(g => totalCount >= g.min);
+            const nextGrade = [...GRADE_SETTINGS].reverse().find(g => g.min > totalCount);
+
+            label.innerText = currentGrade.label;
+            message.innerText = currentGrade.msg;
+
+            if (nextGrade) {
+                const remain = nextGrade.min - totalCount;
+                nextInfo.innerText = `🚀 다음 '${nextGrade.label}'까지 ${remain}개 남음!`;
+            } else {
+                nextInfo.innerText = `🎉 최고 레벨 달성! 당신은 블로그 마스터!`;
+            }
+            nextInfo.style.display = 'inline-block';
+
+            svgContainer.className = `mb-3 level-${currentGrade.level}`;
+            gradeCard.style.display = 'block';
+
+            // 365일 잔디 심기 함수 호출
+            renderHeatmap(allPosts);
+
         } catch (error) {
-            console.error('Grade Load Error:', error); // 에러 로그
+            console.error('Garden Stats Load Error:', error);
         }
     }
 
-    /**
-     * 최근 게시글을 가져와서 디자인된 리스트로 출력합니다.
-     */
+    function renderHeatmap(posts) {
+        const heatmapGrid = document.getElementById('heatmap-grid');
+        const scrollWrapper = document.querySelector('.heatmap-scroll-wrapper');
+        heatmapGrid.innerHTML = '';
+
+        // 작성한 글들의 날짜를 문자열로 모아둡니다.
+        const postDates = posts.map(p => {
+            const d = new Date(p.created_at);
+            return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+        });
+
+        const totalDays = 365; // 🔥 28일에서 365일(1년)로 변경!
+        const today = new Date();
+
+        for (let i = totalDays - 1; i >= 0; i--) {
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() - i);
+            const dateString = `${targetDate.getFullYear()}-${targetDate.getMonth()+1}-${targetDate.getDate()}`;
+
+            const isPosted = postDates.includes(dateString);
+            const box = document.createElement('div');
+            box.className = 'heatmap-box ' + (isPosted ? 'active' : '');
+
+            // 🔥 마우스 호버 시 나오는 문구 커스텀 (브라우저 기본 툴팁 활용)
+            const displayDate = targetDate.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            box.title = isPosted ? `${displayDate} : 글을 작성했습니다 🌱` : `${displayDate} : 기록 없음`;
+
+            heatmapGrid.appendChild(box);
+        }
+
+        // 렌더링이 끝나면 가장 최근 날짜(가장 오른쪽)로 자동 스크롤을 이동시킵니다.
+        setTimeout(() => {
+            scrollWrapper.scrollLeft = scrollWrapper.scrollWidth;
+        }, 100);
+    }
+
     async function fetchRecentPosts() {
-        const container = document.getElementById('post-list-container'); // 목록 컨테이너 선택
-
+        const container = document.getElementById('post-list-container');
         try {
-            const response = await fetch('/api/v1/post/'); // 게시글 API 호출
-            const data = await response.json(); // 결과 파싱
-
+            const response = await fetch('/api/v1/post/');
+            const data = await response.json();
             if (response.ok) {
-                const posts = data.results || data; // 데이터 추출
-
-                if (posts.length === 0) { // 글이 없는 경우
+                const posts = data.results || data;
+                if (posts.length === 0) {
                     container.innerHTML = `<div class="text-center py-5 text-muted">아직 작성된 이야기가 없습니다.</div>`;
                     return;
                 }
-
-                container.innerHTML = ''; // 기존 내용 삭제
-
-                posts.forEach(post => { // 게시글 순회 및 HTML 생성
-                    const date = new Date(post.created_at).toLocaleDateString(); // 날짜 변환
-                    // 더 세련된 형태의 리스트 아이템 디자인으로 변경
+                container.innerHTML = '';
+                posts.forEach(post => {
+                    const date = new Date(post.created_at).toLocaleDateString();
                     const postHtml = `
                         <div class="mb-3">
                             <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none card border-0 bg-light-subtle hover-shadow transition-all p-3 rounded-3 d-block border-start border-4 border-success">
@@ -122,35 +243,131 @@
                             </a>
                         </div>
                     `;
-                    container.insertAdjacentHTML('beforeend', postHtml); // HTML 삽입
+                    container.insertAdjacentHTML('beforeend', postHtml);
                 });
             } else {
                 container.innerHTML = '<p class="text-danger text-center">목록을 불러오지 못했습니다.</p>';
             }
         } catch (error) {
-            console.error('Error fetching posts:', error); // 에러 로그
             container.innerHTML = '<p class="text-danger text-center">서버와의 통신 오류</p>';
         }
     }
 </script>
 
 <style>
-    /* 🎨 디자인의 디테일을 살리는 커스텀 스타일 */
+    /* 1. SVG 식물 애니메이션 CSS 유지 */
+    .plant-path {
+        stroke-dasharray: 150;
+        stroke-dashoffset: 150;
+        transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .plant-leaf {
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s;
+    }
+
+    .level-1 .stem {
+        stroke-dashoffset: 90;
+    }
+
+    .level-2 .stem {
+        stroke-dashoffset: 0;
+    }
+
+    .level-3 .stem, .level-3 .branch-1 {
+        stroke-dashoffset: 0;
+    }
+
+    .level-4 .stem, .level-4 .branch-1, .level-4 .branch-2 {
+        stroke-dashoffset: 0;
+    }
+
+    .level-5 .stem, .level-5 .branch-1, .level-5 .branch-2 {
+        stroke-dashoffset: 0;
+    }
+
+    .level-5 .leaf-group-1 {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .level-6 .stem, .level-6 .branch-1, .level-6 .branch-2 {
+        stroke-dashoffset: 0;
+    }
+
+    .level-6 .leaf-group-1, .level-6 .leaf-group-2 {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+
+    /* ✨ 2. 365일 잔디밭(Heatmap) 전용 스타일 ✨ */
+    .heatmap-scroll-wrapper {
+        overflow-x: auto; /* 내용이 넘치면 가로 스크롤 생성 */
+        overflow-y: hidden;
+        padding-bottom: 8px; /* 스크롤바와 잔디 사이의 여백 */
+    }
+
+    /* 맥OS/윈도우 가리지 않고 예쁜 커스텀 스크롤바 */
+    .heatmap-scroll-wrapper::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .heatmap-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 10px;
+    }
+
+    .heatmap-scroll-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .heatmap-box {
+        width: 12px; /* 깃허브처럼 작은 크기로 명시 */
+        height: 12px;
+        background-color: #ebedf0;
+        border-radius: 2px; /* 둥근 모서리 대신 각진 모서리로 깃허브 감성 추가 */
+        transition: background-color 0.4s ease, transform 0.2s ease;
+        cursor: pointer;
+    }
+
+    .heatmap-box:hover {
+        transform: scale(1.4); /* 마우스를 올리면 확 커지면서 강조됨 */
+        z-index: 10; /* 다른 칸들에 안 가려지게 맨 위로 */
+        position: relative;
+    }
+
+    .heatmap-box.active {
+        background-color: var(--brand-accent-green);
+        box-shadow: 0 0 4px rgba(30, 135, 84, 0.5); /* 초록색일 때 은은하게 빛나는 효과 */
+    }
+
+    /* 리스트 스타일 */
     .hover-shadow:hover {
-        transform: translateX(5px); /* 호버 시 오른쪽으로 살짝 이동 */
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important; /* 부드러운 그림자 */
-        background: #fff !important; /* 배경색 반전 */
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+        background: #fff !important;
     }
+
     .transition-all {
-        transition: all 0.3s ease; /* 모든 변화에 애니메이션 적용 */
+        transition: all 0.3s ease;
     }
+
     #post-list-container {
-        max-height: 600px; /* 너무 길어지지 않게 최대 높이 설정 */
-        overflow-y: auto; /* 내용이 많으면 스크롤 */
+        max-height: 600px;
+        overflow-y: auto;
         padding-right: 5px;
     }
-    /* 스크롤바 디자인 */
-    #post-list-container::-webkit-scrollbar { width: 5px; }
-    #post-list-container::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+
+    #post-list-container::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    #post-list-container::-webkit-scrollbar-thumb {
+        background: #e0e0e0;
+        border-radius: 10px;
+    }
 </style>
 {% endblock %}
