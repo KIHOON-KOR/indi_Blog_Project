@@ -83,9 +83,19 @@
         <div class="col-lg-7 col-xl-8">
             <div class="card border-0 shadow-lg rounded-4 h-100" style="background: rgba(255, 255, 255, 0.95);">
                 <div class="card-body p-4 p-md-5">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold m-0" style="color: var(--brand-dark-green);">최근 소식</h4>
-                        <a href="/api/v1/post/page/" class="btn btn-outline-success btn-sm rounded-pill px-3">전체보기</a>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+
+                        <h4 class="fw-bold m-0 text-nowrap" style="color: var(--brand-dark-green);">나의 최근 이야기</h4>
+
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="/api/v1/post/all/page/"
+                               class="btn btn-success btn-sm rounded-pill px-3 text-nowrap">전체 피드 구경하기</a>
+
+                            <a href="/api/v1/post/my/page/" id="my-blog-link"
+                               class="btn btn-outline-success btn-sm rounded-pill px-3 text-nowrap"
+                               style="display: none;">내 블로그 가기</a>
+                        </div>
                     </div>
 
                     <div id="post-list-container">
@@ -104,8 +114,11 @@
 
 {% block extra_js %}
 <script>
+    // HTML 문서가 전부 로드되면 내부의 함수들을 실행합니다.
     document.addEventListener("DOMContentLoaded", function () {
-        fetchRecentPosts();
+        // 내 최근 글을 불러오는 새로운 함수를 호출합니다.
+        fetchMyRecentPosts();
+        // 잔디밭 렌더링 함수를 호출합니다.
         fetchMyGardenStats();
     });
 
@@ -167,7 +180,6 @@
             svgContainer.className = `mb-3 level-${currentGrade.level}`;
             gradeCard.style.display = 'block';
 
-            // 365일 잔디 심기 함수 호출
             renderHeatmap(allPosts);
 
         } catch (error) {
@@ -180,13 +192,12 @@
         const scrollWrapper = document.querySelector('.heatmap-scroll-wrapper');
         heatmapGrid.innerHTML = '';
 
-        // 작성한 글들의 날짜를 문자열로 모아둡니다.
         const postDates = posts.map(p => {
             const d = new Date(p.created_at);
             return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
         });
 
-        const totalDays = 365; // 🔥 28일에서 365일(1년)로 변경!
+        const totalDays = 365;
         const today = new Date();
 
         for (let i = totalDays - 1; i >= 0; i--) {
@@ -198,7 +209,6 @@
             const box = document.createElement('div');
             box.className = 'heatmap-box ' + (isPosted ? 'active' : '');
 
-            // 🔥 마우스 호버 시 나오는 문구 커스텀 (브라우저 기본 툴팁 활용)
             const displayDate = targetDate.toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',
@@ -209,26 +219,71 @@
             heatmapGrid.appendChild(box);
         }
 
-        // 렌더링이 끝나면 가장 최근 날짜(가장 오른쪽)로 자동 스크롤을 이동시킵니다.
         setTimeout(() => {
             scrollWrapper.scrollLeft = scrollWrapper.scrollWidth;
         }, 100);
     }
 
-    async function fetchRecentPosts() {
+    // ✨ 수정포인트 2: 전체 목록 조회가 아닌 '내 최근 글 조회' 로직으로 완전히 변경했습니다.
+    async function fetchMyRecentPosts() {
+        // 리스트를 그려줄 부모 HTML 컨테이너 요소를 찾습니다.
         const container = document.getElementById('post-list-container');
+        // 로그인 인증 수단인 JWT 토큰을 로컬스토리지에서 꺼내옵니다.
+        const token = localStorage.getItem('access_token');
+        // '내 블로그 가기' 버튼 요소를 가져옵니다.
+        const myBlogLink = document.getElementById('my-blog-link');
+
+        // 만약 토큰이 없다면 (즉, 비로그인 상태라면)
+        if (!token) {
+            // 빈 리스트 대신 사용자에게 로그인을 유도하는 예쁜 안내문구를 삽입합니다.
+            container.innerHTML = `<div class="text-center py-5 text-muted">
+                <p>로그인하고 나만의 코딩 정원을 가꿔보세요 🌱</p>
+                <a href="/api/v1/user/login-page/" class="btn btn-outline-success btn-sm mt-2">로그인 하러가기</a>
+            </div>`;
+            // 서버 통신 없이 바로 함수를 종료합니다. (최적화)
+            return;
+        }
+
+        // 로그인된 상태라면, 숨겨두었던 '내 블로그 가기' 버튼을 화면에 보여줍니다.
+        myBlogLink.style.display = 'inline-block';
+
         try {
-            const response = await fetch('/api/v1/post/');
+            // 내 포스트 목록을 가져오는 API로 GET 요청을 보냅니다.
+            const response = await fetch('/api/v1/post/my/', {
+                // 내 글을 조회해야 하므로 헤더에 인증 토큰을 잊지 않고 담아줍니다.
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            // 서버에서 돌아온 응답 데이터를 JSON 객체로 변환합니다.
             const data = await response.json();
+
+            // HTTP 응답 코드가 200번대(정상)일 경우
             if (response.ok) {
+                // 페이지네이션 구조를 고려하여 실제 포스트 배열 데이터를 추출합니다.
                 const posts = data.results || data;
+
+                // 내가 작성한 글이 하나도 없을 경우의 예외 처리입니다.
                 if (posts.length === 0) {
-                    container.innerHTML = `<div class="text-center py-5 text-muted">아직 작성된 이야기가 없습니다.</div>`;
-                    return;
+                    // 첫 글 작성을 유도하는 메시지를 보여줍니다.
+                    container.innerHTML = `<div class="text-center py-5 text-muted">아직 작성된 이야기가 없습니다.<br>첫 글을 작성해보세요!</div>`;
+                    return; // 함수 종료
                 }
+
+                // 기존에 있던 로딩 스피너 HTML을 비워서 초기화합니다.
                 container.innerHTML = '';
-                posts.forEach(post => {
+
+                // 💡 최적화 포인트: 대시보드에서는 목록 전체가 필요하지 않으므로 slice(0,5)를 사용해 최신 5개 글만 순회합니다.
+                posts.slice(0, 5).forEach(post => {
+                    // 작성일을 사용자가 보기 편한 형태(yyyy. mm. dd.)의 문자열로 바꿉니다.
                     const date = new Date(post.created_at).toLocaleDateString();
+
+                    // 해당 게시글이 '전체 공개' 설정인지 확인하여 boolean 값으로 저장합니다.
+                    const isPublic = post.visibility === 'PUBLIC';
+                    // 공개 여부에 따라 UI 뱃지에 표시할 텍스트를 할당합니다.
+                    const badgeText = isPublic ? '공개됨' : '비공개';
+                    // 공개 여부에 따라 UI 뱃지에 입힐 부트스트랩 색상 클래스(초록 or 회색)를 할당합니다.
+                    const badgeClass = isPublic ? 'bg-success' : 'bg-secondary';
+
+                    // 각 글에 대한 HTML 카드 조각을 생성합니다. (백틱 기호 사용)
                     const postHtml = `
                         <div class="mb-3">
                             <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none card border-0 bg-light-subtle hover-shadow transition-all p-3 rounded-3 d-block border-start border-4 border-success">
@@ -236,19 +291,27 @@
                                     <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 80%;">${post.title}</h6>
                                     <span class="text-muted" style="font-size: 0.75rem;">${date}</span>
                                 </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-success rounded-circle me-2" style="width: 8px; height: 8px;"></div>
-                                    <small class="text-success fw-medium">${post.author_nickname || '익명 사용자'}</small>
+                                <div class="d-flex align-items-center justify-content-between mt-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                                        <small class="text-success fw-medium">${post.author_nickname || '나의 기록'}</small>
+                                    </div>
+                                    <span class="badge ${badgeClass} bg-opacity-10 text-${isPublic ? 'success' : 'secondary'} rounded-pill px-2" style="font-size: 0.7rem;">
+                                        ${isPublic ? '' : '🔒 '}${badgeText}
+                                    </span>
                                 </div>
                             </a>
                         </div>
                     `;
+                    // 만들어진 HTML 카드 조각을 컨테이너 안에 차례대로 추가합니다.
                     container.insertAdjacentHTML('beforeend', postHtml);
                 });
             } else {
+                // 토큰 만료 등 서버에서 에러 응답을 보냈을 때의 처리입니다.
                 container.innerHTML = '<p class="text-danger text-center">목록을 불러오지 못했습니다.</p>';
             }
         } catch (error) {
+            // 인터넷 연결 끊김 등 서버와 아예 통신하지 못했을 때의 에러 처리입니다.
             container.innerHTML = '<p class="text-danger text-center">서버와의 통신 오류</p>';
         }
     }
@@ -302,15 +365,13 @@
         transform: scale(1);
     }
 
-
     /* ✨ 2. 365일 잔디밭(Heatmap) 전용 스타일 ✨ */
     .heatmap-scroll-wrapper {
-        overflow-x: auto; /* 내용이 넘치면 가로 스크롤 생성 */
+        overflow-x: auto;
         overflow-y: hidden;
-        padding-bottom: 8px; /* 스크롤바와 잔디 사이의 여백 */
+        padding-bottom: 8px;
     }
 
-    /* 맥OS/윈도우 가리지 않고 예쁜 커스텀 스크롤바 */
     .heatmap-scroll-wrapper::-webkit-scrollbar {
         height: 6px;
     }
@@ -325,23 +386,23 @@
     }
 
     .heatmap-box {
-        width: 12px; /* 깃허브처럼 작은 크기로 명시 */
+        width: 12px;
         height: 12px;
         background-color: #ebedf0;
-        border-radius: 2px; /* 둥근 모서리 대신 각진 모서리로 깃허브 감성 추가 */
+        border-radius: 2px;
         transition: background-color 0.4s ease, transform 0.2s ease;
         cursor: pointer;
     }
 
     .heatmap-box:hover {
-        transform: scale(1.4); /* 마우스를 올리면 확 커지면서 강조됨 */
-        z-index: 10; /* 다른 칸들에 안 가려지게 맨 위로 */
+        transform: scale(1.4);
+        z-index: 10;
         position: relative;
     }
 
     .heatmap-box.active {
         background-color: var(--brand-accent-green);
-        box-shadow: 0 0 4px rgba(30, 135, 84, 0.5); /* 초록색일 때 은은하게 빛나는 효과 */
+        box-shadow: 0 0 4px rgba(30, 135, 84, 0.5);
     }
 
     /* 리스트 스타일 */
