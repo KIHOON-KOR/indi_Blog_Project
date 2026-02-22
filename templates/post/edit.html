@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}글 수정 - My Blog{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center w-100">
     <div class="col-lg-8">
@@ -19,7 +23,7 @@
 
                     <div class="mb-4">
                         <label class="form-label fw-bold text-secondary">본문 내용</label>
-                        <textarea class="form-control border-2" id="content" rows="12" required></textarea>
+                        <div id="editor"></div>
                     </div>
 
                     <div class="row">
@@ -33,7 +37,8 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-5 border-top pt-4">
-                        <button type="button" onclick="history.back()" class="btn btn-light rounded-pill px-4">취소</button>
+                        <button type="button" onclick="history.back()" class="btn btn-light rounded-pill px-4">취소
+                        </button>
                         <button type="submit" class="btn btn-primary rounded-pill px-5 shadow">수정 완료</button>
                     </div>
                 </form>
@@ -44,29 +49,50 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
 <script>
-    // [수정] 동일한 안전한 ID 추출 로직 사용
     const segments = window.location.pathname.split('/');
     const currentPostId = segments[segments.indexOf('post') + 1];
     const token = localStorage.getItem('access_token');
 
+    // ✨ [추가] 전역 변수로 에디터 선언
+    let editor;
+
     document.addEventListener("DOMContentLoaded", async () => {
+        // ✨ [추가] 1. 화면이 로드되면 먼저 에디터 UI부터 화면에 그립니다.
+        editor = new toastui.Editor({
+            el: document.querySelector('#editor'),
+            height: '500px',
+            initialEditType: 'markdown',
+            previewStyle: 'vertical'
+        });
+
         try {
+            // 2. 서버에서 수정할 기존 글의 데이터를 가져옵니다.
             const res = await fetch(`/api/v1/post/${currentPostId}/`);
             const data = await res.json();
+
             if (res.ok) {
+                // 3. 제목과 공개설정을 채웁니다.
                 document.getElementById('title').value = data.title;
-                document.getElementById('content').value = data.content;
                 document.getElementById('visibility').value = data.visibility;
+
+                // ✨ [수정] 4. 가져온 마크다운 본문을 에디터 안에 채워 넣습니다! (setMarkdown 사용)
+                editor.setMarkdown(data.content);
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        }
     });
 
     document.getElementById('editForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // ✨ [수정] 제출 시 textarea가 아닌 에디터 객체에서 내용을 가져옵니다. (getMarkdown 사용)
         const payload = {
             title: document.getElementById('title').value,
-            content: document.getElementById('content').value,
+            content: editor.getMarkdown(),
             visibility: document.getElementById('visibility').value
         };
 
