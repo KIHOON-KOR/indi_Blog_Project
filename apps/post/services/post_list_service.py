@@ -3,6 +3,7 @@ from apps.post.models import Post  # Post 모델을 사용하기 위해 임포�
 from apps.user.models import User  # User 모델을 사용하기 위해 임포트합니다.
 from django.db.models import Count
 
+
 def get_global_posts() -> QuerySet[Post]:
     """
     모든 사용자의 공개된 포스트 목록을 가져옵니다. (전체 피드용)
@@ -14,7 +15,7 @@ def get_global_posts() -> QuerySet[Post]:
             deleted_at__isnull=True,  # 삭제되지 않은 글만 필터링합니다.
         )
         .select_related("user")
-        .annotate(likes_count=Count('likes', distinct=True))
+        .annotate(likes_count=Count("likes", distinct=True))
         .order_by("-created_at")
     )
 
@@ -54,6 +55,6 @@ def get_post_detail(post_id: int) -> Post:
     return (
         Post.objects.select_related("user")  # type: ignore
         .filter(id=post_id, deleted_at__isnull=True)
-        .annotate(likes_count=Count('likes', distinct=True))
+        .annotate(likes_count=Count("likes", distinct=True))
         .first()
     )

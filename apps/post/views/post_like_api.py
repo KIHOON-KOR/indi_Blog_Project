@@ -12,6 +12,7 @@ from apps.post.services.post_like_service import add_post_like, remove_post_like
 
 class PostLikeAPIView(APIView):
     """게시글 좋아요 등록 및 삭제를 담당하는 View입니다."""
+
     permission_classes = [IsAuthenticated]
 
     @extend_schema(tags=["포스트 좋아요"], summary="게시글 좋아요 등록")
@@ -24,8 +25,7 @@ class PostLikeAPIView(APIView):
         add_post_like(post_id=post_id, user=user)
 
         return Response(
-            {"message": "좋아요가 등록되었습니다."},
-            status=status.HTTP_201_CREATED
+            {"message": "좋아요가 등록되었습니다."}, status=status.HTTP_201_CREATED
         )
 
     @extend_schema(tags=["포스트 좋아요"], summary="게시글 좋아요 취소(삭제)")

@@ -7,6 +7,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")  # type: ignore
     likes_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Post
         fields = [
