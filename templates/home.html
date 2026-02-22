@@ -289,7 +289,10 @@
                             <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none card border-0 bg-light-subtle hover-shadow transition-all p-3 rounded-3 d-block border-start border-4 border-success">
                                 <div class="d-flex justify-content-between align-items-start mb-1">
                                     <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 80%;">${post.title}</h6>
-                                    <span class="text-muted" style="font-size: 0.75rem;">${date}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="text-muted" style="font-size: 0.75rem;">${date}</span>
+                                        <span class="text-danger" style="font-size: 0.75rem;"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
+                                    </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mt-2">
                                     <div class="d-flex align-items-center">
