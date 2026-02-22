@@ -79,8 +79,10 @@
                                     <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
                                         <h5 class="mb-1 fw-bold">${post.title}</h5>
                                     </a>
-                                    <small class="text-muted">
-                                        by <span class="text-success fw-bold">${post.author_nickname || '익명'}</span> | ${date}
+                                    <small class="text-muted d-flex align-items-center gap-2">
+                                        <span>by <span class="text-success fw-bold">${post.author_nickname || '익명'}</span></span>
+                                        <span>| ${date}</span>
+                                        <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
                                     </small>
                                 </div>
                                 ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">` : ''}
