@@ -26,7 +26,6 @@ urlpatterns = [
     ),
     # [좋아요 등록/취소]
     path("<int:post_id>/likes/", PostLikeAPIView.as_view(), name="post_like"),
-
     # [화면(UI)]
     path("write/", post_write_page, name="post_write_page"),
     path("my/page/", my_post_list_page, name="my_post_list_page"),

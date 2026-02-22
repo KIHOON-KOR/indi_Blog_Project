@@ -7,6 +7,7 @@ class PostListSerializer(serializers.ModelSerializer):
 
     author_nickname = serializers.CharField(source="user.nickname", read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Post
         fields = [
