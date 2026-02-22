@@ -31,6 +31,7 @@ def get_my_published_posts(*, user: User) -> QuerySet[Post]:
             deleted_at__isnull=True,  # 삭제되지 않은 글만 필터링합니다.
         )
         .select_related("user")
+        .annotate(likes_count=Count('likes', distinct=True))
         .order_by("-created_at")
     )  # 성능을 위해 유저 정보를 미리 가져옵니다.
 
