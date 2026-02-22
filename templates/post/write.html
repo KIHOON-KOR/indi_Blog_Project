@@ -1,16 +1,52 @@
-{% extends 'base.html' %} {% block title %}글쓰기 - My Blog{% endblock %} {% block content %}
-<div class="row justify-content-center w-100"> <div class="col-lg-8"> <div class="text-center text-white mb-4"> <h2 class="fw-bold">New Story</h2> <p class="opacity-75">당신의 지식과 경험을 공유해주세요.</p> </div>
+{% extends 'base.html' %}
+{% block title %}글쓰기 - My Blog{% endblock %}
 
-        <div class="card auth-card shadow-lg border-0"> <div class="card-body p-5"> <form id="postForm"> <div class="mb-4"> <label for="title" class="form-label fw-bold text-secondary">제목</label> <input type="text" class="form-control form-control-lg" id="title" placeholder="매력적인 제목을 입력하세요" required> </div>
+{% block extra_css %}
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>
+{% endblock %}
 
-                    <div class="mb-4"> <label for="content" class="form-label fw-bold text-secondary">내용</label> <textarea class="form-control" id="content" rows="12" placeholder="자유롭게 이야기를 풀어보세요..." required></textarea> </div>
+{% block content %}
+<div class="row justify-content-center w-100">
+    <div class="col-lg-8">
+        <div class="text-center text-white mb-4">
+            <h2 class="fw-bold">New Story</h2>
+            <p class="opacity-75">당신의 지식과 경험을 공유해주세요.</p>
+        </div>
 
-                    <div class="mb-4"> <label for="visibility" class="form-label fw-bold text-secondary">공개 설정</label> <select class="form-select" id="visibility"> <option value="PUBLIC" selected>전체 공개</option> <option value="PRIVATE">비공개 (나만 보기)</option> </select>
+        <div class="card auth-card shadow-lg border-0">
+            <div class="card-body p-5">
+                <form id="postForm">
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-bold text-secondary">제목</label>
+                        <input type="text" class="form-control form-control-lg" id="title" placeholder="매력적인 제목을 입력하세요"
+                               required>
                     </div>
 
-                    <div class="mb-4"> <label for="tags" class="form-label fw-bold text-secondary">태그</label> <input type="text" class="form-control" id="tags" placeholder="예: Python, Django, 일상 (쉼표로 구분)"> </div>
+                    <div class="mb-4">
+                        <label for="content" class="form-label fw-bold text-secondary">내용</label>
+                        <div id="editor"></div>
+                    </div>
 
-                    <div class="d-flex justify-content-end gap-2 mt-5"> <a href="/" class="btn btn-light rounded-pill px-4">취소</a> <button type="button" id="tempSaveBtn" class="btn btn-outline-secondary rounded-pill px-4">임시저장</button> <button type="submit" class="btn btn-primary rounded-pill px-5">발행하기</button> </div>
+                    <div class="mb-4">
+                        <label for="visibility" class="form-label fw-bold text-secondary">공개 설정</label>
+                        <select class="form-select" id="visibility">
+                            <option value="PUBLIC" selected>전체 공개</option>
+                            <option value="PRIVATE">비공개 (나만 보기)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="tags" class="form-label fw-bold text-secondary">태그</label>
+                        <input type="text" class="form-control" id="tags" placeholder="예: Python, Django, 일상 (쉼표로 구분)">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-5">
+                        <a href="/" class="btn btn-light rounded-pill px-4">취소</a>
+                        <button type="button" id="tempSaveBtn" class="btn btn-outline-secondary rounded-pill px-4">
+                            임시저장
+                        </button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5">발행하기</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -19,67 +55,84 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() { // 문서 로드가 완료되면 실행합니다.
-        const token = localStorage.getItem('access_token'); // 로컬 스토리지에서 토큰을 확인합니다.
-        if (!token) { // 토큰이 없으면 로그인이 안 된 상태입니다.
-            alert("로그인이 필요한 서비스입니다."); // 경고창을 띄웁니다.
-            window.location.href = "/api/v1/user/login-page/"; // 로그인 페이지로 리다이렉트합니다.
+    // ✨ [추가] 에디터 인스턴스를 담아둘 전역 변수입니다.
+    let editor;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            alert("로그인이 필요한 서비스입니다.");
+            window.location.href = "/api/v1/user/login-page/";
         }
+
+        // ✨ [추가] 화면이 로드되면 지정한 div(#editor)에 에디터를 그립니다.
+        editor = new toastui.Editor({
+            el: document.querySelector('#editor'), // 에디터를 렌더링할 DOM 요소
+            height: '500px', // 에디터의 높이 지정
+            initialEditType: 'markdown', // 기본 작성 모드를 마크다운으로 설정
+            previewStyle: 'vertical', // 화면을 좌우로 나누어 미리보기를 제공
+            placeholder: '자유롭게 이야기를 풀어보세요...'
+        });
     });
 
-    async function savePost(isTemp = false) { // 게시글 저장 로직을 처리하는 비동기 함수입니다.
-        const title = document.getElementById('title').value; // 입력된 제목을 가져옵니다.
-        const content = document.getElementById('content').value; // 입력된 본문을 가져옵니다.
-        const tagsInput = document.getElementById('tags').value; // 입력된 태그 문자열을 가져옵니다.
-        const visibility = document.getElementById('visibility').value; // [추가] 선택된 공개 범위 값을 가져옵니다.
+    async function savePost(isTemp = false) {
+        const title = document.getElementById('title').value;
 
-        if (!title || !content) { // 필수 값이 비어있는지 체크합니다.
-            alert("제목과 내용을 입력해주세요."); // 알림을 띄웁니다.
-            return; // 함수를 종료합니다.
+        // ✨ [수정] textarea의 value 대신, 에디터에서 작성한 마크다운 문서를 통째로 가져옵니다!
+        const content = editor.getMarkdown();
+
+        const tagsInput = document.getElementById('tags').value;
+        const visibility = document.getElementById('visibility').value;
+
+        if (!title || !content) {
+            alert("제목과 내용을 입력해주세요.");
+            return;
         }
 
-        const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== ""); // 문자열을 배열로 정제합니다.
+        const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
 
         try {
-            const token = localStorage.getItem('access_token'); // 인증을 위해 토큰을 가져옵니다.
+            const token = localStorage.getItem('access_token');
 
-            const response = await fetch('/api/v1/post/', { // 포스트 생성 API를 호출합니다.
-                method: 'POST', // 데이터 생성을 위해 POST 메서드를 사용합니다.
+            const response = await fetch('/api/v1/post/', {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json', // JSON 형식으로 보냄을 명시합니다.
-                    'Authorization': 'Bearer ' + token // 토큰을 헤더에 실어 보냅니다.
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({ // 데이터를 JSON 문자열로 변환하여 본문에 넣습니다.
-                    title: title, // 제목 데이터입니다.
-                    content: content, // 본문 데이터입니다.
-                    tags: tags, // 태그 배열입니다.
-                    is_temp: isTemp, // 임시저장 여부입니다.
-                    visibility: visibility // [추가] 서버 모델에 정의된 visibility 필드로 전송합니다.
+                body: JSON.stringify({
+                    title: title,
+                    content: content, // 가져온 마크다운 데이터 전송
+                    tags: tags,
+                    is_temp: isTemp,
+                    visibility: visibility
                 })
             });
 
-            const data = await response.json(); // 서버의 응답을 파싱합니다.
+            const data = await response.json();
 
-            if (response.ok) { // 성공적으로 저장되었을 경우입니다.
-                alert(isTemp ? "임시 저장되었습니다." : "게시글이 성공적으로 발행되었습니다!"); // 상태별 메시지를 띄웁니다.
-                window.location.href = isTemp ? "/api/v1/post/my/temp/page/" : "/"; // 이동할 페이지를 결정합니다.
-            } else { // 서버에서 에러를 반환했을 경우입니다.
-                alert("처리 실패: " + (data.detail || JSON.stringify(data))); // 에러 내용을 표시합니다.
+            if (response.ok) {
+                alert(isTemp ? "임시 저장되었습니다." : "게시글이 성공적으로 발행되었습니다!");
+                window.location.href = isTemp ? "/api/v1/post/my/temp/page/" : "/";
+            } else {
+                alert("처리 실패: " + (data.detail || JSON.stringify(data)));
             }
-        } catch (error) { // 네트워크 오류 등 예외 발생 시 처리입니다.
-            console.error('Error:', error); // 콘솔에 로그를 남깁니다.
-            alert("서버 통신 중 오류가 발생했습니다."); // 사용자에게 알립니다.
+        } catch (error) {
+            console.error('Error:', error);
+            alert("서버 통신 중 오류가 발생했습니다.");
         }
     }
 
-    document.getElementById('postForm').addEventListener('submit', function(e) { // 폼 제출 이벤트를 가로챕니다.
-        e.preventDefault(); // 페이지 새로고침을 방지합니다.
-        savePost(false); // 발행(is_temp=false)으로 저장합니다.
+    document.getElementById('postForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        savePost(false);
     });
 
-    document.getElementById('tempSaveBtn').addEventListener('click', function() { // 임시저장 버튼 클릭 시 실행합니다.
-        savePost(true); // 임시저장(is_temp=true)으로 저장합니다.
+    document.getElementById('tempSaveBtn').addEventListener('click', function () {
+        savePost(true);
     });
 </script>
 {% endblock %}

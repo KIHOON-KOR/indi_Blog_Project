@@ -4,6 +4,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.views import APIView
+from rest_framework.response import Response
 
 
 class PostPageNumberPagination(PageNumberPagination):
@@ -54,3 +55,20 @@ class PostPageNumberPagination(PageNumberPagination):
             self.page.object_list = []
 
             return []
+
+    # DRF가 최종적으로 JSON 응답을 만들 때 호출하는 메서드입니다.
+    def get_paginated_response(self, data):
+        return Response(
+            {
+                # 전체 데이터의 개수를 보냅니다.
+                "count": self.page.paginator.count,
+                # 장고의 paginator가 이미 계산해둔 '총 페이지 수'를 프론트엔드로 보냅니다.
+                "total_pages": self.page.paginator.num_pages,
+                # 다음 페이지로 가는 API URL을 보냅니다.
+                "next": self.get_next_link(),
+                # 이전 페이지로 가는 API URL을 보냅니다.
+                "previous": self.get_previous_link(),
+                # 실제 게시글 데이터(리스트)를 보냅니다.
+                "results": data,
+            }
+        )
