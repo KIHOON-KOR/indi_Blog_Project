@@ -1,7 +1,7 @@
 from django.db.models import QuerySet  # QuerySet 타입을 힌팅하기 위해 임포트합니다.
 from apps.post.models import Post  # Post 모델을 사용하기 위해 임포트합니다.
 from apps.user.models import User  # User 모델을 사용하기 위해 임포트합니다.
-
+from django.db.models import Count
 
 def get_global_posts() -> QuerySet[Post]:
     """
@@ -14,6 +14,7 @@ def get_global_posts() -> QuerySet[Post]:
             deleted_at__isnull=True,  # 삭제되지 않은 글만 필터링합니다.
         )
         .select_related("user")
+        .annotate(likes_count=Count('likes', distinct=True))
         .order_by("-created_at")
     )
 
@@ -53,5 +54,6 @@ def get_post_detail(post_id: int) -> Post:
     return (
         Post.objects.select_related("user")  # type: ignore
         .filter(id=post_id, deleted_at__isnull=True)
+        .annotate(likes_count=Count('likes', distinct=True))
         .first()
     )
