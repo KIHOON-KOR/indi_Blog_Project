@@ -16,41 +16,62 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener("DOMContentLoaded", fetchMyPosts); // 페이지가 열리면 내 포스트를 가져옵니다.
+    // 현재 보고 있는 페이지 상태를 저장하는 변수입니다.
+    let currentPage = 1;
 
-    async function fetchMyPosts() { // 내 포스트 목록을 API로 호출하는 함수입니다.
-        const container = document.getElementById('my-post-list'); // 데이터를 넣을 DOM 요소를 참조합니다.
-        const token = localStorage.getItem('access_token'); // 로컬 스토리지에서 인증 토큰을 가져옵니다.
+    // 문서 로드가 완료되면 첫 페이지 로드를 시작합니다.
+    document.addEventListener("DOMContentLoaded", () => fetchMyPosts(currentPage));
 
-        if (!token) { // 로그인이 안 되어 있다면 리다이렉트합니다.
+    /**
+     * 내 포스트 목록을 API로 호출하고 화면에 그리는 함수입니다.
+     */
+    async function fetchMyPosts(page) {
+        // 데이터를 넣을 컨테이너 DOM을 찾습니다.
+        const container = document.getElementById('my-post-list');
+        // 로컬 스토리지에서 인증용 JWT 토큰을 가져옵니다.
+        const token = localStorage.getItem('access_token');
+
+        // 토큰이 없으면 비정상적인 접근이므로 로그인 페이지로 강제 이동시킵니다.
+        if (!token) {
             window.location.href = "/api/v1/user/login-page/";
             return;
         }
 
+        // 로딩 중임을 알리는 UI를 출력합니다.
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success"></div></div>';
+
         try {
-            const response = await fetch('/api/v1/post/my/', { // 내 발행글 목록 API를 호출합니다.
-                headers: { 'Authorization': 'Bearer ' + token } // 토큰을 헤더에 포함합니다.
+            // ✨ 쿼리 파라미터로 page를 넘기고, 헤더에 Authorization 토큰을 담아 GET 요청합니다.
+            const response = await fetch(`/api/v1/post/my/?page=${page}`, {
+                headers: {'Authorization': 'Bearer ' + token}
             });
 
-            const data = await response.json(); // 응답 데이터를 JSON으로 파싱합니다.
+            // JSON 데이터를 파싱합니다.
+            const data = await response.json();
 
-            if (response.ok) { // 요청이 성공했을 때의 로직입니다.
-                const posts = data.results || data; // 페이지네이션 유무에 따라 데이터를 가져옵니다.
+            // 요청 성공 시 로직
+            if (response.ok) {
+                // 데이터에서 배열 형태의 게시글 목록을 뽑아냅니다.
+                const posts = data.results || data;
 
-                if (posts.length === 0) { // 작성한 글이 없는 경우입니다.
+                // 작성한 글이 없을 때의 예외 처리입니다.
+                if (posts.length === 0) {
                     container.innerHTML = '<div class="text-center py-5 text-muted">아직 발행한 게시글이 없습니다.</div>';
+                    document.getElementById('pagination-container').innerHTML = ''; // 페이지네이션 삭제
                     return;
                 }
 
-                container.innerHTML = ''; // 로딩 스피너를 제거합니다.
+                // 로딩 메시지를 초기화합니다.
+                container.innerHTML = '';
 
-                posts.forEach(post => { // 각 포스트를 돌면서 HTML을 생성합니다.
-                    const date = new Date(post.created_at).toLocaleDateString(); // 날짜 형식을 가독성 있게 변환합니다.
+                // 배열을 순회하며 카드 HTML을 조립합니다.
+                posts.forEach(post => {
+                    const date = new Date(post.created_at).toLocaleDateString();
 
-                    // [수정 포인트] visibility 상태에 따라 뱃지 디자인 결정 (변경 기능은 나중 수정페이지에서 처리)
-                    const isPublic = post.visibility === 'PUBLIC'; // 전체 공개 상태인지 판별합니다.
-                    const badgeText = isPublic ? '공개됨' : '비공개'; // 뱃지에 들어갈 텍스트입니다.
-                    const badgeClass = isPublic ? 'bg-success' : 'bg-secondary'; // 뱃지 색상을 결정합니다.
+                    // 공개 상태(PUBLIC)인지 판별하여 뱃지 디자인과 문구를 세팅합니다.
+                    const isPublic = post.visibility === 'PUBLIC';
+                    const badgeText = isPublic ? '공개됨' : '비공개';
+                    const badgeClass = isPublic ? 'bg-success' : 'bg-secondary';
 
                     const postHtml = `
                         <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom">
@@ -66,15 +87,53 @@
                             </div>
                         </div>
                     `;
-                    container.insertAdjacentHTML('beforeend', postHtml); // 완성된 HTML을 목록에 추가합니다.
+                    // 컨테이너 끝에 렌더링합니다.
+                    container.insertAdjacentHTML('beforeend', postHtml);
                 });
-            } else { // 요청 실패 시 처리입니다.
+
+                // 총 데이터 개수가 존재한다면 페이지네이션을 렌더링합니다.
+                if (data.count !== undefined) {
+                    renderPagination(data.count, page, document.getElementById('pagination-container'), 'fetchMyPosts');
+                }
+            } else {
                 container.innerHTML = '<p class="text-danger text-center py-5">목록을 불러오지 못했습니다.</p>';
             }
-        } catch (error) { // 통신 에러 처리입니다.
+        } catch (error) {
             console.error('Error fetching my posts:', error);
             container.innerHTML = '<p class="text-danger text-center py-5">서버 통신 중 오류가 발생했습니다.</p>';
         }
+    }
+
+    /**
+     * 페이지네이션
+     */
+    function renderPagination(totalCount, currentPage, container, fetchFunctionName) {
+        const pageSize = 10; // 페이지당 출력 개수
+        const totalPages = Math.ceil(totalCount / pageSize); // 총 페이지 수 계산
+
+        if (totalPages <= 1) { // 1페이지 이하면 버튼 숨김
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '<nav><ul class="pagination pagination-sm justify-content-center">';
+
+        // 이전 버튼 (1페이지면 비활성화)
+        const prevDisabled = currentPage === 1 ? 'disabled' : '';
+        html += `<li class="page-item ${prevDisabled}"><a class="page-link text-success" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${currentPage - 1})">이전</a></li>`;
+
+        // 페이지 번호 루프
+        for (let i = 1; i <= totalPages; i++) {
+            const activeClass = currentPage === i ? 'active bg-success border-success text-white' : 'text-success';
+            html += `<li class="page-item"><a class="page-link ${activeClass}" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${i})">${i}</a></li>`;
+        }
+
+        // 다음 버튼 (마지막 페이지면 비활성화)
+        const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+        html += `<li class="page-item ${nextDisabled}"><a class="page-link text-success" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${currentPage + 1})">다음</a></li>`;
+
+        html += '</ul></nav>';
+        container.innerHTML = html; // DOM에 적용
     }
 </script>
 {% endblock %}
