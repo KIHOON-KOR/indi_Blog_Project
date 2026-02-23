@@ -13,6 +13,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("admin/", admin.site.urls),
     path("api/v1/user/", include("apps.user.urls")),
     path("api/v1/post/", include("apps.post.urls")),
+    path("api/v1/tag/", include("apps.tags.urls")),
 ]
 
 if settings.DEBUG:
