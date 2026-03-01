@@ -67,6 +67,11 @@ class ErrorMessage(Enum):
         "not_post_author",
         "게시글 수정/삭제 권한이 없습니다.",
     )
+    NOT_COMMENT_AUTHOR = (
+        status.HTTP_403_FORBIDDEN,
+        "not_comment_author",
+        "댓글 수정/삭제 권한이 없습니다.",
+    )
 
     @property
     def status_code(self):
