@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from typing import cast
 from apps.comment.serializers.create_comment_serializer import CommentCreateSerializer
+from apps.comment.services.delete_comment_service import delete_comment
 from apps.comment.services.update_comment_service import update_comment
 from apps.user.models import User
 from rest_framework.response import Response
@@ -39,3 +40,16 @@ class CommentManageAPIView(APIView):
             CommentCreateSerializer(comment).data,
             status=status.HTTP_200_OK,
         )
+
+    @extend_schema(
+        tags=["댓글"],
+        summary="게시글 댓글 삭제",
+    )
+    def delete(self, request: Request, comment_id: int):
+        # 1. User 타입 지정
+        user = cast(User, request.user)
+
+        # 2. 서비스레이어 호출
+        delete_comment(comment_id=comment_id, user=user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

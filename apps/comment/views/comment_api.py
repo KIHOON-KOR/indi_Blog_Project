@@ -40,7 +40,9 @@ class CommentAPIView(APIView):
 
         return Response(CommentListSerializer(comments, many=True).data)
 
-    @extend_schema(tags=["댓글"], summary="댓글 작성", request=CommentCreateSerializer)
+    @extend_schema(
+        tags=["댓글"], summary="게시글 댓글 작성", request=CommentCreateSerializer
+    )
     def post(self, request: Request, post_id: int):
         # 1. 입력 데이터 검증
         serializer = CommentCreateSerializer(data=request.data)
