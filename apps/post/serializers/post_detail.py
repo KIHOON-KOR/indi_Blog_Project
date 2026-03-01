@@ -26,7 +26,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     def get_is_liked(self, obj) -> bool:
         # 1. 뷰(View)에서 넘겨준 context 안에서 현재 요청(request) 객체를 가져옵니다.
-        request = self.context.get('request')
+        request = self.context.get("request")
 
         # 2. 요청 객체가 존재하고, 로그인된 사용자(is_authenticated)일 경우에만 검사합니다.
         if request and request.user.is_authenticated:
