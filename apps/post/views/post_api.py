@@ -101,7 +101,7 @@ class PostDetailAPIView(APIView):
             raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
         # 이렇게 해야 Serializer 내부에서 현재 접속한 유저가 누구인지 알 수 있음
-        return Response(PostDetailSerializer(post, context={'request': request}).data)
+        return Response(PostDetailSerializer(post, context={"request": request}).data)
 
     @extend_schema(tags=["포스트"], summary="게시글 수정", request=PostCreateSerializer)
     def put(self, request: Request, post_id: int):
