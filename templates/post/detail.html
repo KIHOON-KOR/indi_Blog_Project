@@ -272,7 +272,8 @@
                     const isMyComment = currentNickname && currentNickname === comment.author_nickname;
 
                     const actionHtml = isMyComment
-                            ? `<button onclick="toggleEditMode(${comment.id})" class="btn btn-link text-secondary p-0 text-decoration-none" style="font-size: 0.8rem;">수정</button>`
+                            ? `<button onclick="toggleEditMode(${comment.id})" class="btn btn-link text-secondary p-0 text-decoration-none" style="font-size: 0.8rem;">수정</button>
+                               <button onclick="deleteComment(${comment.id})" class="btn btn-link text-danger p-0 text-decoration-none ms-2" style="font-size: 0.8rem;">삭제</button>`
                             : '';
 
                     const commentHtml = `
@@ -415,6 +416,35 @@
 
         html += '</ul></nav>';
         container.innerHTML = html;
+    }
+    // 댓글 삭제 요청 함수
+    async function deleteComment(commentId) {
+        // 실수로 누르는 것을 방지하기 위해 한 번 더 확인합니다.
+        if (!confirm("정말 이 댓글을 삭제하시겠습니까?")) return;
+
+        const token = localStorage.getItem('access_token');
+
+        try {
+            // DELETE 메서드로 방금 만든 삭제 API 엔드포인트를 호출합니다.
+            const response = await fetch(`/api/v1/comment/post/${commentId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            // 204 No Content 응답이 오면 성공입니다.
+            if (response.status === 204) {
+                alert("댓글이 삭제되었습니다.");
+                // 삭제가 반영된 화면을 보여주기 위해 댓글 목록을 다시 불러옵니다.
+                fetchComments(currentCommentPage);
+            } else {
+                const data = await response.json();
+                alert("삭제 실패: " + (data.detail || "권한이 없거나 오류가 발생했습니다."));
+            }
+        } catch (error) {
+            console.error('Comment Delete Error:', error);
+        }
     }
 </script>
 {% endblock %}
