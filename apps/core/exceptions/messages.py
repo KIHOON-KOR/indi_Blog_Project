@@ -72,6 +72,11 @@ class ErrorMessage(Enum):
         "not_comment_author",
         "댓글 수정/삭제 권한이 없습니다.",
     )
+    SERIES_ALREADY_EXISTS = (
+        status.HTTP_400_BAD_REQUEST,
+        "series_already_exists",
+        "이미 존재하는 시리즈 이름입니다.",
+    )
 
     @property
     def status_code(self):

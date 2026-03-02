@@ -15,7 +15,7 @@ class Post(TimeStampedModel):
     series = models.ForeignKey(
         Series, on_delete=models.SET_NULL, null=True, blank=True, related_name="posts"
     )
-    series_order = models.BigIntegerField(null=True, blank=True)
+    series_order = models.PositiveSmallIntegerField(null=True, blank=True)
 
     title = models.CharField(max_length=200)
     content = models.TextField()
