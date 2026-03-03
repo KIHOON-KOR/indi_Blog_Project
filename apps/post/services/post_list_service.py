@@ -4,34 +4,44 @@ from apps.user.models import User
 from django.db.models import Count
 
 
-def get_global_posts() -> QuerySet[Post]:
+def get_global_posts(series_id: int | None = None) -> QuerySet[Post]:
     """
-    모든 사용자의 공개된 포스트 목록을 가져옵니다. (전체 피드용)
+    모든 사용자의 공개된 포스트 목록을 가져옵니다. (전체 피드 및 시리즈 목차용)
     """
+    qs = Post.objects.filter(
+        is_temp=False,
+        visibility=Post.Visibility.PUBLIC,
+        deleted_at__isnull=True,
+    )
+
+    # 시리즈 ID가 전달되었다면 해당 시리즈의 글만 필터링합니다.
+    if series_id:
+        qs = qs.filter(series_id=series_id)
+
     return (
-        Post.objects.filter(
-            is_temp=False,
-            visibility=Post.Visibility.PUBLIC,
-            deleted_at__isnull=True,
-        )
-        .select_related("user")
+        qs.select_related("user")
         .prefetch_related("tags")
         .annotate(likes_count=Count("likes", distinct=True))
         .order_by("-created_at")
     )
 
 
-def get_my_published_posts(*, user: User) -> QuerySet[Post]:
+def get_my_published_posts(*, user: User, series_id: int | None = None) -> QuerySet[Post]:
     """
     내가 작성한 글 중 공개된(발행된) 글만 가져옵니다. (내 블로그용)
     """
+    qs = Post.objects.filter(
+        user=user,
+        is_temp=False,
+        deleted_at__isnull=True,
+    )
+
+    # 전달받은 시리즈 아이디가 있다면 필터링 적용
+    if series_id:
+        qs = qs.filter(series_id=series_id)
+
     return (
-        Post.objects.filter(
-            user=user,
-            is_temp=False,
-            deleted_at__isnull=True,
-        )
-        .select_related("user")
+        qs.select_related("user")
         .prefetch_related("tags")
         .annotate(likes_count=Count("likes", distinct=True))
         .order_by("-created_at")

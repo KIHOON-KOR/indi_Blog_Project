@@ -9,6 +9,9 @@ class PostListSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(read_only=True)
     tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")  # type: ignore
 
+    series_id = serializers.IntegerField(source="series.id", read_only=True)
+    series_name = serializers.CharField(source="series.name", read_only=True)
+
     class Meta:
         model = Post
         fields = [
@@ -20,4 +23,6 @@ class PostListSerializer(serializers.ModelSerializer):
             "visibility",
             "likes_count",
             "tags",
+            "series_id",
+            "series_name",
         ]

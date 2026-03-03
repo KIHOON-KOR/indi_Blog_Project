@@ -29,10 +29,14 @@ class PostAPIView(APIView):
 
     @extend_schema(tags=["포스트"], summary="전체 포스트 피드 조회")
     def get(self, request: Request):
-        # 1. 서비스 레이어 호출
-        posts = get_global_posts()
+        # 1. URL에서 '?series=숫자' 값을 꺼내옵니다.
+        series_id_str = request.query_params.get("series")
+        series_id = int(series_id_str) if series_id_str and series_id_str.isdigit() else None
 
-        # 2. 페이지네이션을 적용
+        # 2. 서비스 레이어 호출 시 series_id를 전달합니다.
+        posts = get_global_posts(series_id=series_id)
+
+        # 3. 페이지네이션 적용
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
 
@@ -73,10 +77,14 @@ class MyPostAPIView(APIView):
         # 1. User 타입 지정
         user = cast(User, request.user)
 
-        # 2. 서비스 레이어 호출
-        posts = get_my_published_posts(user=user)
+        # 2. URL에서 '?series=숫자' 파라미터 값을 꺼내옴
+        series_id_str = request.query_params.get("series")
+        series_id = int(series_id_str) if series_id_str and series_id_str.isdigit() else None
 
-        # 3. 페이지 네이션 적용
+        # 3. 서비스 레이어 호출
+        posts = get_my_published_posts(user=user, series_id=series_id)
+
+        # 4. 페이지 네이션 적용
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
 
