@@ -12,7 +12,6 @@ urlpatterns = [
         SeriesDetailAPIView.as_view(),
         name="series_detail_manage",
     ),
-
     # [화면 라우팅]
     path("my/page/", series_my_list_page, name="series_my_list_page"),
     path("<int:series_id>/page/", series_detail_page, name="series_detail_page"),
