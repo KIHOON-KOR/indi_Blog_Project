@@ -13,7 +13,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
     series = serializers.PrimaryKeyRelatedField(
         queryset=Series.objects.all(),  # 존재하는 모든 시리즈 중에서 찾도록 쿼리셋 지정
         required=False,  # 시리즈 지정은 필수가 아니므로 False
-        allow_null=True  # 빈 값도 허용하여 시리즈 없이도 글을 쓸 수 있게 함
+        allow_null=True,  # 빈 값도 허용하여 시리즈 없이도 글을 쓸 수 있게 함
     )
 
     class Meta:
