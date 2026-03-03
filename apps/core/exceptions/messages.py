@@ -83,6 +83,12 @@ class ErrorMessage(Enum):
         "자신의 시리즈에만 게시글을 추가할 수 있습니다.",
     )
 
+    SERIES_SERVICE_PERMISSION = (
+        status.HTTP_403_FORBIDDEN,
+        "series_service_permission",
+        "존재하지 않거나 권한이 없는 시리즈입니다.",
+    )
+
     @property
     def status_code(self):
         return self.value[0]
