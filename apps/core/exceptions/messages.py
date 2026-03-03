@@ -77,6 +77,11 @@ class ErrorMessage(Enum):
         "series_already_exists",
         "이미 존재하는 시리즈 이름입니다.",
     )
+    SERIES_PERMISSION_DENIED = (
+        status.HTTP_403_FORBIDDEN,
+        "series_permission_denied",
+        "자신의 시리즈에만 게시글을 추가할 수 있습니다.",
+    )
 
     @property
     def status_code(self):
