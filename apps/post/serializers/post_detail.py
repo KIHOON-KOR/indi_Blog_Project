@@ -9,6 +9,9 @@ class PostDetailSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(read_only=True)
     is_liked = serializers.SerializerMethodField()
 
+    series_id = serializers.IntegerField(source="series.id", read_only=True)
+    series_name = serializers.CharField(source="series.name", read_only=True)
+
     class Meta:
         model = Post
         fields = [
@@ -22,7 +25,8 @@ class PostDetailSerializer(serializers.ModelSerializer):
             "tags",
             "likes_count",
             "is_liked",
-            "series",
+            "series_id",
+            "series_name",
         ]
 
     def get_is_liked(self, obj) -> bool:
