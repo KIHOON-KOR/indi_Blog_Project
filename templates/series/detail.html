@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}시리즈 보기 - My Blog{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center text-white mb-5">
+        <p class="opacity-75 mb-1">SERIES</p>
+        <h1 class="fw-bold display-5" id="seriesTitle">시리즈 로딩중...</h1>
+    </div>
+
+    <div class="row g-4" id="postContainer">
+        <div class="text-center text-white opacity-75 py-5">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-2">글을 불러오는 중입니다...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 1. 현재 접속한 브라우저의 URL 주소를 '/' 기준으로 쪼갭니다.
+    const segments = window.location.pathname.split('/');
+    // 2. 쪼갠 배열에서 'series'라는 단어 바로 다음에 오는 값(숫자 ID)을 찾아냅니다.
+    const seriesId = segments[segments.indexOf('series') + 1];
+
+    // 3. HTML 문서가 모두 로드(렌더링)된 직후에 실행될 비동기 함수를 설정합니다.
+    document.addEventListener("DOMContentLoaded", async () => {
+        // 포스트 카드가 들어갈 부모 컨테이너 요소를 찾습니다.
+        const container = document.getElementById('postContainer');
+        // 시리즈 제목이 적힐 H1 태그 요소를 찾습니다.
+        const titleElement = document.getElementById('seriesTitle');
+
+        try {
+            // [추가] 브라우저 저장소(localStorage)에서 로그인할 때 발급받은 'access_token'을 꺼냅니다.
+            const token = localStorage.getItem('access_token');
+
+            // [추가] 만약 토큰이 없다면 (로그인을 안 했다면)
+            if (!token) {
+                // 경고창을 띄우고
+                alert("로그인이 필요합니다.");
+                // 로그인 페이지로 강제로 이동시킵니다.
+                window.location.href = "/api/v1/user/login-page/";
+                // 아래 코드가 실행되지 않도록 함수를 여기서 종료합니다.
+                return;
+            }
+
+            // [수정] 내 글을 불러오는 API('/api/v1/post/my/')에 쿼리 파라미터로 '?series=아이디'를 붙여서 호출합니다.
+            const res = await fetch(`/api/v1/post/my/?series=${seriesId}`, {
+                // [추가] 헤더에 인증 토큰을 실어서 백엔드로 보냅니다. (이게 있어야 누군지 판별 가능)
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+
+            // 서버에서 온 응답(JSON)을 자바스크립트 객체로 변환합니다.
+            const data = await res.json();
+            // 페이지네이션이 적용되어 있다면 data.results에, 아니라면 data 자체에 목록이 들어있으므로 유연하게 꺼냅니다.
+            const posts = data.results || data;
+
+            // 만약 서버에서 넘어온 포스트 배열이 비어있다면 (시리즈에 글이 0개라면)
+            if (!posts || posts.length === 0) {
+                // 제목을 기본값으로 바꿉니다.
+                titleElement.textContent = "시리즈의 글 목록";
+                // 화면에 글이 없다는 안내 메시지를 렌더링합니다.
+                container.innerHTML = `<div class="col-12 text-center text-white opacity-75 py-5"><h4>이 시리즈에 등록된 글이 없습니다.</h4></div>`;
+                // 함수를 종료합니다.
+                return;
+            }
+
+            // [수정] 백엔드 시리얼라이저에서 'series_name'을 내려주도록 변경했으므로,
+            // 첫 번째 게시글 정보에서 시리즈 이름을 꺼내와서 H1 태그에 이쁘게 출력합니다. (없을 경우를 대비해 기본값 설정)
+            const seriesName = posts[0].series_name || "시리즈 연재 목록";
+            titleElement.textContent = `📚 ${seriesName}`;
+
+            // 로딩 스피너가 들어있던 컨테이너를 깨끗하게 비웁니다.
+            container.innerHTML = '';
+
+            // 가져온 포스트 배열을 반복문(forEach)으로 돌면서 하나씩 화면에 그립니다.
+            posts.forEach(post => {
+                // 썸네일 이미지가 있으면 img 태그를 만들고, 없으면 빈 문자열을 넣습니다.
+                const imgTag = post.thumbnail ? `<img src="${post.thumbnail}" class="card-img-top" style="height:200px; object-fit:cover;">` : '';
+
+                // 컨테이너에 HTML 코드를 누적(+=)해서 추가합니다.
+                container.innerHTML += `
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm border-0 auth-card transition-hover">
+                            ${imgTag}
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title fw-bold text-dark text-truncate">${post.title}</h5>
+                                <p class="card-text text-secondary small mb-3">${post.summary || "내용이 없습니다."}</p>
+                                <div class="mt-auto d-flex justify-content-between align-items-center border-top pt-3">
+                                    <span class="badge bg-light text-dark text-decoration-none">${post.author_nickname || "익명"}</span>
+                                    <a href="/api/v1/post/${post.id}/page/" class="btn btn-sm btn-outline-primary rounded-pill px-3">Read</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        } catch (error) {
+            // 통신 에러가 발생하면 콘솔에 로그를 찍습니다.
+            console.error(error);
+            // 사용자에게 에러가 발생했음을 알립니다.
+            titleElement.textContent = "오류 발생";
+            container.innerHTML = `<div class="col-12 text-center text-danger py-5">데이터를 불러오지 못했습니다.</div>`;
+        }
+    });
+</script>
+{% endblock %}

@@ -38,6 +38,15 @@ def update_post(*, post_id: int, user: User, validated_data: dict):
     if not post:
         raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
+    # # series 객체를 가져옵니다. (없을 경우 None)
+    if "series" in validated_data:
+        series = validated_data.get("series")
+
+        # 수정하려는 시리즈가 존재하는데, 그 시리즈의 주인이 현재 수정을 요청한 유저가 아니라면 차단합니다.
+        if series and series.user != user:
+            # 타인의 시리즈를 도용하려는 시도이므로 예외를 발생시킵니다.
+            raise BaseCustomException(ErrorMessage.SERIES_PERMISSION_DENIED)
+
     # 2. 태그 데이터가 있다면 데이터에서 태그 목록을 추출
     tag_names = validated_data.pop("tags", None)
 

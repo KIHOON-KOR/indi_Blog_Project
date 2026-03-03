@@ -1,6 +1,8 @@
 from typing import Any
 
 from django.db import transaction
+from apps.core.exceptions.messages import ErrorMessage
+from apps.core.exceptions.base import BaseCustomException
 from apps.tags.models import Tag, PostTag
 from apps.post.models import Post
 from apps.user.models import User
@@ -14,11 +16,18 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
     # 1. 입력 데이터에서 태그 목록을 분리합니다.
     tags_names = validated_data.pop("tags", [])
 
-    # 2. 요약(summary)이 없을 경우 본문에서 앞부분을 추출하여 저장합니다.
+    # 2. 클라이언트가 전달한 시리즈 객체를 뽑음 (없으면 None)
+    series = validated_data.pop("series", None)
+
+    # 전달받은 시리즈가 있다면, 그 시리즈를 만든 사람(user)이 현재 글 작성자(author)와 일치하는지 확인
+    if series and series.user != author:
+        raise BaseCustomException(ErrorMessage.SERIES_PERMISSION_DENIED)
+
+    # 3. 요약(summary)이 없을 경우 본문에서 앞부분을 추출하여 저장합니다.
     content = validated_data["content"]
     summary = validated_data.get("summary") or content[:150]
 
-    # 3. 게시글을 먼저 생성합니다.
+    # 4. 게시글을 먼저 생성합니다.
     post = Post.objects.create(
         user=author,
         title=validated_data["title"],
@@ -27,15 +36,16 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
         thumbnail=validated_data.get("thumbnail"),
         is_temp=validated_data.get("is_temp", False),
         visibility=validated_data.get("visibility", Post.Visibility.PUBLIC),
+        series=series,
     )
 
-    # 4. 태그 최적화 처리 (N+1 문제 해결)
+    # 5. 태그 최적화 처리 (N+1 문제 해결)
     if tags_names:
-        # 4-1. 이미 존재하는 태그들을 한 번에 조회합니다.
+        # 5-1. 이미 존재하는 태그들을 한 번에 조회합니다.
         existing_tags = Tag.objects.filter(name__in=tags_names)
         existing_tag_names = {tag.name for tag in existing_tags}
 
-        # 4-2. DB에 없는 새로운 태그들만 선별하여 한 번에 생성(bulk_create)합니다.
+        # 5-2. DB에 없는 새로운 태그들만 선별하여 한 번에 생성(bulk_create)합니다.
         new_tag_names = set(tags_names) - existing_tag_names
         if new_tag_names:
             Tag.objects.bulk_create([Tag(name=name) for name in new_tag_names])
