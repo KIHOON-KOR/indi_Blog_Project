@@ -22,6 +22,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
             "tags",
             "likes_count",
             "is_liked",
+            "series",
         ]
 
     def get_is_liked(self, obj) -> bool:

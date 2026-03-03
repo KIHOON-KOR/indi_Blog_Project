@@ -27,12 +27,20 @@
                         <div id="editor"></div>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="visibility" class="form-label fw-bold text-secondary">공개 설정</label>
-                        <select class="form-select" id="visibility">
-                            <option value="PUBLIC" selected>전체 공개</option>
-                            <option value="PRIVATE">비공개 (나만 보기)</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="visibility" class="form-label fw-bold text-secondary">공개 설정</label>
+                            <select class="form-select" id="visibility">
+                                <option value="PUBLIC" selected>전체 공개</option>
+                                <option value="PRIVATE">비공개 (나만 보기)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label for="series" class="form-label fw-bold text-secondary">시리즈 (선택)</label>
+                            <select class="form-select" id="series">
+                                <option value="">선택 안 함</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -58,34 +66,53 @@
 <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 
 <script>
-    // ✨ [추가] 에디터 인스턴스를 담아둘 전역 변수입니다.
     let editor;
 
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", async function () {
         const token = localStorage.getItem('access_token');
         if (!token) {
             alert("로그인이 필요한 서비스입니다.");
             window.location.href = "/api/v1/user/login-page/";
+            return;
         }
 
-        // ✨ [추가] 화면이 로드되면 지정한 div(#editor)에 에디터를 그립니다.
+        // 에디터 초기화
         editor = new toastui.Editor({
-            el: document.querySelector('#editor'), // 에디터를 렌더링할 DOM 요소
-            height: '500px', // 에디터의 높이 지정
-            initialEditType: 'markdown', // 기본 작성 모드를 마크다운으로 설정
-            previewStyle: 'vertical', // 화면을 좌우로 나누어 미리보기를 제공
+            el: document.querySelector('#editor'),
+            height: '500px',
+            initialEditType: 'markdown',
+            previewStyle: 'vertical',
             placeholder: '자유롭게 이야기를 풀어보세요...'
         });
+
+        // [추가] 내 시리즈 목록을 API에서 가져와 Select Box에 채워넣습니다.
+        try {
+            const seriesRes = await fetch('/api/v1/series/my/', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            if (seriesRes.ok) {
+                const seriesData = await seriesRes.json();
+                const seriesList = seriesData.results || seriesData;
+                const seriesSelect = document.getElementById('series');
+
+                seriesList.forEach(series => {
+                    const option = document.createElement('option');
+                    option.value = series.id;
+                    option.textContent = series.name;
+                    seriesSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('시리즈 목록 로드 실패:', error);
+        }
     });
 
     async function savePost(isTemp = false) {
         const title = document.getElementById('title').value;
-
-        // ✨ [수정] textarea의 value 대신, 에디터에서 작성한 마크다운 문서를 통째로 가져옵니다!
         const content = editor.getMarkdown();
-
         const tagsInput = document.getElementById('tags').value;
         const visibility = document.getElementById('visibility').value;
+        const seriesValue = document.getElementById('series').value; // [추가] 선택된 시리즈 ID 가져오기
 
         if (!title || !content) {
             alert("제목과 내용을 입력해주세요.");
@@ -94,22 +121,25 @@
 
         const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
 
+        // [추가] 시리즈가 선택되었을 경우 정수(Int) 형태로, 선택 안 했으면 null로 전송
+        const payload = {
+            title: title,
+            content: content,
+            tags: tags,
+            is_temp: isTemp,
+            visibility: visibility,
+            series: seriesValue ? parseInt(seriesValue) : null
+        };
+
         try {
             const token = localStorage.getItem('access_token');
-
             const response = await fetch('/api/v1/post/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({
-                    title: title,
-                    content: content, // 가져온 마크다운 데이터 전송
-                    tags: tags,
-                    is_temp: isTemp,
-                    visibility: visibility
-                })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
