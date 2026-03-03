@@ -26,7 +26,9 @@ def get_global_posts(series_id: int | None = None) -> QuerySet[Post]:
     )
 
 
-def get_my_published_posts(*, user: User, series_id: int | None = None) -> QuerySet[Post]:
+def get_my_published_posts(
+    *, user: User, series_id: int | None = None
+) -> QuerySet[Post]:
     """
     내가 작성한 글 중 공개된(발행된) 글만 가져옵니다. (내 블로그용)
     """
