@@ -9,6 +9,7 @@ from apps.series.services.series_manage_service import update_series, delete_ser
 from rest_framework.request import Request
 from apps.user.models import User
 
+
 class SeriesDetailAPIView(APIView):
     """특정 시리즈의 수정 및 삭제를 담당하는 View입니다."""
 
@@ -28,9 +29,7 @@ class SeriesDetailAPIView(APIView):
 
         # 3. 서비스 레이어 호출
         updated_series = update_series(
-            series_id=series_id,
-            user=user,
-            name=serializer.validated_data["name"]
+            series_id=series_id, user=user, name=serializer.validated_data["name"]
         )
 
         return Response(
