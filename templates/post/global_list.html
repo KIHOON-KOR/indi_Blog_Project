@@ -1,9 +1,20 @@
-{% extends 'base.html' %} {% block title %}전체 피드 - My Blog{% endblock %} {% block content %}
+{% extends 'base.html' %}
+{% block title %}전체 피드 - My Blog{% endblock %}
+
+{% block content %}
 <div class="row w-100 justify-content-center">
     <div class="col-lg-10">
         <div class="text-white mb-4">
             <h2 class="fw-bold">전체 피드</h2>
             <p class="opacity-75">모든 블로거들의 새로운 소식을 만나보세요.</p>
+
+            <div id="current-tag-info" class="mt-3" style="display: none;">
+                <span class="badge bg-success fs-6 rounded-pill px-3 py-2 shadow-sm">
+                    <i class="bi bi-tag-fill me-1"></i> <span id="tag-name-display"></span>
+                    <a href="/api/v1/post/all/page/" class="text-white ms-2 text-decoration-none"><i
+                            class="bi bi-x-circle-fill"></i></a>
+                </span>
+            </div>
         </div>
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -24,54 +35,62 @@
 
 {% block extra_js %}
 <script>
-    // 현재 사용자가 보고 있는 페이지 번호를 저장하는 변수입니다. (기본값 1)
     let currentPage = 1;
+    // 브라우저의 현재 URL에서 쿼리 파라미터(?tag=...)를 쉽게 추출하기 위해 URLSearchParams 객체를 생성합니다.
+    const urlParams = new URLSearchParams(window.location.search);
+    // 'tag'라는 이름의 파라미터 값을 꺼내옵니다. (없으면 null이 됩니다)
+    const currentTag = urlParams.get('tag');
 
-    // HTML 문서 로딩이 완료되면 첫 번째 페이지의 글을 불러오는 함수를 실행합니다.
     document.addEventListener("DOMContentLoaded", function () {
+        // 만약 URL에 태그 값이 존재한다면,
+        if (currentTag) {
+            // 태그 정보를 보여주는 UI 요소를 화면에 나타나게 합니다.
+            document.getElementById('current-tag-info').style.display = 'block';
+            // 뱃지 안의 텍스트를 현재 검색 중인 태그 이름으로 변경합니다.
+            document.getElementById('tag-name-display').innerText = currentTag;
+        }
+        // 첫 페이지 데이터를 불러오는 함수를 실행합니다.
         fetchGlobalPosts(currentPage);
     });
 
-    /**
-     * 전체 공개 게시글 목록을 가져와서 화면에 렌더링하는 비동기 함수입니다.
-     * @param {number} page - 불러올 페이지 번호
-     */
     async function fetchGlobalPosts(page) {
-        // 게시글이 들어갈 부모 컨테이너 요소를 찾습니다.
         const container = document.getElementById('global-post-list');
-        // 페이지네이션 버튼들이 들어갈 부모 컨테이너 요소를 찾습니다.
         const paginationContainer = document.getElementById('pagination-container');
 
-        // 데이터를 불러오는 동안 화면에 로딩 스피너를 표시합니다.
         container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="text-muted mt-2">글을 불러오는 중입니다...</p></div>';
 
         try {
-            // ✨ 최적화 포인트: 쿼리 파라미터(?page=N)를 통해 서버에 특정 페이지 데이터를 요청합니다.
-            const response = await fetch(`/api/v1/post/?page=${page}`);
-            // 서버 응답을 JSON 객체로 파싱합니다.
+            // API 호출 URL을 기본적으로 페이지만 포함하여 만듭니다.
+            let apiUrl = `/api/v1/post/?page=${page}`;
+
+            // 만약 현재 추출한 태그 값이 존재한다면
+            if (currentTag) {
+                // API URL 뒤에 '&tag=태그명'을 덧붙여 백엔드 서비스 레이어로 전달되게 합니다. (encodeURIComponent로 특수문자 깨짐 방지)
+                apiUrl += `&tag=${encodeURIComponent(currentTag)}`;
+            }
+
+            // 조립된 URL로 백엔드에 GET 요청을 보냅니다.
+            const response = await fetch(apiUrl);
             const data = await response.json();
 
-            // 응답이 정상(200번대)일 경우
             if (response.ok) {
-                // 페이지네이션이 적용되어 있으면 data.results에 배열이 담겨옵니다.
                 const posts = data.results || data;
 
-                // 게시글이 아예 없는 경우의 예외 처리입니다.
                 if (posts.length === 0) {
-                    container.innerHTML = '<div class="text-center py-5 text-muted">아직 등록된 게시글이 없습니다.</div>';
-                    paginationContainer.innerHTML = ''; // 페이지네이션 영역도 비웁니다.
-                    return; // 함수를 종료합니다.
+                    // 글이 없을 때, 일반 상황과 태그 필터링 상황의 안내 메시지를 다르게 보여줍니다.
+                    const emptyMsg = currentTag
+                            ? `'${currentTag}' 태그가 포함된 게시글이 없습니다.`
+                            : '아직 등록된 게시글이 없습니다.';
+                    container.innerHTML = `<div class="text-center py-5 text-muted">${emptyMsg}</div>`;
+                    paginationContainer.innerHTML = '';
+                    return;
                 }
 
-                // 로딩 스피너를 지우고 컨테이너를 초기화합니다.
                 container.innerHTML = '';
 
-                // 서버에서 받은 게시글 배열을 순회하며 HTML을 생성합니다.
                 posts.forEach(post => {
-                    // 게시글 작성일을 가독성 좋은 날짜 문자열로 변환합니다.
                     const date = new Date(post.created_at).toLocaleDateString();
 
-                    // 각 게시글을 나타내는 리스트 아이템 HTML 문자열을 작성합니다.
                     const postHtml = `
                         <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
                             <div class="d-flex w-100 justify-content-between align-items-center">
@@ -89,68 +108,71 @@
                             </div>
                         </div>
                     `;
-                    // 컨테이너의 맨 마지막에 생성된 HTML을 계속 추가합니다.
                     container.insertAdjacentHTML('beforeend', postHtml);
                 });
 
-                // ✨ 페이지네이션 버튼을 화면에 그리는 함수를 호출합니다. (전체 갯수가 있을 때만)
-                if (data.total_pages !== undefined) {
-                    // renderPagination 함수에 data.count 대신 data.total_pages를 첫 번째 인자로 넘깁니다.
-                    renderPagination(data.total_pages, page, document.getElementById('pagination-container'), 'fetchMyPosts');
+                if (data.count !== undefined) {
+                    renderPagination(data.count, page, document.getElementById('pagination-container'), 'fetchGlobalPosts');
                 }
             } else {
                 container.innerHTML = '<p class="text-danger text-center py-5">목록을 불러오지 못했습니다.</p>';
             }
         } catch (error) {
-            // 인터넷 연결 문제 등 통신 자체가 실패한 경우의 에러 처리입니다.
             console.error('Error:', error);
             container.innerHTML = '<p class="text-danger text-center py-5">서버 통신 오류가 발생했습니다.</p>';
         }
     }
 
+    // ✨ 누락되었던 페이지네이션 렌더링 함수를 추가했습니다.
     /**
-     * 백엔드에서 전달받은 '총 페이지 수'를 기준으로 버튼을 그립니다.
-     * @param {number} totalPages - 백엔드에서 계산해서 보내준 총 페이지 수 (data.total_pages)
-     * @param {number} currentPage - 현재 보고 있는 페이지 번호
-     * @param {HTMLElement} container - 페이지네이션을 그릴 HTML DOM 요소
-     * @param {string} fetchFunctionName - 클릭 시 실행할 함수 이름
+     * 범용적으로 사용할 수 있도록 최적화된 페이지네이션 렌더링 함수입니다.
+     * @param {number} totalCount - API에서 받아온 전체 게시글의 개수
+     * @param {number} currentPage - 현재 사용자가 보고 있는 페이지 번호
+     * @param {HTMLElement} container - 페이지 버튼들이 그려질 HTML 부모 요소
+     * @param {string} fetchFunctionName - 페이지 클릭 시 데이터를 불러올 함수 이름
      */
-    function renderPagination(totalPages, currentPage, container, fetchFunctionName) {
+    function renderPagination(totalCount, currentPage, container, fetchFunctionName) {
+        // 1. 한 페이지에 보여줄 데이터 개수를 10개로 고정합니다. (백엔드 페이지네이션 설정과 동일해야 함)
+        const pageSize = 10;
 
+        // 2. 전체 개수를 10으로 나눈 뒤 소수점을 올림(Math.ceil)하여 총 필요한 페이지 수를 계산합니다.
+        const totalPages = Math.ceil(totalCount / pageSize);
 
-        // 전달받은 총 페이지 수가 1 이하일 경우, 넘길 페이지가 없으므로 버튼 영역을 비웁니다.
+        // 3. 만약 총 페이지가 1페이지 이하(데이터가 10개 이하)라면 페이징이 필요 없습니다.
         if (totalPages <= 1) {
-            // 컨테이너 내부의 HTML을 지워 화면에서 숨깁니다.
+            // 4. 페이지네이션을 보여줄 필요가 없으므로 컨테이너를 깨끗하게 비우고 함수를 즉시 종료합니다.
             container.innerHTML = '';
-            // 처리를 마쳤으므로 함수를 즉시 종료합니다.
             return;
         }
 
-        // 부트스트랩 클래스를 활용해 페이지네이션을 감싸는 nav와 ul 태그를 엽니다.
+        // 5. 부트스트랩 클래스를 활용하여 페이지네이션 UI를 감싸는 HTML 구조를 엽니다.
         let html = '<nav><ul class="pagination pagination-sm justify-content-center">';
 
-        // 현재 페이지가 1페이지일 경우, [이전] 버튼을 누를 수 없도록 'disabled' 클래스를 세팅합니다.
+        // 6. 현재 페이지가 1페이지인지 확인하여 [이전] 버튼을 비활성화(disabled)할지 결정합니다.
         const prevDisabled = currentPage === 1 ? 'disabled' : '';
-        // [이전] 버튼 HTML 생성: 클릭 시 현재 페이지보다 1 작은 번호로 데이터를 불러옵니다.
+
+        // 7. [이전] 버튼의 HTML 태그를 조립합니다. 클릭 시 현재 페이지 번호에서 1을 뺀 값으로 데이터를 다시 불러옵니다.
         html += `<li class="page-item ${prevDisabled}"><a class="page-link text-success" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${currentPage - 1})">이전</a></li>`;
 
-        // 1부터 백엔드가 알려준 총 페이지 수(totalPages)까지 반복하여 숫자 버튼을 만듭니다.
+        // 8. 1페이지부터 계산된 총 페이지 수(totalPages)까지 반복문을 실행하여 숫자 버튼들을 만듭니다.
         for (let i = 1; i <= totalPages; i++) {
-            // 반복문의 숫자(i)가 현재 보고 있는 페이지(currentPage)와 같다면 초록색(active)으로 강조합니다.
+            // 9. 반복문을 도는 중의 숫자(i)가 현재 보고 있는 페이지 번호와 같다면 색상을 채워 활성화 상태(active)로 만듭니다.
             const activeClass = currentPage === i ? 'active bg-success border-success text-white' : 'text-success';
-            // 숫자 버튼 HTML 생성: 클릭 시 해당 숫자(i) 페이지 데이터를 불러옵니다.
+
+            // 10. 각 숫자(i) 버튼에 대한 HTML 태그를 생성하여 전체 HTML 문자열에 누적시킵니다.
             html += `<li class="page-item"><a class="page-link ${activeClass}" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${i})">${i}</a></li>`;
         }
 
-        // 현재 페이지가 마지막 페이지(totalPages)일 경우, [다음] 버튼을 누를 수 없도록 'disabled' 클래스를 추가합니다.
+        // 11. 현재 페이지가 마지막 페이지인지 확인하여 [다음] 버튼을 비활성화할지 결정합니다.
         const nextDisabled = currentPage === totalPages ? 'disabled' : '';
-        // [다음] 버튼 HTML 생성: 클릭 시 현재 페이지보다 1 큰 번호로 데이터를 불러옵니다.
+
+        // 12. [다음] 버튼의 HTML 태그를 조립합니다. 클릭 시 현재 페이지 번호에서 1을 더한 값으로 데이터를 다시 불러옵니다.
         html += `<li class="page-item ${nextDisabled}"><a class="page-link text-success" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${currentPage + 1})">다음</a></li>`;
 
-        // 열어두었던 ul과 nav 태그를 닫아 HTML 문자열 생성을 마칩니다.
+        // 13. 열어두었던 <nav>와 <ul> 태그를 닫아주어 HTML 조립을 마무리합니다.
         html += '</ul></nav>';
 
-        // 완성된 HTML 코드를 화면의 컨테이너 DOM 요소에 삽입하여 실제 버튼을 렌더링합니다.
+        // 14. 문자열로 조립이 완료된 전체 HTML을 브라우저의 실제 컨테이너 요소 안에 렌더링합니다.
         container.innerHTML = html;
     }
 </script>

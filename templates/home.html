@@ -331,51 +331,67 @@
         }
     }
 
-    // 2. [추가됨] 백엔드에서 태그와 게시글 개수 데이터를 가져와서 화면에 그리는 비동기 함수입니다.
+    // 2. 전체 태그가 아닌 '내가 작성한 글의 태그'만 가져와서 화면에 그리는 함수입니다.
     async function fetchTagCloud() {
-        // 태그 뱃지들을 삽입할 부모 HTML 요소를 찾아옵니다.
+        // 태그들이 표시될 HTML의 부모 컨테이너(div) 요소를 찾습니다.
         const container = document.getElementById('tag-cloud-container');
 
-        try {
-            // 백엔드의 Tag API를 호출합니다. (앱 설계상 /api/v1/tags/ 로 라우팅 되었다고 가정합니다)
-            const response = await fetch('/api/v1/tags/');
+        // 내가 누군지 서버에 알려주기 위해, 로컬스토리지에 저장된 로그인 토큰을 가져옵니다.
+        const token = localStorage.getItem('access_token');
 
-            // HTTP 응답이 200번대(정상)인지 확인합니다.
+        // 만약 토큰이 없다면 (즉, 사용자가 로그인을 하지 않은 상태라면)
+        if (!token) {
+            // 내 태그를 가져올 수 없으므로, 태그 대신 로그인 유도 안내 문구를 삽입합니다.
+            container.innerHTML = '<span class="text-muted small">로그인 후 나의 관심 태그를 확인해보세요 🌱</span>';
+            // 서버와 굳이 통신할 필요가 없으므로 함수를 여기서 즉시 종료합니다. (최적화)
+            return;
+        }
+
+        try {
+            // 백엔드의 '내 태그 통계 조회' 전용 API로 통신(GET)을 요청합니다.
+            const response = await fetch('/api/v1/tags/my/', {
+                // 내 데이터를 조회해야 하므로 헤더에 'Authorization' 토큰을 반드시 담아줍니다.
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+
+            // 서버에서 돌아온 응답 상태가 200번대(정상 처리)일 경우
             if (response.ok) {
-                // 응답 데이터를 JSON 객체 배열로 변환합니다.
+                // 서버에서 보내준 JSON 형식의 데이터를 자바스크립트 배열 객체로 변환합니다.
                 const tags = await response.json();
 
-                // 만약 집계된 유효한 태그가 하나도 없다면 안내 문구를 보여줍니다.
+                // 만약 내가 작성한 글 중에 태그가 달린 글이 하나도 없다면 (배열 길이가 0)
                 if (tags.length === 0) {
-                    container.innerHTML = '<span class="text-muted small">아직 등록된 태그가 없습니다.</span>';
-                    // 함수 실행을 종료합니다.
+                    // 아직 태그가 없다는 안내 메시지를 화면에 띄워줍니다.
+                    container.innerHTML = '<span class="text-muted small">아직 등록된 태그가 없습니다. 첫 글에 태그를 달아보세요!</span>';
+                    // HTML 렌더링 로직을 건너뛰고 함수를 종료합니다.
                     return;
                 }
 
-                // 로딩용 스피너가 들어있던 컨테이너 내부를 깨끗하게 비웁니다.
+                // 태그 데이터가 존재한다면, 기존에 띄워져 있던 로딩 스피너(빙글빙글 도는 UI)를 깨끗하게 지웁니다.
                 container.innerHTML = '';
 
-                // 전달받은 태그 배열을 하나씩 순회합니다. (tag = {id, name, post_count})
+                // 받아온 태그 데이터 배열을 처음부터 끝까지 하나씩 순회합니다.
                 tags.forEach(tag => {
-                    // 각 태그를 나타낼 예쁜 뱃지 형태의 HTML 문자열을 만듭니다.
-                    // 디자인은 부트스트랩 클래스를 조합하여 녹색 계열 테두리와 배경으로 설정했습니다.
+                    // 클릭 시 전체 피드가 아닌, '내 블로그(/api/v1/post/my/page/)' 안에서 해당 태그로 검색되도록 링크(href)를 수정합니다.
+                    // 쿼리스트링에 한글이나 특수문자가 들어갈 수 있으므로 encodeURIComponent로 인코딩해 줍니다.
                     const tagHtml = `
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-medium fs-6">
-                            #${tag.name}
-                            <span class="opacity-75 ms-1">(${tag.post_count})</span>
-                        </span>
-                    `;
-                    // 만들어진 HTML 조각을 컨테이너의 맨 끝에 차례대로 추가합니다.
+                            <a href="/api/v1/post/my/page/?tag=${encodeURIComponent(tag.name)}"
+                               class="text-decoration-none badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-medium fs-6 transition-all hover-shadow">
+                                #${tag.name}
+                                <span class="opacity-75 ms-1">(${tag.post_count})</span>
+                            </a>
+                        `;
+                    // 완성된 HTML 태그 조각을 컨테이너의 맨 마지막 위치(beforeend)에 계속해서 이어 붙입니다.
                     container.insertAdjacentHTML('beforeend', tagHtml);
                 });
             } else {
-                // 백엔드에서 에러 상태 코드를 보냈을 경우의 예외 처리입니다.
+                // 토큰이 만료되었거나 권한이 없는 등 서버에서 에러 상태를 내려보냈을 때의 처리입니다.
                 container.innerHTML = '<span class="text-danger small">태그를 불러오지 못했습니다.</span>';
             }
         } catch (error) {
-            // 네트워크 오류 등 자바스크립트 실행 중 에러가 발생한 경우 콘솔에 로그를 남깁니다.
+            // 인터넷 연결이 끊겼거나 백엔드 서버가 아예 꺼져있어 통신 자체를 실패했을 때 실행됩니다.
             console.error("Tag load error:", error);
-            // 사용자에게는 서버 통신 오류 메시지를 보여줍니다.
+            // 사용자에게 서버 통신 오류가 발생했음을 알립니다.
             container.innerHTML = '<span class="text-danger small">서버 통신 오류가 발생했습니다.</span>';
         }
     }
