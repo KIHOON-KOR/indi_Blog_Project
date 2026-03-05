@@ -21,6 +21,7 @@ from apps.post.serializers.post_list import PostListSerializer
 from apps.core.pagination import PostPageNumberPagination
 from drf_spectacular.types import OpenApiTypes
 
+
 class PostAPIView(APIView):
     """포스트 등록 및 전체 목록 조회를 담당합니다."""
 
@@ -31,16 +32,28 @@ class PostAPIView(APIView):
         tags=["포스트"],
         summary="전체 포스트 피드 조회",
         parameters=[
-            OpenApiParameter(name="series", description="필터링할 시리즈 ID", type=OpenApiTypes.INT,
-                             location=OpenApiParameter.QUERY, required=False),
-            OpenApiParameter(name="tag", description="필터링할 태그 이름", type=OpenApiTypes.STR,
-                             location=OpenApiParameter.QUERY, required=False),
-        ]
+            OpenApiParameter(
+                name="series",
+                description="필터링할 시리즈 ID",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="tag",
+                description="필터링할 태그 이름",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+        ],
     )
     def get(self, request: Request):
         # 1. URL에서 '?series=숫자' 값을 꺼내옵니다.
         series_id_str = request.query_params.get("series")
-        series_id = int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        series_id = (
+            int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        )
 
         # 2. URL에서 '?tag=문자열' 값을 꺼내옵니다.
         tag_name = request.query_params.get("tag")
@@ -88,11 +101,21 @@ class MyPostAPIView(APIView):
         tags=["포스트"],
         summary="내 블로그 공개글 조회",
         parameters=[
-            OpenApiParameter(name="series", description="필터링할 시리즈 ID", type=OpenApiTypes.INT,
-                             location=OpenApiParameter.QUERY, required=False),
-            OpenApiParameter(name="tag", description="필터링할 태그 이름", type=OpenApiTypes.STR,
-                             location=OpenApiParameter.QUERY, required=False),
-        ]
+            OpenApiParameter(
+                name="series",
+                description="필터링할 시리즈 ID",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="tag",
+                description="필터링할 태그 이름",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
+        ],
     )
     def get(self, request: Request):
         # 1. User 타입 지정
@@ -100,13 +123,17 @@ class MyPostAPIView(APIView):
 
         # 2. URL 파라미터에서 series 값을 꺼내옵니다.
         series_id_str = request.query_params.get("series")
-        series_id = int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        series_id = (
+            int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        )
 
         # 3. URL 파라미터에서 tag 값을 꺼내옵니다.
         tag_name = request.query_params.get("tag")
 
         # 4. 서비스 레이어 호출 시 시리즈와 태그 조건 전달
-        posts = get_my_published_posts(user=user, series_id=series_id, tag_name=tag_name)
+        posts = get_my_published_posts(
+            user=user, series_id=series_id, tag_name=tag_name
+        )
 
         # 5. 페이지 네이션 적용 및 응답
         paginator = self.pagination_class()

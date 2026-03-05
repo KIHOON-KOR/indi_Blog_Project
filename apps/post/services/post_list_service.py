@@ -4,7 +4,9 @@ from apps.user.models import User
 from django.db.models import Count
 
 
-def get_global_posts(series_id: int | None = None, tag_name: str | None = None) -> QuerySet[Post]:
+def get_global_posts(
+    series_id: int | None = None, tag_name: str | None = None
+) -> QuerySet[Post]:
     """
     전체 피드 및 시리즈 목차, 태그 필터링용 포스트 목록을 가져옵니다.
     """
