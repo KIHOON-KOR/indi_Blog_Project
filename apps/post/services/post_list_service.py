@@ -4,20 +4,26 @@ from apps.user.models import User
 from django.db.models import Count
 
 
-def get_global_posts(series_id: int | None = None) -> QuerySet[Post]:
+def get_global_posts(series_id: int | None = None, tag_name: str | None = None) -> QuerySet[Post]:
     """
-    모든 사용자의 공개된 포스트 목록을 가져옵니다. (전체 피드 및 시리즈 목차용)
+    전체 피드 및 시리즈 목차, 태그 필터링용 포스트 목록을 가져옵니다.
     """
+    # 1. 기본 필터링 조건 (임시글 제외, 공개글, 삭제되지 않은 글) 적용
     qs = Post.objects.filter(
         is_temp=False,
         visibility=Post.Visibility.PUBLIC,
         deleted_at__isnull=True,
     )
 
-    # 시리즈 ID가 전달되었다면 해당 시리즈의 글만 필터링합니다.
+    # 2. 시리즈 ID가 전달되었다면 해당 시리즈의 글만 필터링
     if series_id:
         qs = qs.filter(series_id=series_id)
 
+    # 3. 태그 이름이 전달되었다면, 연결된 태그의 이름이 일치하는 글만 필터링
+    if tag_name:
+        qs = qs.filter(tags__name=tag_name)
+
+    # 4. N+1 문제 해결 및 좋아요 수 계산 후 생성일 기준 내림차순 정렬 반환
     return (
         qs.select_related("user")
         .prefetch_related("tags")
@@ -27,21 +33,27 @@ def get_global_posts(series_id: int | None = None) -> QuerySet[Post]:
 
 
 def get_my_published_posts(
-    *, user: User, series_id: int | None = None
+    *, user: User, series_id: int | None = None, tag_name: str | None = None
 ) -> QuerySet[Post]:
     """
-    내가 작성한 글 중 공개된(발행된) 글만 가져옵니다. (내 블로그용)
+    내가 작성한 발행 글 중 조건에 맞는 글만 가져옵니다.
     """
+    # 1. 내 글 중 임시저장 및 삭제되지 않은 글 필터링
     qs = Post.objects.filter(
         user=user,
         is_temp=False,
         deleted_at__isnull=True,
     )
 
-    # 전달받은 시리즈 아이디가 있다면 필터링 적용
+    # 2. 시리즈 ID 필터링
     if series_id:
         qs = qs.filter(series_id=series_id)
 
+    # 3. 태그 이름 필터링 추가
+    if tag_name:
+        qs = qs.filter(tags__name=tag_name)
+
+    # 4. N+1 문제 해결 및 좋아요 수 계산 후 반환
     return (
         qs.select_related("user")
         .prefetch_related("tags")
