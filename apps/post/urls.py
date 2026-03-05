@@ -6,7 +6,8 @@ from apps.post.views.page_views import (
     my_post_list_page,
     global_post_list_page,
     post_detail_page,
-    post_edit_page, trash_post_list_page,
+    post_edit_page,
+    trash_post_list_page,
 )
 
 from apps.post.views.post_api import PostAPIView, MyPostAPIView, PostDetailAPIView
@@ -27,11 +28,13 @@ urlpatterns = [
     ),
     # [좋아요 등록/취소]
     path("<int:post_id>/likes/", PostLikeAPIView.as_view(), name="post_like"),
-
     # [휴지통 관리]
     path("my/trash/", TrashAPIView.as_view(), name="post_trash_list"),
-    path("my/trash/<int:post_id>/", TrashManageAPIView.as_view(), name="post_trash_detail"),
-
+    path(
+        "my/trash/<int:post_id>/",
+        TrashManageAPIView.as_view(),
+        name="post_trash_detail",
+    ),
     # [화면(UI)]
     path("write/", post_write_page, name="post_write_page"),
     path("my/page/", my_post_list_page, name="my_post_list_page"),
