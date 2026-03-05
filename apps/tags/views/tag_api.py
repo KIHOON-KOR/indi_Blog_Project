@@ -1,10 +1,24 @@
-from rest_framework.views import APIView  # API 뷰를 만들기 위한 기본 클래스를 불러옵니다.
-from rest_framework.response import Response  # API 응답을 반환하기 위한 클래스를 불러옵니다.
-from rest_framework.permissions import AllowAny, IsAuthenticated  # 권한 설정 클래스들을 불러옵니다.
-from drf_spectacular.utils import extend_schema  # API 문서화를 위한 데코레이터를 불러옵니다.
+from rest_framework.views import (
+    APIView,
+)  # API 뷰를 만들기 위한 기본 클래스를 불러옵니다.
+from rest_framework.response import (
+    Response,
+)  # API 응답을 반환하기 위한 클래스를 불러옵니다.
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+)  # 권한 설정 클래스들을 불러옵니다.
+from drf_spectacular.utils import (
+    extend_schema,
+)  # API 문서화를 위한 데코레이터를 불러옵니다.
 
-from apps.tags.serializers.tag_count_serializer import TagStatSerializer  # 태그 데이터를 JSON으로 바꿔줄 시리얼라이저를 불러옵니다.
-from apps.tags.services.tag_count_service import get_tags_with_post_counts  # 위에서 수정한 서비스 함수를 불러옵니다.
+from apps.tags.serializers.tag_count_serializer import (
+    TagStatSerializer,
+)  # 태그 데이터를 JSON으로 바꿔줄 시리얼라이저를 불러옵니다.
+from apps.tags.services.tag_count_service import (
+    get_tags_with_post_counts,
+)  # 위에서 수정한 서비스 함수를 불러옵니다.
+
 
 class TagListAPIView(APIView):
     # 비회원도 볼 수 있도록 권한을 모두에게 허용
