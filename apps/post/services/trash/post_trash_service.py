@@ -5,25 +5,23 @@ from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
 from django.db.models import Count
 
+
 def get_trashed_posts(*, user: User) -> QuerySet[Post]:
     """사용자의 삭제된 게시글(휴지통) 목록을 조회합니다."""
-    return Post.objects.filter(
-        user=user,
-        deleted_at__isnull=False
-    ).annotate(
-        likes_count=Count("likes", distinct=True)
-    ).order_by("-deleted_at")
+    return (
+        Post.objects.filter(user=user, deleted_at__isnull=False)
+        .annotate(likes_count=Count("likes", distinct=True))
+        .order_by("-deleted_at")
+    )
 
 
 def get_trashed_post_detail(*, post_id: int, user: User) -> Post:
     """휴지통 내 특정 게시글의 상세 내용을 조회합니다."""
-    post = Post.objects.filter(
-        id=post_id,
-        user=user,
-        deleted_at__isnull=False
-    ).annotate(
-        likes_count=Count("likes", distinct=True)
-    ).first()
+    post = (
+        Post.objects.filter(id=post_id, user=user, deleted_at__isnull=False)
+        .annotate(likes_count=Count("likes", distinct=True))
+        .first()
+    )
 
     if not post:
         raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
