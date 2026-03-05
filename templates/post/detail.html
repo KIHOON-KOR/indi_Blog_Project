@@ -174,8 +174,12 @@
                 // 태그 렌더링
                 if (post.tags && post.tags.length > 0) {
                     const tagContainer = document.getElementById('post-tags');
+
                     tagContainer.innerHTML = post.tags.map(tag =>
-                            `<span class="badge bg-light text-success border me-1 rounded-pill">#${tag}</span>`
+                            `<a href="/api/v1/post/all/page/?tag=${encodeURIComponent(tag)}"
+                                                class="badge bg-light text-success border me-1 rounded-pill text-decoration-none hover-shadow transition-all">
+                                                #${tag}
+                                            </a>`
                     ).join('');
                 }
 
