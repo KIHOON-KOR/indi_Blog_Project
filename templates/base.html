@@ -106,6 +106,13 @@
                     </div>
 
                     <div id="user-menu" class="d-flex align-items-center" style="display: none !important;">
+                        <li class="nav-item">
+                            <a class="nav-link text-secondary" href="{% url 'trash_post_list_page' %}">
+                                <i class="bi bi-trash3"></i>
+                                휴지통
+                            </a>
+                        </li>
+
                         <li class="nav-item me-3">
                             <a class="nav-link text-white-50 small" href="/api/v1/post/my/page/">내 블로그</a>
                         </li>
