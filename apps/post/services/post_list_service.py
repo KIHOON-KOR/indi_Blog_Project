@@ -61,6 +61,7 @@ def get_my_temp_posts(*, user: User) -> QuerySet[Post]:
             deleted_at__isnull=True,
         )
         .prefetch_related("tags")
+        .annotate(likes_count=Count("likes", distinct=True))
         .order_by("-created_at")
     )
 
