@@ -12,6 +12,7 @@ from apps.post.views.page_views import (
 from apps.post.views.post_api import PostAPIView, MyPostAPIView, PostDetailAPIView
 from apps.post.views.post_like_api import PostLikeAPIView
 from apps.post.views.temp_post_api import MyTempManageAPIView, MyTempAPIView
+from apps.post.views.trash.trash_api import TrashAPIView, TrashManageAPIView
 
 urlpatterns = [
     # [전체 피드 및 생성]
@@ -26,6 +27,11 @@ urlpatterns = [
     ),
     # [좋아요 등록/취소]
     path("<int:post_id>/likes/", PostLikeAPIView.as_view(), name="post_like"),
+
+    # [휴지통 관리]
+    path("my/trash/", TrashAPIView.as_view(), name="post_trash_list"),
+    path("my/trash/<int:post_id>/", TrashManageAPIView.as_view(), name="post_trash_detail"),
+
     # [화면(UI)]
     path("write/", post_write_page, name="post_write_page"),
     path("my/page/", my_post_list_page, name="my_post_list_page"),
