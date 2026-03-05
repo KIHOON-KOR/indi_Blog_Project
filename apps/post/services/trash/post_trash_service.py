@@ -3,24 +3,26 @@ from apps.post.models import Post
 from apps.user.models import User
 from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
-
+from django.db.models import Count
 
 def get_trashed_posts(*, user: User) -> QuerySet[Post]:
     """사용자의 삭제된 게시글(휴지통) 목록을 조회합니다."""
-    # 본인이 작성한 글 중, deleted_at 필드가 비어있지 않은(삭제된) 데이터만 가져옴(내림차순 정렬)
     return Post.objects.filter(
         user=user,
         deleted_at__isnull=False
+    ).annotate(
+        likes_count=Count("likes", distinct=True)
     ).order_by("-deleted_at")
 
 
 def get_trashed_post_detail(*, post_id: int, user: User) -> Post:
     """휴지통 내 특정 게시글의 상세 내용을 조회합니다."""
-    # 삭제된 상태의 글인지 명확히 확인하기 위해 deleted_at__isnull=False 조건을 줌
     post = Post.objects.filter(
         id=post_id,
         user=user,
         deleted_at__isnull=False
+    ).annotate(
+        likes_count=Count("likes", distinct=True)
     ).first()
 
     if not post:

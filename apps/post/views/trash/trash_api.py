@@ -30,9 +30,21 @@ class TrashAPIView(APIView):
         # 3. 페이지네이션을 적용하여 응답
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
+
         if page is not None:
-            return paginator.get_paginated_response(PostListSerializer(page, many=True).data)
-        return Response(PostListSerializer(posts, many=True).data)
+            serializer = PostListSerializer(
+                page,
+                many=True,
+                context={"request": request}
+            )
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = PostListSerializer(
+            posts,
+            many=True,
+            context={"request": request}
+        )
+        return Response(serializer.data)
 
 
 class TrashManageAPIView(APIView):

@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}휴지통 - My Blog{% endblock %}
+{% block content %}
+<div class="row w-100 justify-content-center">
+    <div class="col-lg-10">
+        <div class="text-white mb-4">
+            <h2 class="fw-bold">휴지통</h2>
+            <p class="opacity-75">삭제된 글을 보관하는 곳입니다. 복구하거나 영구 삭제할 수 있습니다.</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">제목</th>
+                        <th>삭제일</th>
+                        <th class="text-center">관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="trash-post-list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="pagination-container" class="d-flex justify-content-center mt-4"></div>
+
+        <div class="modal fade" id="trashDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                <div class="modal-content rounded-4 border-0 shadow">
+                    <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                        <h5 class="modal-title fw-bold text-success" id="modalTitle">불러오는 중...</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="modalDate" class="text-muted small mb-4 pb-2 border-bottom"></div>
+                        <div id="modalContent" class="text-dark" style="white-space: pre-wrap; line-height: 1.8;">내용을
+                            불러오는 중입니다...
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0 pb-4 px-4">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">닫기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // 현재 보고 있는 페이지 번호를 추적하기 위한 전역 변수입니다. 초기값은 1페이지입니다.
+    let currentPage = 1;
+
+    // HTML 요소들이 브라우저에 모두 로드되면 콜백 함수를 실행합니다.
+    // 화면이 켜지자마자 1페이지의 휴지통 목록을 서버에서 불러오도록 지시합니다.
+    document.addEventListener("DOMContentLoaded", () => fetchTrashedPosts(currentPage));
+
+    /**
+     * 휴지통 목록을 서버(API)에서 불러와 화면에 그려주는 비동기(async) 함수입니다.
+     * @param {number} page - 불러오고자 하는 페이지 번호
+     */
+    async function fetchTrashedPosts(page) {
+        // 테이블 내용이 들어갈 tbody 요소를 DOM에서 찾습니다.
+        const container = document.getElementById('trash-post-list');
+        // 페이지네이션 번호들이 들어갈 div 요소를 DOM에서 찾습니다.
+        const paginationContainer = document.getElementById('pagination-container');
+        // 로컬 스토리지에 저장되어 있는 로그인 인증 토큰(access_token)을 가져옵니다.
+        const token = localStorage.getItem('access_token');
+
+        // 토큰이 존재하지 않는다면 (로그인이 풀렸거나 비정상 접근)
+        if (!token) {
+            // 강제로 로그인 페이지로 리다이렉트(이동) 시킵니다.
+            window.location.href = "/api/v1/user/login-page/";
+            return; // 함수 실행을 즉시 종료합니다.
+        }
+
+        try {
+            // 백엔드의 휴지통 목록 API로 GET 요청을 보냅니다. URL 뒤에 '?page=번호' 파라미터를 붙여줍니다.
+            const response = await fetch(`/api/v1/post/my/trash/?page=${page}`, {
+                // 사용자가 누구인지 백엔드가 알 수 있도록 Authorization 헤더에 토큰을 담아 보냅니다.
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            // 서버로부터 받은 HTTP 응답 데이터를 JSON 객체로 변환합니다.
+            const data = await response.json();
+            // 백엔드에서 페이지네이션을 적용했다면 data.results에 배열이 담겨오므로 이를 처리합니다.
+            const posts = data.results || data;
+
+            // 휴지통에 들어있는 게시글이 0개라면
+            if (posts.length === 0) {
+                // 테이블 중앙에 휴지통이 비어있다는 안내 메시지 행을 만들어 넣습니다.
+                container.innerHTML = '<tr><td colspan="3" class="text-center py-5 text-muted">휴지통이 비어 있습니다.</td></tr>';
+                // 데이터가 없으므로 페이지네이션 영역도 비워줍니다.
+                paginationContainer.innerHTML = '';
+                return; // 함수 실행을 종료합니다.
+            }
+
+            // 게시글 배열(posts)을 순회하며 HTML 코드 조각(문자열)으로 만든 뒤 결합합니다.
+            container.innerHTML = posts.map(post => `
+                <tr>
+                    <td class="ps-4">
+                        <a href="#" onclick="event.preventDefault(); showTrashDetail(${post.id})" class="fw-bold text-dark text-decoration-none" style="cursor: pointer;">
+                            ${post.title} <i class="bi bi-box-arrow-up-right small text-muted ms-1"></i>
+                        </a>
+                    </td>
+                    <td class="text-muted small">${new Date(post.created_at).toLocaleDateString()}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-success rounded-pill px-3 me-1" onclick="manageTrashPost(${post.id}, 'PATCH')">복구</button>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="manageTrashPost(${post.id}, 'DELETE')">영구삭제</button>
+                    </td>
+                </tr>
+            `).join(''); // 생성된 여러 개의 <tr> 태그 문자열들을 하나로 이어붙입니다.
+
+            // 백엔드에서 총 데이터의 개수(count)를 함께 보내주었다면
+            if (data.count !== undefined) {
+                // 화면 하단에 페이지네이션 버튼을 그리는 전용 함수를 호출합니다.
+                renderPagination(data.count, page, paginationContainer, 'fetchTrashedPosts');
+            }
+        } catch (error) {
+            // 만약 서버가 꺼져있거나 인터넷 연결이 끊겨 에러가 나면 브라우저 콘솔에 에러를 기록합니다.
+            console.error('Error:', error);
+            // 사용자에게는 서버 오류 안내 메시지를 테이블에 띄워줍니다.
+            container.innerHTML = '<tr><td colspan="3" class="text-center py-5 text-danger">서버 통신 중 오류가 발생했습니다.</td></tr>';
+        }
+    }
+
+    /**
+     * 특정 게시글을 휴지통에서 복구하거나 영구 삭제하는 비동기 함수입니다.
+     * @param {number} postId - 작업을 수행할 게시글의 고유 ID 번호
+     * @param {string} method - 호출할 HTTP 메소드 ('PATCH' 또는 'DELETE')
+     */
+    async function manageTrashPost(postId, method) {
+        // 메소드가 PATCH라면 '복구', 아니라면 '영구 삭제'라는 텍스트를 변수에 담습니다.
+        const actionText = method === 'PATCH' ? "복구" : "영구 삭제";
+
+        // 사용자에게 확인차 물어볼 경고창(알림창) 메시지를 정의합니다.
+        const confirmMessage = method === 'DELETE'
+                ? "정말 영구 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+                : "이 글을 원래 상태로 복구하시겠습니까?";
+
+        // 브라우저의 내장 confirm 함수를 띄워 사용자가 '취소'를 누르면 함수를 즉시 종료합니다.
+        if (!confirm(confirmMessage)) return;
+
+        // 인증 작업을 위해 로컬 스토리지에서 토큰을 가져옵니다.
+        const token = localStorage.getItem('access_token');
+        try {
+            // 백엔드의 특정 휴지통 게시글 URL로 네트워크 요청을 보냅니다.
+            const response = await fetch(`/api/v1/post/my/trash/${postId}/`, {
+                // 매개변수로 받은 HTTP 메소드(PATCH 또는 DELETE)를 그대로 사용합니다.
+                method: method,
+                // 권한 인증을 위한 헤더를 포함합니다.
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+
+            // HTTP 상태 코드가 200번대(성공)라면
+            if (response.ok) {
+                // 성공적으로 처리되었다는 알림을 띄웁니다.
+                alert(`${actionText}되었습니다.`);
+                // 항목이 삭제/복구되어 리스트가 변했으므로, 현재 페이지의 목록을 다시 불러옵니다.
+                fetchTrashedPosts(currentPage);
+            } else {
+                // 백엔드에서 400번대 에러(권한 없음 등)가 발생하면 실패 알림을 띄웁니다.
+                alert(`${actionText}에 실패하였습니다.`);
+            }
+        } catch (error) {
+            // 통신 에러 발생 시 콘솔에 로그를 남깁니다.
+            console.error('Error:', error);
+            // 사용자에게 오류를 알립니다.
+            alert("서버 오류가 발생했습니다.");
+        }
+    }
+
+    // 👇 여기서부터 새롭게 추가된 모달(상세 내용) 띄우기 함수입니다.
+    /**
+     * 휴지통 게시글 제목을 클릭했을 때 모달을 띄워 상세 내용을 보여주는 함수입니다.
+     * @param {number} postId - 상세 내용을 조회할 게시글의 고유 ID
+     */
+    async function showTrashDetail(postId) {
+        // 1. HTML에 미리 만들어둔 부트스트랩 모달 객체를 DOM에서 가져옵니다.
+        const modalElement = document.getElementById('trashDetailModal');
+        // 부트스트랩의 Modal 클래스를 이용해 제어할 수 있는 객체로 만듭니다.
+        const modal = new bootstrap.Modal(modalElement);
+
+        // 2. 서버에서 데이터를 불러오기 전에 모달 창의 텍스트를 '로딩 중' 상태로 초기화합니다.
+        document.getElementById('modalTitle').innerText = '불러오는 중...';
+        document.getElementById('modalDate').innerText = '';
+        // 화면 중앙에 빙글빙글 도는 로딩 스피너(spinner) 애니메이션을 띄워줍니다.
+        document.getElementById('modalContent').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-success" role="status"></div></div>';
+
+        // 3. 사용자에게 일단 모달 창을 화면에 보여줍니다. (데이터는 뒤에서 비동기로 채웁니다)
+        modal.show();
+
+        try {
+            // 인증 작업을 위해 로컬 스토리지에서 토큰을 가져옵니다.
+            const token = localStorage.getItem('access_token');
+            // 4. 백엔드의 휴지통 게시글 상세 조회 API를 호출합니다. (이미 잘 만들어두신 TrashManageAPIView의 get 활용)
+            const response = await fetch(`/api/v1/post/my/trash/${postId}/`, {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+
+            // 응답이 정상적(200 OK)이라면
+            if (response.ok) {
+                // 응답 데이터를 JSON 객체로 변환합니다.
+                const data = await response.json();
+
+                // 5. 서버에서 받아온 데이터를 모달 창의 각 위치에 채워 넣습니다.
+                document.getElementById('modalTitle').innerText = data.title;
+                document.getElementById('modalDate').innerText = `삭제일: ${new Date(data.created_at).toLocaleDateString()}`;
+
+                // 본문 내용을 삽입합니다. (데이터가 비어있으면 "내용이 없습니다."를 출력합니다.)
+                document.getElementById('modalContent').innerText = data.content || "내용이 없습니다.";
+            } else {
+                // 글이 없거나 권한이 없는 등 에러가 발생하면 실패 메시지를 띄웁니다.
+                document.getElementById('modalContent').innerHTML = '<span class="text-danger">내용을 불러오지 못했습니다.</span>';
+            }
+        } catch (error) {
+            // 통신 에러(인터넷 끊김 등)가 발생하면 콘솔에 기록합니다.
+            console.error('Error:', error);
+            // 사용자에게 오류 메시지를 띄워줍니다.
+            document.getElementById('modalContent').innerHTML = '<span class="text-danger">서버 통신 오류가 발생했습니다.</span>';
+        }
+    }
+
+    // 👆 모달 띄우기 함수 끝
+
+    /**
+     * 게시글이 많을 때 이전/다음 및 페이지 번호 버튼을 그려주는 함수입니다.
+     * @param {number} totalCount - 데이터베이스에 있는 전체 게시글 총 개수
+     * @param {number} currentPage - 현재 사용자가 보고 있는 페이지 번호
+     * @param {HTMLElement} container - 버튼들이 들어갈 화면의 div 요소
+     * @param {string} fetchFunctionName - 번호를 클릭했을 때 데이터를 불러올 함수의 이름 문자열
+     */
+    function renderPagination(totalCount, currentPage, container, fetchFunctionName) {
+        // 백엔드 API에서 기본적으로 한 페이지당 내려주는 데이터의 개수입니다. (10개)
+        const pageSize = 10;
+        // 전체 게시글 수를 페이지 사이즈로 나누어 총 몇 페이지가 필요한지 올림(Math.ceil) 계산합니다.
+        const totalPages = Math.ceil(totalCount / pageSize);
+
+        // 만약 총 페이지가 1페이지 이하라면 페이징 처리가 필요 없으므로
+        if (totalPages <= 1) {
+            // 컨테이너 내부를 비워서 페이지 번호를 숨기고 함수를 종료합니다.
+            container.innerHTML = '';
+            return;
+        }
+
+        // 부트스트랩 클래스를 활용하여 페이지네이션 HTML의 시작 부분을 작성합니다.
+        let html = '<nav><ul class="pagination pagination-sm justify-content-center">';
+
+        // 현재 1페이지를 보고 있다면 [이전] 버튼을 누를 수 없도록 'disabled' 클래스를 추가합니다.
+        const prevDisabled = currentPage === 1 ? 'disabled' : '';
+        // [이전] 버튼 HTML을 추가합니다. 클릭 시 현재 페이지 번호에서 1을 뺀 값으로 데이터를 다시 불러옵니다.
+        html += `<li class="page-item ${prevDisabled}"><a class="page-link text-success" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${currentPage - 1})">이전</a></li>`;
+
+        // 1페이지부터 계산된 총 페이지 번호까지 루프를 돕니다.
+        for (let i = 1; i <= totalPages; i++) {
+            // 루프를 도는 중의 숫자(i)가 사용자가 현재 보고 있는 페이지 번호와 같다면 색상을 채워 활성화(active) 표시를 합니다.
+            const activeClass = currentPage === i ? 'active bg-success border-success text-white' : 'text-success';
+            // 각 숫자 버튼의 HTML을 추가합니다. 클릭 시 해당 숫자(i)로 데이터를 다시 불러옵니다.
+            html += `<li class="page-item"><a class="page-link ${activeClass}" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${i})">${i}</a></li>`;
+        }
+
+        // 현재 마지막 페이지를 보고 있다면 [다음] 버튼을 누를 수 없도록 'disabled' 클래스를 추가합니다.
+        const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+        // [다음] 버튼 HTML을 추가합니다. 클릭 시 현재 페이지 번호에서 1을 더한 값으로 데이터를 다시 불러옵니다.
+        html += `<li class="page-item ${nextDisabled}"><a class="page-link text-success" href="#" onclick="event.preventDefault(); ${fetchFunctionName}(${currentPage + 1})">다음</a></li>`;
+
+        // ul과 nav 태그를 닫아 HTML 조립을 마무리합니다.
+        html += '</ul></nav>';
+        // 완성된 HTML 코드를 브라우저 DOM 컨테이너에 덮어씌워 실제 버튼들을 화면에 렌더링합니다.
+        container.innerHTML = html;
+    }
+</script>
+{% endblock %}

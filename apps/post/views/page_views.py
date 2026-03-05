@@ -29,3 +29,7 @@ def post_detail_page(request, post_id):
 def post_edit_page(request, post_id):
     """게시글 수정 화면(HTML)을 렌더링합니다."""
     return render(request, "post/edit.html")
+
+def trash_post_list_page(request):
+    """휴지통 관리 화면을 렌더링합니다."""
+    return render(request, "post/trash_list.html")
