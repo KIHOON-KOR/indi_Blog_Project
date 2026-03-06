@@ -78,14 +78,43 @@
 
         // 에디터 초기화
         editor = new toastui.Editor({
+            // 에디터가 렌더링될 HTML 요소를 선택합니다.
             el: document.querySelector('#editor'),
+            // 에디터의 기본 높이를 500px로 설정합니다.
             height: '500px',
+            // 처음 켜졌을 때 기본 편집 모드를 마크다운(markdown)으로 설정합니다.
             initialEditType: 'markdown',
+            // 마크다운 작성 시 우측에 미리보기가 나오도록 세로 분할(vertical) 모드를 씁니다.
             previewStyle: 'vertical',
+            // 내용이 비어있을 때 보여줄 안내 문구를 설정합니다.
             placeholder: '자유롭게 이야기를 풀어보세요...'
         });
 
-        // [추가] 내 시리즈 목록을 API에서 가져와 Select Box에 채워넣습니다.
+        // 맞춤법 검사 기능 추가
+        // 에디터 렌더링을 기다리기 위해 0.1초 딜레이를 줍니다.
+        setTimeout(() => {
+            // 에디터의 실제 텍스트 입력 영역(ProseMirror)을 DOM에서 찾습니다.
+            const editorInputArea = document.querySelector('.ProseMirror');
+
+            // 요소가 정상적으로 찾아졌다면 아래 로직을 실행합니다.
+            if (editorInputArea) {
+                // [1] 브라우저 내장 맞춤법 검사 기능을 강제로 켭니다. (빨간 줄 생성)
+                editorInputArea.setAttribute('spellcheck', 'true');
+                // 한국어 사전을 우선적으로 참조하도록 언어 속성을 부여합니다.
+                editorInputArea.setAttribute('lang', 'ko');
+
+                // 💡 [2] 여기서부터 추가된 코드입니다! (우클릭 차단 해제 로직)
+                // 에디터 입력 영역에서 'contextmenu'(우클릭) 이벤트가 발생했을 때 실행할 함수를 등록합니다.
+                editorInputArea.addEventListener('contextmenu', function (e) {
+                    // stopPropagation()은 이벤트가 부모 요소(에디터 코어)로 전파되는 것을 막아줍니다.
+                    // 즉, 에디터가 "우클릭 메뉴 띄우지 마!"라고 명령하기 전에 우리가 연결을 끊어버려서
+                    // 브라우저 본연의 우클릭 메뉴(맞춤법 교정 창)가 정상적으로 뜰 수 있게 해줍니다.
+                    e.stopPropagation();
+                });
+            }
+        }, 100); // 100 밀리초(0.1초) 뒤에 실행하여 에디터 렌더링 완료를 보장합니다.
+
+        // 내 시리즈 목록을 API에서 가져와 Select Box에 채워넣습니다.
         try {
             const seriesRes = await fetch('/api/v1/series/my/', {
                 headers: {'Authorization': 'Bearer ' + token}
