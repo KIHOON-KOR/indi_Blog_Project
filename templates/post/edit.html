@@ -76,6 +76,20 @@
             previewStyle: 'vertical'
         });
 
+        // 👇 여기서부터 복사해서 붙여넣기 해주세요! 👇
+        setTimeout(() => {
+            const editorInputArea = document.querySelector('.ProseMirror');
+
+            if (editorInputArea) {
+                editorInputArea.setAttribute('spellcheck', 'true');
+                editorInputArea.setAttribute('lang', 'ko');
+
+                editorInputArea.addEventListener('contextmenu', function (e) {
+                    e.stopPropagation();
+                });
+            }
+        }, 100);
+
         // [추가 1] 백엔드에서 내 시리즈 목록을 가져와 옵션 렌더링
         try {
             const seriesRes = await fetch('/api/v1/series/my/', {
