@@ -46,6 +46,13 @@ class PostAPIView(APIView):
                 location=OpenApiParameter.QUERY,
                 required=False,
             ),
+            OpenApiParameter(
+                name="search",
+                description="제목, 내용, 태그 기준 검색 키워드",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
         ],
     )
     def get(self, request: Request):
@@ -58,10 +65,15 @@ class PostAPIView(APIView):
         # 2. URL에서 '?tag=문자열' 값을 꺼내옵니다.
         tag_name = request.query_params.get("tag")
 
-        # 3. 서비스 레이어 호출 시 series_id와 tag_name을 함께 전달합니다.
-        posts = get_global_posts(series_id=series_id, tag_name=tag_name)
+        # 3. URL에서 '?search=검색어' 값을 꺼내옵니다.
+        search_keyword = request.query_params.get("search")
 
-        # 4. 페이지네이션 적용 후 반환
+        # 4. 서비스 레이어 호출 시 series_id와 tag_name을 함께 전달합니다.
+        posts = get_global_posts(
+            series_id=series_id, tag_name=tag_name, search_keyword=search_keyword
+        )
+
+        # 5. 페이지네이션 적용 후 반환
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(posts, request, view=self)
 
@@ -115,6 +127,13 @@ class MyPostAPIView(APIView):
                 location=OpenApiParameter.QUERY,
                 required=False,
             ),
+            OpenApiParameter(
+                name="search",
+                description="제목, 내용, 태그 기준 검색 키워드",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+            ),
         ],
     )
     def get(self, request: Request):
@@ -130,9 +149,15 @@ class MyPostAPIView(APIView):
         # 3. URL 파라미터에서 tag 값을 꺼내옵니다.
         tag_name = request.query_params.get("tag")
 
+        # 4. URL에서 '?search=검색어' 값을 꺼내옵니다.
+        search_keyword = request.query_params.get("search")
+
         # 4. 서비스 레이어 호출 시 시리즈와 태그 조건 전달
         posts = get_my_published_posts(
-            user=user, series_id=series_id, tag_name=tag_name
+            user=user,
+            series_id=series_id,
+            tag_name=tag_name,
+            search_keyword=search_keyword,
         )
 
         # 5. 페이지 네이션 적용 및 응답
