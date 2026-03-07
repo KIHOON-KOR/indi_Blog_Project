@@ -69,7 +69,9 @@ class PostAPIView(APIView):
         search_keyword = request.query_params.get("search")
 
         # 4. 서비스 레이어 호출 시 series_id와 tag_name을 함께 전달합니다.
-        posts = get_global_posts(series_id=series_id, tag_name=tag_name, search_keyword=search_keyword)
+        posts = get_global_posts(
+            series_id=series_id, tag_name=tag_name, search_keyword=search_keyword
+        )
 
         # 5. 페이지네이션 적용 후 반환
         paginator = self.pagination_class()
@@ -152,7 +154,10 @@ class MyPostAPIView(APIView):
 
         # 4. 서비스 레이어 호출 시 시리즈와 태그 조건 전달
         posts = get_my_published_posts(
-            user=user, series_id=series_id, tag_name=tag_name, search_keyword=search_keyword
+            user=user,
+            series_id=series_id,
+            tag_name=tag_name,
+            search_keyword=search_keyword,
         )
 
         # 5. 페이지 네이션 적용 및 응답

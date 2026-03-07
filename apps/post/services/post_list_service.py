@@ -4,7 +4,9 @@ from apps.user.models import User
 
 
 def get_global_posts(
-    series_id: int | None = None, tag_name: str | None = None, search_keyword: str | None = None
+    series_id: int | None = None,
+    tag_name: str | None = None,
+    search_keyword: str | None = None,
 ) -> QuerySet[Post]:
     """
     전체 피드 및 시리즈 목차, 태그 필터링용 포스트 목록을 가져옵니다.
@@ -27,9 +29,9 @@ def get_global_posts(
     # 4. 검색 기능 로직 추가
     if search_keyword:
         qs = qs.filter(
-            Q(title__icontains=search_keyword) |
-            Q(content__icontains=search_keyword) |
-            Q(tags__name__icontains=search_keyword)
+            Q(title__icontains=search_keyword)
+            | Q(content__icontains=search_keyword)
+            | Q(tags__name__icontains=search_keyword)
         ).distinct()  # 태그 M:N JOIN으로 인한 중복 결과 제거를 위해 추가
 
     # 5. N+1 문제 해결 및 좋아요 수 계산 후 생성일 기준 내림차순 정렬 반환
@@ -42,7 +44,11 @@ def get_global_posts(
 
 
 def get_my_published_posts(
-    *, user: User, series_id: int | None = None, tag_name: str | None = None, search_keyword: str | None = None
+    *,
+    user: User,
+    series_id: int | None = None,
+    tag_name: str | None = None,
+    search_keyword: str | None = None,
 ) -> QuerySet[Post]:
     """
     내가 작성한 발행 글 중 조건에 맞는 글만 가져옵니다.
@@ -66,9 +72,9 @@ def get_my_published_posts(
     if search_keyword:
         # 제목(title), 내용(content), 태그이름(tags__name) 중 하나라도 검색어가 포함(icontains)되어 있는지 확인합니다.
         qs = qs.filter(
-            Q(title__icontains=search_keyword) |
-            Q(content__icontains=search_keyword) |
-            Q(tags__name__icontains=search_keyword)
+            Q(title__icontains=search_keyword)
+            | Q(content__icontains=search_keyword)
+            | Q(tags__name__icontains=search_keyword)
         ).distinct()
 
     # 5. N+1 문제 해결 및 좋아요 수 계산 후 반환
