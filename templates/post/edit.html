@@ -3,51 +3,90 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>
+<style>
+    .border-dashed {
+        border-style: dashed !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="row justify-content-center w-100">
-    <div class="col-lg-8">
+    <div class="col-12 col-xl-15">
         <div class="text-center text-white mb-4">
             <h2 class="fw-bold">Edit Story</h2>
             <p class="opacity-75">내용을 다듬어 더 멋진 글을 완성해보세요.</p>
         </div>
 
         <div class="card auth-card shadow-lg border-0 bg-white">
-            <div class="card-body p-5">
+            <div class="card-body p-4 p-md-5">
                 <form id="editForm">
                     <div class="mb-4">
                         <label class="form-label fw-bold text-secondary">제목</label>
                         <input type="text" class="form-control form-control-lg border-2" id="title" required>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-5">
                         <label class="form-label fw-bold text-secondary">본문 내용</label>
                         <div id="editor"></div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label fw-bold text-secondary">공개 설정</label>
-                            <select class="form-select" id="visibility">
-                                <option value="PUBLIC">전체 공개</option>
-                                <option value="PRIVATE">비공개 (나만 보기)</option>
-                            </select>
+                    <div class="row g-4 mb-4">
+
+                        <div class="col-lg-6">
+                            <div class="bg-light rounded-4 p-4 h-100 border border-light-subtle">
+                                <h5 class="fw-bold text-dark mb-4"><i class="bi bi-gear-fill text-success me-2"></i>기본
+                                    설정</h5>
+
+                                <div class="row mb-3">
+                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                        <label class="form-label fw-bold text-secondary small">공개 설정</label>
+                                        <select class="form-select border-0 shadow-sm" id="visibility">
+                                            <option value="PUBLIC">전체 공개</option>
+                                            <option value="PRIVATE">비공개 (나만 보기)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label fw-bold text-secondary small">시리즈 설정</label>
+                                        <select class="form-select border-0 shadow-sm" id="series">
+                                            <option value="">선택 안 함</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <label for="tags" class="form-label fw-bold text-secondary small">태그</label>
+                                    <input type="text" class="form-control border-0 shadow-sm" id="tags"
+                                           placeholder="예: Python, Django, 일상 (쉼표로 구분)">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label fw-bold text-secondary">시리즈 설정</label>
-                            <select class="form-select" id="series">
-                                <option value="">선택 안 함</option>
-                            </select>
+
+                        <div class="col-lg-6">
+                            <div class="bg-light rounded-4 p-4 h-100 border border-light-subtle d-flex flex-column">
+                                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-image text-success me-2"></i>대표 썸네일
+                                </h5>
+
+                                <label for="thumbnail" class="form-label text-secondary" style="font-size: 0.8rem;">
+                                    이미지 주소(URL)를 입력해주세요 (파일 업로드 준비 중)
+                                </label>
+                                <input type="url" class="form-control border-0 shadow-sm mb-3" id="thumbnail"
+                                       placeholder="https://example.com/image.jpg">
+
+                                <div id="thumbnail-preview"
+                                     class="rounded-3 border border-2 border-dashed border-secondary border-opacity-25 d-flex align-items-center justify-content-center overflow-hidden flex-grow-1 bg-white"
+                                     style="min-height: 160px;">
+                                    <span class="text-muted small"
+                                          id="preview-text">이미지 URL을 입력하면<br>여기에 미리보기가 표시됩니다.</span>
+                                    <img id="preview-img" src="" class="w-100 h-100 object-fit-cover d-none"
+                                         alt="썸네일 미리보기">
+                                </div>
+                            </div>
                         </div>
+
                     </div>
 
-                    <div class="mb-4">
-                        <label for="tags" class="form-label fw-bold text-secondary">태그</label>
-                        <input type="text" class="form-control" id="tags" placeholder="예: Python, Django, 일상 (쉼표로 구분)">
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-5 border-top pt-4">
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                         <button type="button" onclick="history.back()" class="btn btn-light rounded-pill px-4">취소
                         </button>
                         <button type="submit" class="btn btn-primary rounded-pill px-5 shadow">수정 완료</button>
@@ -71,26 +110,23 @@
     document.addEventListener("DOMContentLoaded", async () => {
         editor = new toastui.Editor({
             el: document.querySelector('#editor'),
-            height: '500px',
+            height: '700px',
             initialEditType: 'markdown',
             previewStyle: 'vertical'
         });
 
-        // 👇 여기서부터 복사해서 붙여넣기 해주세요! 👇
         setTimeout(() => {
             const editorInputArea = document.querySelector('.ProseMirror');
-
             if (editorInputArea) {
                 editorInputArea.setAttribute('spellcheck', 'true');
                 editorInputArea.setAttribute('lang', 'ko');
-
                 editorInputArea.addEventListener('contextmenu', function (e) {
                     e.stopPropagation();
                 });
             }
         }, 100);
 
-        // [추가 1] 백엔드에서 내 시리즈 목록을 가져와 옵션 렌더링
+        // 1. 시리즈 목록 불러오기
         try {
             const seriesRes = await fetch('/api/v1/series/my/', {
                 headers: {'Authorization': 'Bearer ' + token}
@@ -108,10 +144,10 @@
                 });
             }
         } catch (e) {
-            console.error('시리즈 목록 로드 실패', e);
+            console.error('시리즈 로드 실패', e);
         }
 
-        // [추가 2] 기존 게시글 데이터를 가져와서 각 폼의 값을 채움
+        // 2. 기존 게시글 데이터 불러오기
         try {
             const res = await fetch(`/api/v1/post/${currentPostId}/`);
             const data = await res.json();
@@ -120,7 +156,6 @@
                 document.getElementById('title').value = data.title;
                 document.getElementById('visibility').value = data.visibility;
 
-                // 기존 글이 시리즈에 포함되어 있다면 해당 시리즈 선택 상태로 만들기
                 if (data.series) {
                     document.getElementById('series').value = data.series;
                 }
@@ -129,11 +164,47 @@
                     document.getElementById('tags').value = data.tags.join(', ');
                 }
 
+                // ✨ 기존 글에 썸네일(URL)이 존재한다면, 입력칸과 미리보기 영역을 채워줍니다.
+                if (data.thumbnail) {
+                    // 입력창에 기존 URL 값을 넣습니다.
+                    document.getElementById('thumbnail').value = data.thumbnail;
+                    // 미리보기 이미지의 src에도 URL을 넣습니다.
+                    document.getElementById('preview-img').src = data.thumbnail;
+                    // 이미지가 보이도록 클래스(d-none)를 지워줍니다.
+                    document.getElementById('preview-img').classList.remove('d-none');
+                    // 글자 안내 문구는 안 보이게 숨깁니다.
+                    document.getElementById('preview-text').style.display = 'none';
+                }
+
                 editor.setMarkdown(data.content);
             }
         } catch (e) {
             console.error(e);
         }
+
+        // ✨ 썸네일 URL 실시간 미리보기 기능 (글쓰기 페이지와 동일)
+        const thumbnailInput = document.getElementById('thumbnail');
+        const previewImg = document.getElementById('preview-img');
+        const previewText = document.getElementById('preview-text');
+
+        thumbnailInput.addEventListener('input', function () {
+            const url = this.value.trim();
+            if (url) {
+                previewImg.src = url;
+                previewImg.classList.remove('d-none');
+                previewText.style.display = 'none';
+            } else {
+                previewImg.classList.add('d-none');
+                previewImg.src = '';
+                previewText.style.display = 'block';
+            }
+        });
+
+        previewImg.addEventListener('error', function () {
+            this.classList.add('d-none');
+            previewText.style.display = 'block';
+            previewText.innerHTML = '<span class="text-danger">이미지를 불러올 수 없습니다.<br>올바른 URL인지 확인해주세요.</span>';
+        });
     });
 
     document.getElementById('editForm').addEventListener('submit', async (e) => {
@@ -142,14 +213,17 @@
         const tagsInput = document.getElementById('tags').value;
         const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
         const seriesValue = document.getElementById('series').value;
+        // ✨ 수정한 썸네일 URL을 가져옵니다.
+        const thumbnailUrl = document.getElementById('thumbnail').value.trim();
 
-        // [추가] payload에 수정한 시리즈(series) 데이터를 포함
         const payload = {
             title: document.getElementById('title').value,
             content: editor.getMarkdown(),
             visibility: document.getElementById('visibility').value,
             tags: tagsArray,
-            series: seriesValue ? parseInt(seriesValue) : null
+            series: seriesValue ? parseInt(seriesValue) : null,
+            // ✨ 썸네일 값도 함께 업데이트 요청을 보냅니다.
+            thumbnail: thumbnailUrl || null
         };
 
         const res = await fetch(`/api/v1/post/${currentPostId}/`, {
