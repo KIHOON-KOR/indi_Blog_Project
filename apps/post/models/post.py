@@ -20,7 +20,11 @@ class Post(TimeStampedModel):
     title = models.CharField(max_length=200)
     content = models.TextField()
     summary = models.TextField(null=True, blank=True)
-    thumbnail = models.CharField(max_length=255, null=True, blank=True)
+    thumbnail = models.CharField(
+        max_length=255,  # S3 URL 주소가 꽤 길 수 있으므로 255자로 넉넉하게 설정합니다.
+        null=True,  # DB에 값이 없어도(null) 에러를 내지 않도록 허용합니다.
+        blank=True,  # API 요청 시 썸네일 항목이 텅 비어있어("")도 통과시켜 줍니다.
+    )
 
     is_temp = models.BooleanField(default=False)
 
