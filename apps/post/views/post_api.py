@@ -20,6 +20,7 @@ from apps.post.serializers.post_create import PostCreateSerializer
 from apps.post.serializers.post_list import PostListSerializer
 from apps.core.pagination import PostPageNumberPagination
 from drf_spectacular.types import OpenApiTypes
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 class PostAPIView(APIView):
@@ -27,6 +28,7 @@ class PostAPIView(APIView):
 
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = PostPageNumberPagination
+    parser_classes = [MultiPartParser, JSONParser, FormParser]
 
     @extend_schema(
         tags=["포스트"],
@@ -174,6 +176,11 @@ class MyPostAPIView(APIView):
 
 class PostDetailAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = [
+        MultiPartParser,
+        JSONParser,
+        FormParser,
+    ]  # 수정 로직에서 업로드 가능하도록 하기위해 추가
 
     @extend_schema(tags=["포스트"], summary="게시글 상세 조회")
     def get(self, request: Request, post_id: int):
