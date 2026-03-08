@@ -1,5 +1,5 @@
-import os  # 운영체제와 상호작용하기 위한 표준 라이브러리를 가져옵니다.
-from pathlib import Path  # 파일 경로를 객체 단위로 편리하게 다루기 위해 가져옵니다.
+import os
+from pathlib import Path
 
 # 환경 변수(.env) 관리를 위한 라이브러리를 가져옵니다.
 import environ  # type: ignore
@@ -40,9 +40,10 @@ THIRD_PARTY_APPS = [  # 외부에서 설치한 라이브러리 앱들입니다.
     "rest_framework",  # Django Rest Framework를 사용합니다.
     "drf_spectacular",  # Swagger 문서 생성을 위한 라이브러리입니다.
     "rest_framework_simplejwt",  # JWT 인증 기능을 제공하는 라이브러리입니다.
+    "storages",  # S3 연동을 위해 설치한 패키지를 활성화
 ]
 
-CUSTOM_APPS = [  # 기훈 님이 직접 만드신 비즈니스 로직 앱들입니다.
+CUSTOM_APPS = [
     "apps.user",
     "apps.post",
     "apps.series",
@@ -222,3 +223,33 @@ CELERY_RESULT_BACKEND = os.environ.get(
 CELERY_ACCEPT_CONTENT = ["json"]  # 데이터 교환 시 JSON 형식을 허용합니다.
 CELERY_TASK_SERIALIZER = "json"  # 작업 데이터 직렬화 방식입니다.
 CELERY_RESULT_SERIALIZER = "json"  # 결과 데이터 직렬화 방식입니다.
+
+# AWS S3 기본 설정
+AWS_ACCESS_KEY_ID = os.environ.get(
+    "AWS_ACCESS_KEY_ID"
+)  # '액세스 키'를 입력받을 환경변수 이름
+AWS_SECRET_ACCESS_KEY = os.environ.get(
+    "AWS_SECRET_ACCESS_KEY"
+)  # '비밀 액세스 키'를 입력받을 환경변수 이름
+AWS_STORAGE_BUCKET_NAME = "hoon-blog-image-0112"  # '버킷 이름'
+AWS_S3_REGION_NAME = "ap-northeast-2"  # 버킷이 위치한 서울 리전 코드
+
+# 추가 옵션 설정
+AWS_DEFAULT_ACL = "public-read"  # S3에 업로드된 파일에 접근할 수 있는 기본 권한을 '누구나 읽기 가능'으로 설정(블로그 썸네일이기 때문)
+AWS_S3_FILE_OVERWRITE = False  # 동일한 이름의 파일이 올라오면, 기존 파일을 덮어쓰지 않고 파일명 뒤에 랜덤한 문자를 붙여서 저장 (안전성 확보)
+# S3 주소 체계를 설정 (boto3가 이 형식에 맞춰 이미지 URL을 만들어줌)
+AWS_S3_CUSTOM_DOMAIN = (
+    f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+)
+
+# Django 미디어 파일 저장소 변경
+STORAGES = {
+    # 1. 미디어 파일 (유저가 업로드하는 파일, 썸네일 등) -> S3로 보냄
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    # 2. 정적 파일 (CSS, JS 등) -> 일단 기존처럼 서버 로컬에서 처리
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}

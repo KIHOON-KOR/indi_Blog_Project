@@ -20,7 +20,12 @@ class Post(TimeStampedModel):
     title = models.CharField(max_length=200)
     content = models.TextField()
     summary = models.TextField(null=True, blank=True)
-    thumbnail = models.CharField(max_length=255, null=True, blank=True)
+    thumbnail = models.ImageField(
+        upload_to="post/thumbnails/%Y/%m/%d/",  # S3 버킷 안에 어떤 폴더 구조로 저장할지 정함
+        # 썸네일 이미지를 안 올리고 글만 써도 에러가 나지 않도록 허용
+        null=True,
+        blank=True,
+    )
 
     is_temp = models.BooleanField(default=False)
 
