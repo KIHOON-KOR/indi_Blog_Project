@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.post.views.image_api import PresignedUrlAPIView
 from apps.post.views.page_views import (
     post_write_page,
     temp_post_list_page,
@@ -16,6 +17,10 @@ from apps.post.views.temp_post_api import MyTempManageAPIView, MyTempAPIView
 from apps.post.views.trash.trash_api import TrashAPIView, TrashManageAPIView
 
 urlpatterns = [
+    # [이미지 업로드]
+    path(
+        "image/presigned-url/", PresignedUrlAPIView.as_view(), name="get_presigned_url"
+    ),
     # [전체 피드 및 생성]
     path("", PostAPIView.as_view(), name="post_list_create"),
     # [내 블로그]
