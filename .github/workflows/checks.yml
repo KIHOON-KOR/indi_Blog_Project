@@ -128,6 +128,11 @@ jobs:
       - name: Run Django Migration
         run: |
           poetry run python manage.py migrate
+        env:
+          # DB 및 AWS 관련 필수 환경 변수들을 주입합니다.
+          AWS_ACCESS_KEY_ID: "dummy"
+          AWS_SECRET_ACCESS_KEY: "dummy"
+          AWS_STORAGE_BUCKET_NAME: "dummy"
 
       # Coverage 패키지가 필요하므로 없는 경우를 대비해 설치 확인
       # (pyproject.toml에 coverage가 없다면 추가해야 합니다)
