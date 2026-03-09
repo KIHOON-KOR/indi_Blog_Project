@@ -170,43 +170,70 @@
         const previewImg = document.getElementById('preview-img');
         const previewText = document.getElementById('preview-text');
 
+        // 파일 선택 창에서 파일이 변경(선택)되었을 때 실행되는 이벤트 리스너입니다.
         fileInput.addEventListener('change', async function () {
+            // 사용자가 선택한 첫 번째 파일을 가져옵니다.
             const file = this.files[0];
+            // 파일이 선택되지 않았다면(취소 누름) 함수를 바로 종료합니다.
             if (!file) return;
 
+            // 업로드가 진행 중임을 알리는 로딩 스피너를 보여줍니다.
             previewText.innerHTML = '<div class="spinner-border spinner-border-sm text-success"></div><br>S3로 업로드 중...';
             previewText.style.display = 'block';
+            // 기존에 보이던 미리보기 이미지는 숨깁니다.
             previewImg.classList.add('d-none');
 
             try {
                 // 1. URL 발급
+                // 내 백엔드 서버에 프론트엔드가 선택한 파일의 '이름'을 보내며 S3 임시 업로드 권한(URL)을 요청합니다.
+                // encodeURIComponent를 사용해 파일명에 포함된 특수문자나 한글이 깨지지 않도록 보호합니다.
                 const urlResponse = await fetch(`/api/v1/post/image/presigned-url/?filename=${encodeURIComponent(file.name)}`, {
                     headers: {'Authorization': 'Bearer ' + token}
                 });
+
+                // 백엔드에서 온 응답 데이터를 JSON으로 파싱합니다.
                 const urlData = await urlResponse.json();
 
-                if (!urlResponse.ok) throw new Error("URL 발급 실패");
+                // URL 발급에 실패(400번대, 500번대 에러)했다면 예외를 발생시킵니다.
+                if (!urlResponse.ok) throw new Error("URL 발급 실패: " + JSON.stringify(urlData));
 
                 // 2. S3 직접 업로드
+                // 백엔드가 S3로부터 받아와서 프론트엔드에 넘겨준 '임시 업로드용 S3 주소(presigned_url)'로
+                // 프론트엔드가 '직접' 파일을 PUT 방식으로 쏘아 올립니다. (서버 부하 감소)
                 const s3Response = await fetch(urlData.presigned_url, {
                     method: 'PUT',
-                    headers: { 'Content-Type': file.type },
+                    // S3가 이 파일이 이미지임을 알 수 있도록 헤더에 파일의 실제 타입(예: image/png)을 명시합니다.
+                    headers: {'Content-Type': file.type},
+                    // 실제 파일 데이터를 본문(body)에 담아 보냅니다.
                     body: file
                 });
 
+                // S3 업로드가 성공적으로 완료되었다면 (상태 코드 200 OK)
                 if (s3Response.ok) {
+                    // 백엔드가 미리 만들어준 '최종 접속 가능한 이미지 S3 주소(image_url)'를 전역 변수에 저장해둡니다.
+                    // 나중에 '발행하기' 버튼을 누를 때 백엔드 DB에 이 주소를 저장하기 위함입니다.
                     finalImageUrl = urlData.image_url;
+
+                    // 미리보기 img 태그의 주소를 방금 업로드한 S3 주소로 변경합니다.
                     previewImg.src = finalImageUrl;
+                    // 미리보기 이미지가 화면에 보이도록 숨김 클래스(d-none)를 제거합니다.
                     previewImg.classList.remove('d-none');
+                    // 글자 안내 문구는 이제 필요 없으므로 숨깁니다.
                     previewText.style.display = 'none';
                 } else {
-                    throw new Error("S3 직접 업로드 실패");
+                    // S3에서 업로드를 거부했다면(CORS, 권한 문제 등) 예외를 발생시킵니다.
+                    throw new Error("S3 직접 업로드 실패: " + s3Response.status);
                 }
 
             } catch (error) {
+                // 백엔드 URL 발급 실패 또는 S3 업로드 실패 시 이 곳으로 빠집니다.
                 console.error("업로드 에러:", error);
-                previewText.innerHTML = '<span class="text-danger">업로드에 실패했습니다.</span>';
+                // 사용자에게 업로드 실패 사실을 알립니다.
+                previewText.innerHTML = '<span class="text-danger">업로드에 실패했습니다. CORS 설정이나 권한을 확인하세요.</span>';
+                // 실패했으므로 파일 입력창을 초기화합니다.
                 fileInput.value = "";
+                // 실패 시 전역 변수도 초기화하여 찌꺼기 데이터가 저장되지 않게 합니다.
+                finalImageUrl = "";
             }
         });
 
