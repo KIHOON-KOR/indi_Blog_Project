@@ -225,14 +225,22 @@ CELERY_TASK_SERIALIZER = "json"  # 작업 데이터 직렬화 방식입니다.
 CELERY_RESULT_SERIALIZER = "json"  # 결과 데이터 직렬화 방식입니다.
 
 # AWS S3 기본 설정
-AWS_ACCESS_KEY_ID = os.environ.get(
+
+AWS_ACCESS_KEY_ID = env(
     "AWS_ACCESS_KEY_ID"
-)  # '액세스 키'를 입력받을 환경변수 이름
-AWS_SECRET_ACCESS_KEY = os.environ.get(
+)  # .env 파일에서 'AWS_ACCESS_KEY_ID' 값을 엄격하게 가져옵니다. 값이 누락되면 서버 실행 시 즉시 에러를 띄워줍니다.
+
+AWS_SECRET_ACCESS_KEY = env(
     "AWS_SECRET_ACCESS_KEY"
-)  # '비밀 액세스 키'를 입력받을 환경변수 이름
-AWS_STORAGE_BUCKET_NAME = "hoon-blog-image-0112"  # '버킷 이름'
-AWS_S3_REGION_NAME = "ap-northeast-2"  # 버킷이 위치한 서울 리전 코드
+)  # S3 접근을 위한 '비밀 액세스 키'를 가져옵니다. 외부에 절대 노출되면 안 되는 값이므로 확실하게 검증합니다.
+
+AWS_STORAGE_BUCKET_NAME = env(
+    "AWS_STORAGE_BUCKET_NAME"
+)  # 이미지가 저장될 실제 '버킷 이름'을 가져옵니다.
+
+AWS_S3_REGION_NAME = env(
+    "AWS_REGION", default="ap-northeast-2"
+)  # 버킷이 위치한 '리전 코드'를 가져옵니다. default 값을 설정해두면 .env에 값이 없을 때 기본값(서울 리전)으로 동작하게 하여 안정성을 높일 수 있습니다.
 
 # 추가 옵션 설정
 AWS_DEFAULT_ACL = "public-read"  # S3에 업로드된 파일에 접근할 수 있는 기본 권한을 '누구나 읽기 가능'으로 설정(블로그 썸네일이기 때문)
