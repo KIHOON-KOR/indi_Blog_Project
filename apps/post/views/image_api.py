@@ -8,7 +8,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from django.conf import settings
 from datetime import datetime
-from botocore.config import Config
+from botocore.config import Config  # type: ignore
+
 
 class PresignedUrlAPIView(APIView):
     """
@@ -55,7 +56,7 @@ class PresignedUrlAPIView(APIView):
             endpoint_url=f"https://s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com",
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            config=Config(signature_version="s3v4")
+            config=Config(signature_version="s3v4"),
         )
 
         try:
