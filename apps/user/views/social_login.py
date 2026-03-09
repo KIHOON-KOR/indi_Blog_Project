@@ -6,10 +6,12 @@ from apps.user.services.social_login_service import GithubLoginService
 from rest_framework.response import Response
 from rest_framework import status
 
+
 class GithubLoginAPIView(APIView):
     """
     1. 유저가 '깃허브 로그인' 버튼을 눌렀을 때 깃허브 서버로 보내주는 역할만 합니다.
     """
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -28,13 +30,16 @@ class GithubLoginAPIView(APIView):
 
 class GithubLoginCallbackAPIView(APIView):
     """프론트엔드가 넘겨준 코드를 받아 토큰을 발급하는 API (POST)"""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
         code = request.data.get("code")
 
         if not code:
-            return Response({"error": "인가 코드가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "인가 코드가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             # 1. 서비스 호출
@@ -53,7 +58,7 @@ class GithubLoginCallbackAPIView(APIView):
                         "nickname": login_data["user"].nickname,
                     },
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

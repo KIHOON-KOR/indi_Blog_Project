@@ -67,26 +67,26 @@ class GithubLoginService:
 
             # 14. 소셜 계정이 이미 존재한다면 (기존 가입 유저)
             if social_account:
-                user = social_account.user  # 해당 소셜 계정과 연결된 User 객체를 가져옵니다.
+                user = (
+                    social_account.user
+                )  # 해당 소셜 계정과 연결된 User 객체를 가져옵니다.
 
             # 15. 소셜 계정이 없다면 (신규 가입 유저)
             else:
                 # 16. 혹시 같은 이메일로 가입한 기존 일반 유저가 있는지 확인합니다.
-                user = User.objects.filter(email=email).first()
+                user = User.objects.filter(email=email).first()  # type: ignore
 
                 # 17. 일반 유저도 없다면 새로운 유저를 생성합니다. (UserManager의 create_user 활용)
                 if not user:
                     user = User.objects.create_user(
                         email=email,
                         nickname=nickname,
-                        password=None  # 소셜 로그인이므로 비밀번호는 사용 불가 처리됩니다.
+                        password=None,  # 소셜 로그인이므로 비밀번호는 사용 불가 처리됩니다.
                     )
 
                 # 18. 새로 생성한(혹은 기존) 유저와 깃허브 ID를 연결하는 SocialAccount 레코드를 생성합니다.
                 SocialAccount.objects.create(
-                    user=user,
-                    provider="github",
-                    social_id=github_id
+                    user=user, provider="github", social_id=github_id
                 )
 
         # 19. 유저 인증이 완료되었으므로, 프론트엔드에 전달할 자체 JWT 토큰을 생성합니다.
