@@ -58,6 +58,10 @@ jobs:
 
       - name: Run Mypy (Type Checking)
         run: poetry run mypy .
+        env: # 해당 step 내에서만 유효한 환경 변수를 설정하는 블록입니다.
+          AWS_ACCESS_KEY_ID: "dummy"   # mypy가 settings.py를 로드할 때 에러가 나지 않도록 가짜 액세스 키를 주입합니다.
+          AWS_SECRET_ACCESS_KEY: "dummy" # 비밀 키 검증 로직을 통과하기 위한 가짜 비밀 키입니다.
+          AWS_STORAGE_BUCKET_NAME: "dummy" # 버킷 이름 확인 시 에러 방지를 위한 더미 값입니다.
 
   # 2. 테스트 (Tests)
   test:
