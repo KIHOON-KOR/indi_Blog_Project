@@ -49,6 +49,7 @@ CUSTOM_APPS = [
     "apps.series",
     "apps.tags",
     "apps.comment",
+    "apps.ai",
 ]
 
 INSTALLED_APPS = (
