@@ -8,6 +8,7 @@ from apps.user.services.social_login_service import (
 )
 from rest_framework.response import Response
 from rest_framework import status
+import urllib.parse
 
 
 class GithubLoginAPIView(APIView):
@@ -72,11 +73,14 @@ class DiscordLoginAPIView(APIView):
 
     def get(self, request):
         client_id = settings.DISCORD_CLIENT_ID
-        # urls.py에 등록할 콜백 주소와 동일해야 합니다.
+
+        # 프론트엔드 로그인 페이지로 돌아가도록 설정
         redirect_uri = "http://127.0.0.1:8000/api/v1/user/login-page/?provider=discord"
 
-        # scope에 identify(프로필)와 email을 필수로 요청합니다.
-        discord_auth_url = f"https://discord.com/api/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
+        # URL에 들어갈 수 있도록 특수문자(:, /, ? 등)를 안전하게 인코딩합니다.
+        encoded_redirect_uri = urllib.parse.quote(redirect_uri)
+
+        discord_auth_url = f"https://discord.com/api/oauth2/authorize?client_id={client_id}&redirect_uri={encoded_redirect_uri}&response_type=code&scope=identify%20email"
 
         return redirect(discord_auth_url)
 
@@ -84,9 +88,12 @@ class DiscordLoginAPIView(APIView):
 class DiscordLoginCallbackAPIView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request):
-        # 디스코드는 보통 GET 파라미터로 code를 넘겨줍니다 (프론트/백엔드 분리 구조에 따라 POST로 받을 수도 있음)
-        code = request.GET.get("code")
+    # 프론트엔드가 fetch로 POST 요청을 보내므로 POST로 받습니다.
+    def post(self, request):
+        # GET.get이 아닌 data.get으로 body에 담긴 JSON 데이터를 꺼냅니다.
+        code = request.data.get("code")
+
+        # 토큰을 요청할 때도 위(APIView)에서 적었던 주소와 완벽히 똑같아야 합니다!
         redirect_uri = "http://127.0.0.1:8000/api/v1/user/login-page/?provider=discord"
 
         if not code:
@@ -95,6 +102,7 @@ class DiscordLoginCallbackAPIView(APIView):
             )
 
         try:
+            # 서비스 계층 호출
             login_data = DiscordLoginService.discord_login(code, redirect_uri)
 
             return Response(
@@ -112,4 +120,5 @@ class DiscordLoginCallbackAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
+            # 에러 발생 시 문자열로 변환하여 프론트엔드로 전달
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
