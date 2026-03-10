@@ -16,6 +16,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/tags/", include("apps.tags.urls")),
     path("api/v1/comment/", include("apps.comment.urls")),
     path("api/v1/series/", include("apps.series.urls")),
+    path("api/ai/", include("apps.ai.urls")),
 ]
 
 if settings.DEBUG:
