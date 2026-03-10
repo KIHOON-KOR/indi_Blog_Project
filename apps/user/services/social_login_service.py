@@ -98,3 +98,75 @@ class GithubLoginService:
             "refresh_token": str(refresh),
             "user": user,
         }
+
+
+class DiscordLoginService:
+    @staticmethod
+    def discord_login(code: str, redirect_uri: str):
+        # 1. 디스코드 토큰 발급 URL
+        token_req_url = "https://discord.com/api/oauth2/token"
+
+        # 2. 토큰 요청 페이로드 (디스코드는 grant_type과 redirect_uri가 필수입니다)
+        data = {
+            "client_id": settings.DISCORD_CLIENT_ID,
+            "client_secret": settings.DISCORD_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_uri,
+        }
+
+        # 3. 디스코드 API 권장 헤더 포맷
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        # 4. 토큰 요청
+        token_req = requests.post(token_req_url, data=data, headers=headers)
+        token_json = token_req.json()
+
+        if "error" in token_json:
+            raise ValueError("Discord 토큰을 받아오는데 실패했습니다.")
+
+        access_token = token_json.get("access_token")
+
+        # 5. 유저 정보 요청 URL
+        user_req_url = "https://discord.com/api/users/@me"
+        user_req = requests.get(
+            user_req_url, headers={"Authorization": f"Bearer {access_token}"}
+        )
+        user_json = user_req.json()
+
+        # 6. 유저 정보 추출 (디스코드는 id와 username, email을 반환합니다)
+        discord_id = str(user_json.get("id"))
+        nickname = user_json.get("username")
+        email = user_json.get("email")
+
+        if not email:
+            email = f"{discord_id}@discord.dummy.com"
+
+        # 7. DB 트랜잭션 (기존 로직과 동일)
+        with transaction.atomic():
+            social_account = SocialAccount.objects.filter(
+                provider="discord", social_id=discord_id
+            ).first()
+
+            if social_account:
+                user = social_account.user
+            else:
+                user = User.objects.filter(email=email).first()  # type: ignore
+                if not user:
+                    user = User.objects.create_user(
+                        email=email,
+                        nickname=nickname,
+                        password=None,
+                    )
+                SocialAccount.objects.create(
+                    user=user, provider="discord", social_id=discord_id
+                )
+
+        # 8. JWT 발급
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            "access_token": str(refresh.access_token),
+            "refresh_token": str(refresh),
+            "user": user,
+        }
