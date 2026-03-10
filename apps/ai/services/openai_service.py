@@ -21,7 +21,7 @@ def convert_text_tone(text: str, tone: str) -> str:
 
         # Gemini 모델 인스턴스를 생성합니다.
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash", system_instruction=system_prompt
+            model_name="gemini-flash-latest", system_instruction=system_prompt
         )
 
         # 모델에게 실제 변환할 사용자의 텍스트를 전달하고 결과(응답)를 생성하도록 요청합니다.

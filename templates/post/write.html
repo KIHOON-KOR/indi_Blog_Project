@@ -29,7 +29,14 @@
                     </div>
 
                     <div class="mb-5">
-                        <label class="form-label fw-bold text-secondary">본문 내용</label>
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <label class="form-label fw-bold text-secondary mb-0">본문 내용</label>
+                            <button type="button"
+                                    class="btn btn-sm btn-warning fw-bold rounded-pill px-3 shadow-sm text-dark"
+                                    data-bs-toggle="modal" data-bs-target="#aiToneModal">
+                                <i class="bi bi-magic me-1"></i> AI로 글 다듬기
+                            </button>
+                        </div>
                         <div id="editor"></div>
                     </div>
 
@@ -99,6 +106,67 @@
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="aiToneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+
+            <div class="modal-header bg-light border-bottom-0 pt-4 px-4 rounded-top-4">
+                <h5 class="modal-title fw-bold" style="color: var(--brand-dark-green);">
+                    <i class="bi bi-magic text-warning me-2"></i>AI 문체 변환기
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4 bg-white">
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-secondary small">원본 텍스트 (대충 적어도 찰떡같이!)</label>
+                        <textarea id="ai-source-text" class="form-control border-2" rows="8"
+                                  placeholder="예: 강남역 마라탕 존맛탱 웨이팅 엄청 김..."></textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-secondary small">변환된 텍스트</label>
+                        <div class="position-relative h-100">
+                            <textarea id="ai-result-text" class="form-control bg-light border-0" rows="8"
+                                      placeholder="결과가 여기에 표시됩니다." readonly></textarea>
+
+                            <div id="ai-loading" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-success" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="form-label fw-bold text-secondary small mb-2">원하는 문체를 선택하세요</label>
+                    <div class="d-flex gap-2 flex-wrap">
+
+                        <input type="radio" class="btn-check" name="tone-options" id="tone-pro" value="professional"
+                               checked>
+                        <label class="btn btn-outline-success rounded-pill px-3" for="tone-pro">💻 전문적인 IT</label>
+
+                        <input type="radio" class="btn-check" name="tone-options" id="tone-friendly" value="friendly">
+                        <label class="btn btn-outline-success rounded-pill px-3" for="tone-friendly">😊 친근한 리뷰</label>
+
+                        <input type="radio" class="btn-check" name="tone-options" id="tone-emo" value="emotional">
+                        <label class="btn btn-outline-success rounded-pill px-3" for="tone-emo">🌙 감성 에세이</label>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light border-top-0 pb-4 px-4 rounded-bottom-4 d-flex justify-content-between">
+                <button type="button" id="btn-ai-convert" class="btn btn-dark rounded-pill px-4">변환하기</button>
+                <button type="button" id="btn-ai-apply" class="btn btn-primary rounded-pill px-4 shadow-sm" disabled>
+                    에디터에 삽입
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -295,6 +363,80 @@
             savePost(true);
         });
 
-    }); // ✅ [핵심!!] 여기가 이전에 빠져있던 닫는 괄호입니다!
+    });
+
+    // 1. [변환하기] 버튼을 눌렀을 때 실행되는 이벤트입니다.
+    document.getElementById('btn-ai-convert').addEventListener('click', async () => {
+        // 사용자가 입력한 원본 텍스트와, 선택한 문체(radio 버튼 값)를 가져옵니다.
+        const text = document.getElementById('ai-source-text').value.trim();
+        const tone = document.querySelector('input[name="tone-options"]:checked').value;
+
+        // 빈칸 검사
+        if (!text) {
+            alert('변환할 텍스트를 입력해주세요.');
+            return;
+        }
+
+        // UI 변경: 변환 결과창을 비우고, 로딩 스피너를 보여주고, 변환 버튼을 비활성화합니다.
+        document.getElementById('ai-result-text').value = '';
+        document.getElementById('ai-loading').classList.remove('d-none');
+
+        const convertBtn = document.getElementById('btn-ai-convert');
+        convertBtn.disabled = true;
+        convertBtn.innerText = '변환 중...';
+
+        try {
+            // 우리가 만든 ai 앱의 API 엔드포인트로 POST 요청을 보냅니다.
+            const response = await fetch('/api/ai/tone-convert/', { // urls.py 설정에 따라 경로 확인 요망
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // AI 변환은 로그인한 유저만 쓸 수 있도록 토큰을 헤더에 담아줍니다.
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                // 사용자의 글과 선택한 문체를 JSON 형태로 포장하여 보냅니다.
+                body: JSON.stringify({text: text, tone: tone})
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // 성공 시 AI가 변환해 준 텍스트를 결과창에 예쁘게 띄워줍니다.
+                document.getElementById('ai-result-text').value = data.converted_text;
+                // 이제 결과가 나왔으니 [에디터에 삽입] 버튼의 비활성화를 풀어줍니다.
+                document.getElementById('btn-ai-apply').disabled = false;
+            } else {
+                // 실패 시 예외 처리 핸들러가 넘겨준 에러 메시지를 띄웁니다.
+                alert('변환 실패: ' + (data.error_detail || data.error || '알 수 없는 오류'));
+            }
+        } catch (error) {
+            // 네트워크 단절 등 통신 자체가 실패했을 때의 에러 처리입니다.
+            console.error('AI Convert Error:', error);
+            alert('서버 통신 중 오류가 발생했습니다.');
+        } finally {
+            // 변환이 성공하든 실패하든, 로딩 UI를 끄고 버튼을 원래 상태로 되돌립니다.
+            document.getElementById('ai-loading').classList.add('d-none');
+            convertBtn.disabled = false;
+            convertBtn.innerText = '변환하기';
+        }
+    });
+
+    // 2. [에디터에 삽입] 버튼을 눌렀을 때 실행되는 이벤트입니다.
+    document.getElementById('btn-ai-apply').addEventListener('click', () => {
+        // 변환 결과창에 있는 텍스트를 가져옵니다.
+        const resultText = document.getElementById('ai-result-text').value;
+
+        if (resultText && editor) {
+            // Toast UI Editor의 내장 함수를 사용하여, 현재 커서가 있는 위치에 변환된 글을 쏙 집어넣습니다.
+            // 줄바꿈(\n\n)을 추가하여 기존 글과 겹치지 않게 여백을 줍니다.
+            editor.insertText('\n\n' + resultText + '\n\n');
+
+            // 성공적으로 들어갔으니 열려있는 모달 팝업을 닫습니다.
+            const modalEl = document.getElementById('aiToneModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        }
+    });
+
 </script>
 {% endblock %}
