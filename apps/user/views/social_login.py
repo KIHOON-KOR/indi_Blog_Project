@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from apps.user.services.social_login_service import GithubLoginService
+from apps.user.services.social_login_service import GithubLoginService, DiscordLoginService
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -49,6 +49,54 @@ class GithubLoginCallbackAPIView(APIView):
             return Response(
                 {
                     "message": "GitHub 로그인 성공",
+                    "token": {
+                        "access": login_data["access_token"],
+                        "refresh": login_data["refresh_token"],
+                    },
+                    "user": {
+                        "email": login_data["user"].email,
+                        "nickname": login_data["user"].nickname,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DiscordLoginAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        client_id = settings.DISCORD_CLIENT_ID
+        # urls.py에 등록할 콜백 주소와 동일해야 합니다.
+        redirect_uri = "http://127.0.0.1:8000/api/v1/user/login-page/?provider=discord"
+
+        # scope에 identify(프로필)와 email을 필수로 요청합니다.
+        discord_auth_url = f"https://discord.com/api/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=identify%20email"
+
+        return redirect(discord_auth_url)
+
+
+class DiscordLoginCallbackAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # 디스코드는 보통 GET 파라미터로 code를 넘겨줍니다 (프론트/백엔드 분리 구조에 따라 POST로 받을 수도 있음)
+        code = request.GET.get("code")
+        redirect_uri = "http://127.0.0.1:8000/api/v1/user/login-page/?provider=discord"
+
+        if not code:
+            return Response(
+                {"error": "인가 코드가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            login_data = DiscordLoginService.discord_login(code, redirect_uri)
+
+            return Response(
+                {
+                    "message": "Discord 로그인 성공",
                     "token": {
                         "access": login_data["access_token"],
                         "refresh": login_data["refresh_token"],

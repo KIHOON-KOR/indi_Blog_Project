@@ -4,7 +4,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from apps.user.views.login import LoginAPIView
 from apps.user.views.page_views import login_page, signup_page
 from apps.user.views.signup import SignupAPIView
-from apps.user.views.social_login import GithubLoginAPIView, GithubLoginCallbackAPIView
+from apps.user.views.social_login import GithubLoginAPIView, GithubLoginCallbackAPIView, DiscordLoginAPIView, \
+    DiscordLoginCallbackAPIView
 
 urlpatterns = [
     path("login/", LoginAPIView.as_view(), name="login"),
@@ -20,4 +21,7 @@ urlpatterns = [
         GithubLoginCallbackAPIView.as_view(),
         name="github_callback",
     ),
+# 소셜로그인(Discord)
+    path("login/discord/", DiscordLoginAPIView.as_view(), name="discord_login"),
+    path("login/discord/callback/", DiscordLoginCallbackAPIView.as_view(), name="discord_callback"),
 ]
