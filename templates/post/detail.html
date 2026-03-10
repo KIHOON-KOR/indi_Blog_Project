@@ -4,14 +4,40 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>
 <style>
-    /* 댓글 수정 폼 부드러운 전환을 위한 트랜지션 효과입니다. */
+    /* 기존 댓글 수정 폼 트랜지션 효과 유지 */
     .comment-edit-form {
-        display: none;
-        transition: all 0.3s ease;
+        display: none; /* 기본적으로 수정 폼은 숨겨둡니다. */
+        transition: all 0.3s ease; /* 나타나고 사라질 때 0.3초 동안 부드럽게 전환됩니다. */
     }
 
     .comment-content-box {
-        transition: all 0.3s ease;
+        transition: all 0.3s ease; /* 댓글 내용 박스도 상태 변화 시 부드럽게 전환됩니다. */
+    }
+
+    /* ✨ 새롭게 추가된 본문(Toast UI) 스타일 최적화 코드입니다. */
+    /* !important를 사용하여 Toast UI의 기본 스타일을 덮어씌웁니다. */
+    .toastui-editor-contents {
+        font-size: 1.15rem !important; /* 기본 글자 크기를 16px에서 약 18.4px로 키워 시원하게 만듭니다. */
+        line-height: 1.8 !important; /* 줄 간격을 넓혀서 글이 다닥다닥 붙어 보이지 않게 숨통을 틉니다. */
+        color: #2c3e50 !important; /* 완전한 검은색(#000)보다 눈의 피로가 덜한 짙은 남/회색 계열로 설정합니다. */
+    }
+
+    .toastui-editor-contents p {
+        margin-bottom: 1.5rem; /* 엔터를 쳤을 때 생기는 문단과 문단 사이의 여백을 넉넉하게 줍니다. */
+    }
+
+    .toastui-editor-contents h1,
+    .toastui-editor-contents h2,
+    .toastui-editor-contents h3 {
+        margin-top: 2.5rem !important; /* 소제목 위쪽 여백을 넓게 줘서 이전 문단과 확실히 구분되게 합니다. */
+        margin-bottom: 1rem !important; /* 소제목 아래쪽 여백은 살짝 좁혀서 다음 문단과 연결감을 줍니다. */
+        color: var(--brand-dark-green) !important; /* 소제목의 색상을 우리 블로그의 메인 테마색으로 통일합니다. */
+        font-weight: 700 !important; /* 소제목의 굵기를 두껍게 강조합니다. */
+    }
+
+    .toastui-editor-contents img {
+        border-radius: 0.75rem; /* 본문 안에 들어가는 이미지들의 모서리도 둥글게 깎아줍니다. */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 본문 이미지에 가벼운 그림자를 줘서 입체감을 살립니다. */
     }
 </style>
 {% endblock %}
@@ -20,10 +46,11 @@
 <div class="row justify-content-center w-100">
     <div class="col-lg-9">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
-            <div id="post-thumbnail-wrapper" class="d-none px-4 pt-4 px-md-5 pt-md-5">
+            <div id="post-thumbnail-wrapper" class="d-none px-4 pt-4 px-md-5 pt-md-5 text-center">
+
                 <img id="post-thumbnail" src=""
-                     class="w-100 rounded-4 shadow-sm"
-                     style="max-height: 450px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05);">
+                     class="img-fluid rounded-4 shadow-sm"
+                     style="max-height: 350px; width: auto; object-fit: contain; border: 1px solid rgba(0,0,0,0.05);">
             </div>
 
             <div class="card-body p-4 p-md-5">
