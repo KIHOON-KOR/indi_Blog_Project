@@ -89,6 +89,21 @@ class ErrorMessage(Enum):
         "존재하지 않거나 권한이 없는 시리즈입니다.",
     )
 
+    # --- AI 관련 ---
+    UNSUPPORTED_TONE = (
+        status.HTTP_400_BAD_REQUEST,
+        "unsupported_tone",
+        "지원하지 않는 문체입니다.",
+    )
+    AI_CONVERSION_FAILED = (
+        # 500 서버 에러로 통일
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "ai_conversion_failed",
+        "AI 변환 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    )
+
+    # ----------------
+
     @property
     def status_code(self):
         return self.value[0]
