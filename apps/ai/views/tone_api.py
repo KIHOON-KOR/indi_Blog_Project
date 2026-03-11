@@ -28,13 +28,13 @@ class ToneConverterAPIView(APIView):
                 # 첫 번째 인자로 텍스트 조각들을 지속적으로 뿜어내는 제너레이터를 넣음
                 converted_text,
                 # content_type을 'text/event-stream'으로 변경하여 브라우저의 버퍼링을 원천 차단
-                content_type='text/event-stream'
+                content_type="text/event-stream",
             )
 
             # 브라우저나 중간 프록시 서버가 이 응답을 캐싱(저장)하지 못하게 막음
-            response['Cache-Control'] = 'no-cache'
+            response["Cache-Control"] = "no-cache"
             # Nginx 같은 웹 서버를 사용할 경우, 버퍼링을 하지 말고 즉시 클라이언트로 쏘도록 지시
-            response['X-Accel-Buffering'] = 'no'
+            response["X-Accel-Buffering"] = "no"
 
             return response
 

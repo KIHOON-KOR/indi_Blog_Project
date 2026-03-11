@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 genai.configure(api_key=settings.GEMINI_API_KEY)  # type: ignore
 
 
-def convert_text_tone(text: str, tone: str) -> str:
+def convert_text_tone(text: str, tone: str) -> str:  # type: ignore
     try:
         # 1. 클라이언트가 요청한 문체(tone)에 맞는 프롬프트를 찾습니다.
         system_prompt = TONE_MAPPING.get(tone)
@@ -24,7 +24,7 @@ def convert_text_tone(text: str, tone: str) -> str:
             # 빠르고 가벼운 flash 모델을 사용
             model_name="gemini-flash-latest",
             # 앞에서 찾은 시스템 프롬프트를 모델의 기본 지시사항으로 주입
-            system_instruction=system_prompt
+            system_instruction=system_prompt,
         )
 
         # 3. 스트리밍 모드로 텍스트 생성 요청
@@ -48,7 +48,7 @@ def convert_text_tone(text: str, tone: str) -> str:
             if chunk.text:
                 # 일반 문자열(String)이 아닌 UTF-8 바이트(Bytes)로 인코딩하여 반환
                 # 장고가 내부적으로 문자를 처리하며 대기하는 시간을 없애줌
-                yield chunk.text.encode('utf-8')
+                yield chunk.text.encode("utf-8")
 
     # 우리가 위에서 직접 발생시킨 '지원하지 않는 문체' 에러를 잡음
     except ValueError as ve:
