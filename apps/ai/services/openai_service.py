@@ -14,12 +14,12 @@ genai.configure(api_key=settings.GEMINI_API_KEY)  # type: ignore
 
 def convert_text_tone(text: str, tone: str) -> str:
     try:
-        # 클라이언트가 요청한 문체(tone)에 맞는 프롬프트를 찾습니다.
+        # 1. 클라이언트가 요청한 문체(tone)에 맞는 프롬프트를 찾습니다.
         system_prompt = TONE_MAPPING.get(tone)
         if not system_prompt:
             raise BaseCustomException(ErrorMessage.UNSUPPORTED_TONE)
 
-        # Gemini 모델 인스턴스를 생성합니다.
+        # 2. Gemini 모델 인스턴스를 생성합니다.
         model = genai.GenerativeModel(
             # 빠르고 가벼운 flash 모델을 사용
             model_name="gemini-flash-latest",
@@ -27,7 +27,7 @@ def convert_text_tone(text: str, tone: str) -> str:
             system_instruction=system_prompt
         )
 
-        # 모델에게 텍스트 생성을 요청하되, 스트리밍 모드(stream=True)를 활성화
+        # 3. 스트리밍 모드로 텍스트 생성 요청
         response = model.generate_content(
             # 변환할 원본 텍스트를 첫 번째 인자로 전달
             text,
@@ -42,12 +42,13 @@ def convert_text_tone(text: str, tone: str) -> str:
             ),
         )
 
-        # 스트리밍 응답 객체(response)에서 생성되는 텍스트 조각(chunk)을 순회
+        # 4. 스트리밍 응답 객체(response)에서 생성되는 텍스트 조각(chunk)을 순회
         for chunk in response:
             # 조각 안에 텍스트 데이터가 정상적으로 존재하는지 확인
             if chunk.text:
-                # 텍스트 조각을 반환(yield)하여, 모이지 않고 즉시 밖으로 내보냄
-                yield chunk.text
+                # 일반 문자열(String)이 아닌 UTF-8 바이트(Bytes)로 인코딩하여 반환
+                # 장고가 내부적으로 문자를 처리하며 대기하는 시간을 없애줌
+                yield chunk.text.encode('utf-8')
 
     # 우리가 위에서 직접 발생시킨 '지원하지 않는 문체' 에러를 잡음
     except ValueError as ve:

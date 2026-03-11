@@ -24,12 +24,19 @@ class ToneConverterAPIView(APIView):
 
             # 생성된 제너레이터를 StreamingHttpResponse에 담아 클라이언트에 반환함
             # content_type을 'text/plain' 혹은 'text/event-stream'으로 주어 텍스트 조각임을 알림
-            return StreamingHttpResponse(
+            response = StreamingHttpResponse(
                 # 첫 번째 인자로 텍스트 조각들을 지속적으로 뿜어내는 제너레이터를 넣음
                 converted_text,
-                # 클라이언트가 데이터를 일반 텍스트 스트림으로 인식하도록 타입을 지정
-                content_type='text/plain'
+                # content_type을 'text/event-stream'으로 변경하여 브라우저의 버퍼링을 원천 차단
+                content_type='text/event-stream'
             )
+
+            # 브라우저나 중간 프록시 서버가 이 응답을 캐싱(저장)하지 못하게 막음
+            response['Cache-Control'] = 'no-cache'
+            # Nginx 같은 웹 서버를 사용할 경우, 버퍼링을 하지 말고 즉시 클라이언트로 쏘도록 지시
+            response['X-Accel-Buffering'] = 'no'
+
+            return response
 
         # 지원하지 않는 문체 등 사용자의 잘못된 요청으로 인한 에러를 처리
         except ValueError as e:
