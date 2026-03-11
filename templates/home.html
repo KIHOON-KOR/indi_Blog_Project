@@ -22,60 +22,45 @@
 
             <div id="grade-card" class="card border-0 shadow-lg rounded-4 overflow-hidden"
                  style="background: white; display: none; transition: transform 0.3s ease;">
-                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0" style="color: var(--brand-dark-green);">나의 코딩 정원</h5>
+                    <span id="level-badge" class="badge bg-success rounded-pill px-3 shadow-sm">Level 0</span>
                 </div>
 
                 <div class="card-body p-4 text-center">
-
-                    <div id="svg-plant-container" class="level-0 mb-3"
-                         style="height: 140px; display: flex; align-items: flex-end; justify-content: center;">
-                        <svg viewBox="0 0 100 120" style="width: 100px; height: 120px; overflow: visible;">
-                            <ellipse cx="50" cy="115" rx="7" ry="5" fill="#8d6e63"/>
-
-                            <path class="plant-path stem" d="M50,115 Q40,60 50,15" fill="none"
-                                  stroke="var(--brand-accent-green)" stroke-width="5" stroke-linecap="round"/>
-                            <path class="plant-path branch branch-1" d="M47,70 Q20,60 15,40" fill="none"
-                                  stroke="var(--brand-accent-green)" stroke-width="3" stroke-linecap="round"/>
-                            <path class="plant-path branch branch-2" d="M48,40 Q75,35 85,25" fill="none"
-                                  stroke="var(--brand-accent-green)" stroke-width="3" stroke-linecap="round"/>
-
-                            <circle class="plant-leaf leaf-group-1" cx="50" cy="10" r="6"
-                                    fill="var(--brand-accent-green)" style="transform-origin: 50px 10px;"/>
-                            <circle class="plant-leaf leaf-group-1" cx="88" cy="23" r="5"
-                                    fill="var(--brand-accent-green)" style="transform-origin: 88px 23px;"/>
-                            <circle class="plant-leaf leaf-group-2" cx="12" cy="38" r="5"
-                                    fill="var(--brand-accent-green)" style="transform-origin: 12px 38px;"/>
-                            <circle class="plant-leaf leaf-group-2" cx="30" cy="62" r="4"
-                                    fill="var(--brand-accent-green)" style="transform-origin: 30px 62px;"/>
-                            <circle class="plant-leaf leaf-group-2" cx="65" cy="45" r="4"
-                                    fill="var(--brand-accent-green)" style="transform-origin: 65px 45px;"/>
-                        </svg>
+                    <div class="mb-3 position-relative d-inline-block">
+                        <div id="garden-icon"
+                             style="font-size: 5rem; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); animation: float 3s ease-in-out infinite;">
+                            🌱
+                        </div>
                     </div>
 
                     <h4 id="grade-label" class="fw-bold text-success mb-1"></h4>
-                    <p id="grade-message" class="text-muted small mb-2"></p>
+                    <p id="grade-message" class="text-muted small mb-3"></p>
 
-                    <div class="mb-2">
-                        <span id="next-grade-info"
-                              class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-medium"
-                              style="display: none; font-size: 0.75rem;">
-                        </span>
+                    <div class="px-3 mb-2">
+                        <div class="d-flex justify-content-between small text-muted mb-1 fw-bold">
+                            <span id="current-exp-text">현재 글: 0개</span>
+                            <span id="next-exp-text">다음 레벨까지: 5개</span>
+                        </div>
+                        <div class="progress" style="height: 10px; border-radius: 10px; background-color: #e9ecef;">
+                            <div id="grade-progress-bar"
+                                 class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                 role="progressbar" style="width: 0%; border-radius: 10px;"></div>
+                        </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-top text-start">
+                    <div class="mt-4 pt-4 border-top text-start">
                         <div class="d-flex justify-content-between align-items-end mb-2">
                             <span class="fw-bold text-dark" style="font-size: 0.85rem;">1년 간의 발자취 (365일)</span>
                             <span class="text-muted" style="font-size: 0.7rem;">초록색 = 글 작성일</span>
                         </div>
-
                         <div class="heatmap-scroll-wrapper">
                             <div id="heatmap-grid" class="d-grid gap-1"
                                  style="grid-template-rows: repeat(7, 1fr); grid-auto-flow: column;">
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -134,76 +119,166 @@
         fetchTagCloud();
     });
 
+    // 💡 순수한 데이터(조건, 텍스트, 이미지 주소, 적용할 CSS 클래스명)만 남겨 가독성을 높였습니다.
     const GRADE_SETTINGS = [
-        {min: 50, label: '울창한 숲', msg: '완벽하게 피어난 아름다운 정원입니다.', level: 6},
-        {min: 40, label: '풍성한 나무', msg: '잎사귀가 아주 풍성하게 열렸어요!', level: 5},
-        {min: 30, label: '커다란 나무', msg: '가지가 무성한 듬직한 나무가 자랐어요.', level: 4},
-        {min: 20, label: '튼튼한 묘목', msg: '새로운 가지가 힘차게 뻗어나갑니다.', level: 3},
-        {min: 10, label: '어린 묘목', msg: '어엿한 줄기가 형태를 잡았어요.', level: 2},
-        {min: 5, label: '파릇한 새싹', msg: '흙을 뚫고 예쁜 줄기가 올라왔어요!', level: 1},
-        {min: 0, label: '희망찬 씨앗', msg: '글을 작성해서 씨앗을 틔워주세요.', level: 0},
+        {
+            min: 500, label: '울창한 생명의 숲', msg: '수많은 이야기가 모여 전설적인 숲을 이루었습니다!', level: 9,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/f2190a179021431f826762e0956a1902.png',
+            cssClass: 'grade-icon-lv9' // 9레벨 전용 CSS 클래스 연결
+        },
+        {
+            min: 300, label: '웅장한 고목', msg: '깊은 뿌리를 내린 든든한 고목이 되었습니다.', level: 8,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/729bef20eaf546d89ee9342ea1ad83f0.png',
+            cssClass: 'grade-icon-lv8'
+        },
+        {
+            min: 200, label: '탐스러운 열매 나무', msg: '그동안의 노력이 달콤한 열매로 맺혔어요.', level: 7,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/6d5199ad382648a285ed83f05a2bb1b2.png',
+            cssClass: 'grade-icon-lv7'
+        },
+        {
+            min: 150, label: '만개한 꽃나무', msg: '가지마다 아름다운 꽃이 활짝 피어났습니다.', level: 6,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/994bc8236ec1470bbf4bd4e1c3053b53.png',
+            cssClass: 'grade-icon-lv6'
+        },
+        {
+            min: 100, label: '풍성한 나무', msg: '잎사귀가 아주 풍성하게 열린 듬직한 나무입니다!', level: 5,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/d8fe986d15854aaa96fd8fb4ae5ad857.png',
+            cssClass: 'grade-icon-lv5'
+        },
+        {
+            min: 50, label: '작은 나무', msg: '이제 어엿한 나무의 모습을 갖추었네요.', level: 4,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/0e12672759274f2b8a63365cbc8c1c29.png',
+            cssClass: 'grade-icon-lv4'
+        },
+        {
+            min: 30, label: '튼튼한 묘목', msg: '비바람에도 흔들리지 않는 튼튼한 줄기가 생겼어요.', level: 3,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/67dc5f4129464d359f4057e812aff476.png',
+            cssClass: 'grade-icon-lv3'
+        },
+        {
+            min: 10, label: '어린 묘목', msg: '새로운 잎사귀들이 힘차게 돋아나고 있습니다.', level: 2,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/033b3fb73deb40d496055712d87f1838.png',
+            cssClass: 'grade-icon-lv2'
+        },
+        {
+            min: 5, label: '파릇한 새싹', msg: '흙을 뚫고 예쁜 줄기가 올라왔어요!', level: 1,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/922009e1f1064d358fc41f265c119e0d.png',
+            cssClass: 'grade-icon-lv1' // (참고: 기존에 300px로 테스트하셨던 레벨입니다)
+        },
+        {
+            min: 0, label: '희망찬 씨앗', msg: '첫 글을 작성해서 씨앗을 틔워주세요.', level: 0,
+            imgUrl: 'https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/11/54be5c5e97fc4ce7a3129403f4dbf936.png',
+            cssClass: 'grade-icon-lv0'
+        },
     ];
 
     async function fetchMyGardenStats() {
+        // 1. 로컬 스토리지에서 사용자의 접근 토큰(JWT)을 가져옵니다.
         const token = localStorage.getItem('access_token');
+        // 2. 토큰이 없다면 비로그인 상태이므로 함수 실행을 즉시 종료합니다.
         if (!token) return;
 
+        // 3. UI 업데이트를 위해 필요한 HTML 요소들을 DOM에서 찾아 변수에 할당합니다.
         const gradeCard = document.getElementById('grade-card');
-        const svgContainer = document.getElementById('svg-plant-container');
+        const gardenIcon = document.getElementById('garden-icon');
         const label = document.getElementById('grade-label');
         const message = document.getElementById('grade-message');
-        const nextInfo = document.getElementById('next-grade-info');
+        const levelBadge = document.getElementById('level-badge');
+        const progressBar = document.getElementById('grade-progress-bar');
+        const currentExpText = document.getElementById('current-exp-text');
+        const nextExpText = document.getElementById('next-exp-text');
 
         try {
+            // 4. 모든 작성 글을 담을 빈 배열을 초기화합니다.
             let allPosts = [];
+            // 5. 사용자가 작성한 총 글의 개수를 저장할 변수를 초기화합니다.
             let totalCount = 0;
+            // 6. API 요청을 보낼 초기 URL을 설정합니다. (페이지네이션 처리를 위해)
             let nextUrl = '/api/v1/post/my/';
 
+            // 7. nextUrl이 존재하는 동안(다음 페이지가 있는 동안) 반복해서 API를 호출합니다.
+            // (주의: 글이 매우 많아지면 성능 저하가 올 수 있으므로, 추후 백엔드에서 통계 전용 API를 만드는 것이 가장 이상적입니다.)
             while (nextUrl) {
+                // 8. fetch API를 사용해 백엔드에 GET 요청을 보냅니다. 헤더에 토큰을 포함합니다.
                 const response = await fetch(nextUrl, {
                     headers: {'Authorization': 'Bearer ' + token}
                 });
+                // 9. 서버의 응답 데이터를 JSON 객체로 파싱(변환)합니다.
                 const data = await response.json();
 
+                // 10. HTTP 상태 코드가 200번대(정상)인지 확인합니다.
                 if (response.ok) {
+                    // 11. 페이지네이션 구조(data.results)인지, 배열(data)인지 판별하여 글 목록을 가져옵니다.
                     const posts = data.results || data;
+                    // 12. 가져온 글들을 기존 allPosts 배열에 이어붙입니다.
                     allPosts = allPosts.concat(posts);
+                    // 13. 최초 1회만 전체 개수(count)를 totalCount에 저장합니다.
                     if (totalCount === 0) totalCount = data.count !== undefined ? data.count : posts.length;
+                    // 14. 다음 페이지 URL을 업데이트합니다. (없으면 null이 되어 반복문이 종료됩니다.)
                     nextUrl = data.next || null;
                 } else {
+                    // 15. 에러 응답이 오면 무한 루프를 방지하기 위해 반복문을 빠져나갑니다.
                     break;
                 }
             }
 
+            // 16. 내 글 개수(totalCount)를 기준으로 내가 속한 현재 등급 객체를 찾습니다.
             const currentGrade = GRADE_SETTINGS.find(g => totalCount >= g.min);
+            // 17. GRADE_SETTINGS를 역순으로 정렬하여, 내 개수보다 큰 조건을 만족하는 '다음 등급' 객체를 찾습니다.
             const nextGrade = [...GRADE_SETTINGS].reverse().find(g => g.min > totalCount);
 
+            // 18. 찾은 등급 정보(아이콘, 라벨, 메시지, 레벨)를 HTML 요소에 텍스트로 삽입합니다.
+            gardenIcon.innerHTML = `<img src="${currentGrade.imgUrl}" class="grade-icon-base ${currentGrade.cssClass}" alt="${currentGrade.label}">`;
             label.innerText = currentGrade.label;
             message.innerText = currentGrade.msg;
+            levelBadge.innerText = `Level ${currentGrade.level}`;
+            currentExpText.innerText = `현재 글: ${totalCount}개`;
 
+            // 19. 프로그레스 바의 퍼센트를 계산할 변수를 100(기본값)으로 초기화합니다.
+            let progressPercent = 100;
+
+            // 20. 다음 등급이 존재한다면 (아직 최고 레벨이 아니라면)
             if (nextGrade) {
+                // 21. 남은 글 개수를 계산하여 UI에 표시합니다.
                 const remain = nextGrade.min - totalCount;
-                nextInfo.innerText = `🚀 다음 '${nextGrade.label}'까지 ${remain}개 남음!`;
-            } else {
-                nextInfo.innerText = `🎉 최고 레벨 달성! 당신은 블로그 마스터!`;
-            }
-            nextInfo.style.display = 'inline-block';
+                nextExpText.innerText = `다음 '${nextGrade.label}'까지: ${remain}개`;
 
-            svgContainer.className = `mb-3 level-${currentGrade.level}`;
+                // 22. 현재 레벨 구간에서의 진척도(%)를 수학적으로 계산합니다.
+                const prevGradeMin = currentGrade.min;
+                const requiredPostsForNextLevel = nextGrade.min - prevGradeMin;
+                const myPostsInCurrentLevel = totalCount - prevGradeMin;
+                progressPercent = (myPostsInCurrentLevel / requiredPostsForNextLevel) * 100;
+            } else {
+                // 23. 다음 등급이 없다면 최고 레벨 달성 메시지를 띄웁니다.
+                nextExpText.innerText = `🎉 최고 레벨 달성!`;
+            }
+
+            // 24. 계산된 퍼센트를 프로그레스 바의 width CSS 속성에 적용하여 시각적으로 채웁니다.
+            // 약간의 딜레이를 주어 애니메이션이 부드럽게 보이도록 합니다.
+            setTimeout(() => {
+                progressBar.style.width = `${progressPercent}%`;
+            }, 100);
+
+            // 25. 정보가 모두 채워졌으므로 숨겨두었던 카드 전체를 화면에 표시합니다.
             gradeCard.style.display = 'block';
 
+            // 26. 1년 치 잔디밭(히트맵)을 그리는 함수를 호출하며, 수집한 모든 글 데이터를 넘겨줍니다.
             renderHeatmap(allPosts);
 
         } catch (error) {
+            // 27. 통신 중 에러가 발생하면 콘솔에 로그를 남깁니다.
             console.error('Garden Stats Load Error:', error);
         }
     }
 
     function renderHeatmap(posts) {
+        // 28. 잔디밭 격자가 그려질 부모 요소를 찾습니다.
         const heatmapGrid = document.getElementById('heatmap-grid');
+        // 29. 스크롤 위치 조정을 위해 스크롤 컨테이너를 찾습니다.
         const scrollWrapper = document.querySelector('.heatmap-scroll-wrapper');
-        heatmapGrid.innerHTML = '';
 
+        // 30. 내가 작성한 글 배열에서 날짜 정보(YYYY-MM-DD)만 추출하여 새로운 문자열 배열을 만듭니다.
         const postDates = posts.map(p => {
             const d = new Date(p.created_at);
             return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
@@ -211,26 +286,40 @@
 
         const totalDays = 365;
         const today = new Date();
+        // 31. 최적화: DOM 접근을 최소화하기 위해 빈 문자열을 만들고 여기에 HTML 태그를 누적합니다.
+        let htmlString = '';
 
+        // 32. 364일 전부터 오늘까지 총 365번 루프를 돕니다.
         for (let i = totalDays - 1; i >= 0; i--) {
+            // 33. 기준일(오늘)을 복사하여 targetDate 객체를 생성합니다.
             const targetDate = new Date(today);
+            // 34. 오늘 날짜에서 i일을 빼서 과거 날짜를 구합니다.
             targetDate.setDate(today.getDate() - i);
+            // 35. 구한 과거 날짜를 'YYYY-MM-DD' 형태의 문자열로 변환합니다.
             const dateString = `${targetDate.getFullYear()}-${targetDate.getMonth()+1}-${targetDate.getDate()}`;
 
+            // 36. 방금 만든 과거 날짜 문자열이, 내가 글을 쓴 날짜 배열(postDates)에 포함되어 있는지 확인합니다.
             const isPosted = postDates.includes(dateString);
-            const box = document.createElement('div');
-            box.className = 'heatmap-box ' + (isPosted ? 'active' : '');
+            // 37. 글을 썼다면 'active' 클래스를, 아니면 빈 문자열을 할당합니다.
+            const activeClass = isPosted ? 'active' : '';
 
+            // 38. 툴팁에 표시할 날짜 형식을 한글로 예쁘게 변환합니다.
             const displayDate = targetDate.toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
-            box.title = isPosted ? `${displayDate} : 글을 작성했습니다 🌱` : `${displayDate} : 기록 없음`;
+            // 39. 마우스를 올렸을 때 보일 설명(title)을 작성 여부에 따라 다르게 설정합니다.
+            const titleText = isPosted ? `${displayDate} : 글을 작성했습니다 🌱` : `${displayDate} : 기록 없음`;
 
-            heatmapGrid.appendChild(box);
+            // 40. 누적할 문자열에 HTML <div> 요소를 텍스트 형태로 더합니다. (DOM 조작 최소화)
+            htmlString += `<div class="heatmap-box ${activeClass}" title="${titleText}"></div>`;
         }
 
+        // 41. 완성된 365개의 div 문자열을 한 번에 DOM에 삽입합니다. (렌더링 성능이 매우 향상됩니다)
+        heatmapGrid.innerHTML = htmlString;
+
+        // 42. 최신 날짜(오른쪽)가 잘 보이도록 스크롤바를 맨 오른쪽으로 부드럽게 밀어줍니다.
         setTimeout(() => {
             scrollWrapper.scrollLeft = scrollWrapper.scrollWidth;
         }, 100);
@@ -398,51 +487,124 @@
 </script>
 
 <style>
-    /* 1. SVG 식물 애니메이션 CSS 유지 */
-    .plant-path {
-        stroke-dasharray: 150;
-        stroke-dashoffset: 150;
-        transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    /* =========================================
+           정원 등급 아이콘 CSS (리팩토링)
+           ========================================= */
+
+    /* 1. 모든 레벨 아이콘에 공통으로 들어가는 기본 속성 및 애니메이션 */
+    .grade-icon-base {
+        object-fit: contain; /* 이미지 비율 유지 */
+        transition: transform 0.3s ease; /* 마우스 오버 시 부드러운 전환 효과 */
+        cursor: pointer; /* 마우스 오버 시 손가락 모양 커서 */
     }
 
-    .plant-leaf {
-        opacity: 0;
-        transform: scale(0);
-        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s;
+    /* 자바스크립트의 onmouseover, onmouseout 이벤트를 CSS :hover로 깔끔하게 대체했습니다. */
+    .grade-icon-base:hover {
+        transform: scale(1.1);
     }
 
-    .level-1 .stem {
-        stroke-dashoffset: 90;
+    /* 2. 레벨별 개별 속성 (크기와 발광/그림자 효과) */
+    .grade-icon-lv9 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.7));
     }
 
-    .level-2 .stem {
-        stroke-dashoffset: 0;
+    .grade-icon-lv8 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.25)) drop-shadow(0 0 30px rgba(0, 184, 148, 0.6));
     }
 
-    .level-3 .stem, .level-3 .branch-1 {
-        stroke-dashoffset: 0;
+    .grade-icon-lv7 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 25px rgba(255, 71, 87, 0.6));
     }
 
-    .level-4 .stem, .level-4 .branch-1, .level-4 .branch-2 {
-        stroke-dashoffset: 0;
+    .grade-icon-lv6 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 12px 12px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 25px rgba(253, 121, 168, 0.6));
     }
 
-    .level-5 .stem, .level-5 .branch-1, .level-5 .branch-2 {
-        stroke-dashoffset: 0;
+    .grade-icon-lv5 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 20px rgba(46, 213, 115, 0.5));
     }
 
-    .level-5 .leaf-group-1 {
-        opacity: 1;
-        transform: scale(1);
+    .grade-icon-lv4 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 20px rgba(46, 213, 115, 0.5));
     }
 
-    .level-6 .stem, .level-6 .branch-1, .level-6 .branch-2 {
-        stroke-dashoffset: 0;
+    .grade-icon-lv3 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.15));
     }
 
-    .level-6 .leaf-group-1, .level-6 .leaf-group-2 {
-        opacity: 1;
-        transform: scale(1);
+    .grade-icon-lv2 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.15));
+    }
+
+    .grade-icon-lv1 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.12));
+    }
+
+    .grade-icon-lv0 {
+        width: 250px;
+        height: 250px;
+        filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.1));
+    }
+    /* 아이콘 둥둥 떠다니는 애니메이션 */
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+        100% {
+            transform: translateY(0px);
+        }
+    }
+
+    /* 프로그레스 바 부드러운 전환 */
+    #grade-progress-bar {
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* 기존 히트맵 스타일 유지 및 개선 */
+    .heatmap-scroll-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 10px;
+    }
+
+    .heatmap-box {
+        width: 13px;
+        height: 13px;
+        background-color: #ebedf0;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .heatmap-box:hover {
+        transform: scale(1.3);
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .heatmap-box.active {
+        background-color: var(--brand-accent-green);
     }
 
     /* ✨ 2. 365일 잔디밭(Heatmap) 전용 스타일 ✨ */
