@@ -21,23 +21,33 @@ def convert_text_tone(text: str, tone: str) -> str:
 
         # Gemini 모델 인스턴스를 생성합니다.
         model = genai.GenerativeModel(
-            model_name="gemini-flash-latest", system_instruction=system_prompt
+            # 빠르고 가벼운 flash 모델을 사용
+            model_name="gemini-flash-latest",
+            # 앞에서 찾은 시스템 프롬프트를 모델의 기본 지시사항으로 주입
+            system_instruction=system_prompt
         )
 
-        # 모델에게 실제 변환할 사용자의 텍스트를 전달하고 결과(응답)를 생성하도록 요청합니다.
+        # 모델에게 텍스트 생성을 요청하되, 스트리밍 모드(stream=True)를 활성화
         response = model.generate_content(
-            text,  # 유저가 작성한 텍스트
-            # 결과물 생성을 위한 세부 옵션을 설정합니다.
+            # 변환할 원본 텍스트를 첫 번째 인자로 전달
+            text,
+            # 스트리밍 옵션을 켜서, 생성 즉시 응답을 받도록 설정
+            stream=True,
+            # 결과물 생성을 위한 세부 설정값을 전달
             generation_config=genai.types.GenerationConfig(
-                # 0.7은 너무 뻔하지도, 너무 엉뚱하지도 않은 적절하고 자연스러운 문장을 만듬
+                # 자연스럽고 적절한 변환을 위해 창의성 정도(온도)를 0.7로 설정
                 temperature=0.7,
-                # 결과물이 너무 길어져서 토큰(비용)을 과다하게 쓰는 것을 방지
-                max_output_tokens=1000,
+                # 블로그 글이 잘리지 않도록 넉넉하게 토큰 제한을 2500으로 제한
+                max_output_tokens=2500,
             ),
         )
 
-        # Gemini의 응답 객체에서 생성된 텍스트 문자열만 쏙 뽑아서 반환
-        return response.text
+        # 스트리밍 응답 객체(response)에서 생성되는 텍스트 조각(chunk)을 순회
+        for chunk in response:
+            # 조각 안에 텍스트 데이터가 정상적으로 존재하는지 확인
+            if chunk.text:
+                # 텍스트 조각을 반환(yield)하여, 모이지 않고 즉시 밖으로 내보냄
+                yield chunk.text
 
     # 우리가 위에서 직접 발생시킨 '지원하지 않는 문체' 에러를 잡음
     except ValueError as ve:
