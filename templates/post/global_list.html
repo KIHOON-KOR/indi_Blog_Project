@@ -140,23 +140,29 @@
                 posts.forEach(post => {
                     const date = new Date(post.created_at).toLocaleDateString();
 
+                    // 백엔드에서 등급 이미지를 받았다면 img 태그를 만들고, 아니면 빈 문자열을 넣습니다.
+                    const gradeImgHtml = post.author_grade_image
+                            ? `<img src="${post.author_grade_image}" alt="grade" class="me-1" style="width: 18px; height: 18px; object-fit: contain;">`
+                            : '';
+
+                    // 닉네임을 보여주는 span 태그 바로 앞에 gradeImgHtml 변수를 삽입했습니다.
                     const postHtml = `
-                        <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <div class="text-truncate" style="max-width: 75%;">
-                                    <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
-                                        <h5 class="mb-1 fw-bold">${post.title}</h5>
-                                    </a>
-                                    <small class="text-muted d-flex align-items-center gap-2">
-                                        <span>by <span class="text-success fw-bold">${post.author_nickname || '익명'}</span></span>
-                                        <span>| ${date}</span>
-                                        <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
-                                    </small>
-                                </div>
-                                ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">` : ''}
-                            </div>
-                        </div>
-                    `;
+                                            <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
+                                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                                    <div class="text-truncate" style="max-width: 75%;">
+                                                        <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
+                                                            <h5 class="mb-1 fw-bold">${post.title}</h5>
+                                                        </a>
+                                                        <small class="text-muted d-flex align-items-center gap-2">
+                                                            <span class="d-flex align-items-center">by ${gradeImgHtml} <span class="text-success fw-bold ms-1">${post.author_nickname || '익명'}</span></span>
+                                                            <span>| ${date}</span>
+                                                            <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
+                                                        </small>
+                                                    </div>
+                                                    ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">` : ''}
+                                                </div>
+                                            </div>
+                                        `;
                     container.insertAdjacentHTML('beforeend', postHtml);
                 });
 
