@@ -228,6 +228,15 @@
             // 17. GRADE_SETTINGS를 역순으로 정렬하여, 내 개수보다 큰 조건을 만족하는 '다음 등급' 객체를 찾습니다.
             const nextGrade = [...GRADE_SETTINGS].reverse().find(g => g.min > totalCount);
 
+            // 계산된 현재 등급의 이미지 URL을 로컬 스토리지에 저장
+            // 이렇게 하면 다른 페이지로 이동해도 서버 요청 없이 등급 이미지를 유지 가능
+            localStorage.setItem('user_grade_img', currentGrade.imgUrl);
+
+            // 내 정보가 업데이트 되었으므로 base.html의 UI 렌더링 함수를 다시 호출해 즉시 반영
+            if (typeof checkLoginStatus === 'function') {
+                checkLoginStatus();
+            }
+
             // 18. 찾은 등급 정보(아이콘, 라벨, 메시지, 레벨)를 HTML 요소에 텍스트로 삽입합니다.
             gardenIcon.innerHTML = `<img src="${currentGrade.imgUrl}" class="grade-icon-base ${currentGrade.cssClass}" alt="${currentGrade.label}">`;
             label.innerText = currentGrade.label;

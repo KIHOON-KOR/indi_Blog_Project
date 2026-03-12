@@ -60,9 +60,11 @@
                     <h1 id="post-title" class="fw-bold display-6 mb-3" style="color: var(--brand-dark-green);"></h1>
 
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            by <span id="post-author" class="text-success fw-bold"></span> |
-                            <span id="post-date"></span>
+                        <div class="text-muted small d-flex align-items-center"> by
+                            <img id="post-author-grade" src="" alt="grade" class="d-none ms-1 me-1"
+                                 style="width: 20px; height: 20px; object-fit: contain;">
+                            <span id="post-author" class="text-success fw-bold"></span> |
+                            <span id="post-date" class="ms-1"></span>
                             <span id="post-visibility-badge" class="ms-2"></span>
                         </div>
                         <div id="author-actions" class="d-none">
@@ -176,10 +178,24 @@
             const post = await response.json();
 
             if (response.ok) {
-                // 게시글 제목, 작성자, 작성일 삽입
+                // 게시글 제목을 HTML 요소에 텍스트로 삽입합니다.
                 document.getElementById('post-title').innerText = post.title;
+                // 작성자 닉네임을 삽입합니다. 데이터가 없으면 '익명'으로 표시합니다.
                 document.getElementById('post-author').innerText = post.author_nickname || '익명';
+                // 작성일을 현지 날짜 포맷(YYYY.MM.DD)으로 변환하여 삽입합니다.
                 document.getElementById('post-date').innerText = new Date(post.created_at).toLocaleDateString();
+
+                // 게시글 작성자의 등급 이미지 처리
+                // HTML에서 등급 이미지를 보여줄 img 요소를 가져옵니다.
+                const authorGradeImg = document.getElementById('post-author-grade');
+
+                // 백엔드 응답(post)에 작성자의 등급 이미지 주소(author_grade_image)가 포함되어 있는지 확인합니다.
+                if (post.author_grade_image) {
+                    // img 태그의 주소(src)를 백엔드에서 받은 등급 이미지 주소로 설정합니다.
+                    authorGradeImg.src = post.author_grade_image;
+                    // 숨김 처리 해제용 클래스(d-none)를 제거하여 화면에 보여줍니다.
+                    authorGradeImg.classList.remove('d-none');
+                }
 
                 // 좋아요 정보 업데이트 및 렌더링
                 currentLikeCount = post.likes_count || 0;
@@ -332,38 +348,42 @@
                 container.innerHTML = '';
                 const currentNickname = localStorage.getItem('nickname');
 
+                // 반복문을 통해 서버에서 받은 댓글 목록을 하나씩 꺼내어 처리합니다.
                 comments.forEach(comment => {
+                    // 댓글 작성일을 현지 날짜 포맷으로 변환합니다.
                     const date = new Date(comment.created_at).toLocaleDateString();
+                    // 현재 로그인한 닉네임과 댓글 작성자 닉네임이 같은지 확인하여 내 댓글인지 판별합니다.
                     const isMyComment = currentNickname && currentNickname === comment.author_nickname;
 
+                    // 내 댓글이라면 수정/삭제 버튼 HTML을 생성하고, 아니면 빈 문자열을 넣습니다.
                     const actionHtml = isMyComment
                             ? `<button onclick="toggleEditMode(${comment.id})" class="btn btn-link text-secondary p-0 text-decoration-none" style="font-size: 0.8rem;">수정</button>
-                               <button onclick="deleteComment(${comment.id})" class="btn btn-link text-danger p-0 text-decoration-none ms-2" style="font-size: 0.8rem;">삭제</button>`
+                                           <button onclick="deleteComment(${comment.id})" class="btn btn-link text-danger p-0 text-decoration-none ms-2" style="font-size: 0.8rem;">삭제</button>`
                             : '';
 
+                    // ✨ [새로 추가된 코드] 댓글 작성자의 등급 이미지 HTML 생성
+                    // 백엔드에서 등급 이미지를 보내줬다면 img 태그를 만들고, 없다면 빈 문자열을 만듭니다.
+                    const gradeImgHtml = comment.author_grade_image
+                            ? `<img src="${comment.author_grade_image}" alt="grade" class="me-1" style="width: 18px; height: 18px; object-fit: contain;">`
+                            : '';
+
+                    // 개별 댓글의 전체 HTML 구조를 백틱(`)을 사용해 문자열로 조합합니다.
                     const commentHtml = `
-                        <div class="card border-0 bg-light-subtle rounded-4" id="comment-${comment.id}">
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div>
-                                        <span class="fw-bold text-success">${comment.author_nickname || '익명'}</span>
-                                        <span class="text-muted ms-2" style="font-size: 0.8rem;">${date}</span>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        ${actionHtml}
-                                    </div>
-                                </div>
-                                <div id="comment-content-${comment.id}" class="comment-content-box text-dark" style="white-space: pre-wrap;">${comment.content}</div>
-                                <div id="comment-edit-form-${comment.id}" class="comment-edit-form mt-3">
-                                    <textarea id="edit-textarea-${comment.id}" class="form-control mb-2" rows="3">${comment.content}</textarea>
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <button onclick="toggleEditMode(${comment.id})" class="btn btn-sm btn-light rounded-pill px-3">취소</button>
-                                        <button onclick="updateComment(${comment.id})" class="btn btn-sm btn-success rounded-pill px-3">저장</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                                    <div class="card border-0 bg-light-subtle rounded-4" id="comment-${comment.id}">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    ${gradeImgHtml}
+                                                    <span class="fw-bold text-success">${comment.author_nickname || '익명'}</span>
+                                                    <span class="text-muted ms-2" style="font-size: 0.8rem;">${date}</span>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    ${actionHtml}
+                                                </div>
+                                            </div>
+                                            <div id="comment-content-${comment.id}" class="comment-content-box text-dark" style="white-space: pre-wrap;">${comment.content}</div>
+                                            `;
+                    // 완성된 댓글 HTML을 댓글 목록 컨테이너(container)의 맨 끝(beforeend)에 추가합니다.
                     container.insertAdjacentHTML('beforeend', commentHtml);
                 });
 
