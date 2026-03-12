@@ -125,7 +125,10 @@
                             <a class="nav-link text-white-50 small" href="/api/v1/post/my/temp/page/">임시 저장함</a>
                         </li>
 
-                        <li class="nav-item me-3">
+                        <li class="nav-item me-3 d-flex align-items-center">
+                            <img id="nav-grade-img" src="" alt="grade" class="d-none me-2"
+                                 style="width: 24px; height: 24px; object-fit: contain;">
+
                             <span class="text-white opacity-75 small">안녕하세요, <strong id="user-nickname"
                                                                                      class="text-white">User</strong>님</span>
                         </li>
@@ -153,36 +156,63 @@
         });
 
         function checkLoginStatus() {
+            // 로컬 스토리지에서 사용자의 접근 토큰(JWT)을 가져옵니다.
             const token = localStorage.getItem('access_token');
-            // [수정됨] 저장된 닉네임 가져오기 (없으면 기본값 'User')
+
+            // 로컬 스토리지에서 사용자의 닉네임을 가져옵니다.
             const nickname = localStorage.getItem('nickname');
 
+            // 로컬 스토리지에서 home.html에서 저장해둔 등급 이미지 주소를 가져옵니다.
+            const gradeImgUrl = localStorage.getItem('user_grade_img');
+
+            // 비로그인 상태일 때 보여줄 메뉴 요소를 찾습니다.
             const guestMenu = document.getElementById('guest-menu');
+
+            // 로그인 상태일 때 보여줄 메뉴 요소를 찾습니다.
             const userMenu = document.getElementById('user-menu');
+
+            // 닉네임이 들어갈 HTML 요소를 찾습니다.
             const nicknameElement = document.getElementById('user-nickname');
 
+            // 등급 이미지가 들어갈 HTML 요소를 찾습니다.
+            const navGradeImg = document.getElementById('nav-grade-img');
+
             if (token) {
-                // 로그인 상태
+                // 로그인 상태라면 손님 메뉴를 숨기고 유저 메뉴를 보여줍니다.
                 guestMenu.style.setProperty('display', 'none', 'important');
                 userMenu.style.setProperty('display', 'flex', 'important');
 
-                // [수정됨] 화면에 닉네임 표시
-                if(nickname && nicknameElement) {
+                // 화면에 닉네임을 표시합니다.
+                if (nickname && nicknameElement) {
                     nicknameElement.innerText = nickname;
                 }
+
+                // 로컬 스토리지에 등급 이미지가 존재한다면 실행합니다.
+                if (gradeImgUrl && navGradeImg) {
+                    // img 태그의 주소(src)를 내 등급 이미지 주소로 설정합니다.
+                    navGradeImg.src = gradeImgUrl;
+                    // 이미지가 화면에 보이도록 숨김 클래스(d-none)를 제거합니다.
+                    navGradeImg.classList.remove('d-none');
+                }
             } else {
-                // 비로그인 상태
+                // 비로그인 상태라면 손님 메뉴를 보여주고 유저 메뉴를 숨깁니다.
                 guestMenu.style.setProperty('display', 'flex', 'important');
                 userMenu.style.setProperty('display', 'none', 'important');
             }
         }
 
         function handleLogout() {
-            if(confirm("정말 로그아웃 하시겠습니까?")) {
+            // 로그아웃 시 확인 알림창을 띄웁니다.
+            if (confirm("정말 로그아웃 하시겠습니까?")) {
+                // 로그아웃 하므로 모든 인증 관련 데이터와 닉네임을 삭제합니다.
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
-                localStorage.removeItem('nickname'); // [수정됨] 닉네임도 함께 삭제
+                localStorage.removeItem('nickname');
 
+                // 로그아웃 시 다른 계정으로 들어왔을 때 섞이지 않도록 등급 이미지 정보도 함께 삭제합니다.
+                localStorage.removeItem('user_grade_img');
+
+                // 삭제가 완료되면 메인 페이지로 이동합니다.
                 alert("로그아웃 되었습니다.");
                 window.location.href = "/";
             }
