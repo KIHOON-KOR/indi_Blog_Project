@@ -104,12 +104,18 @@
 
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                        <a href="/" class="btn btn-light rounded-pill px-4">취소</a>
-                        <button type="button" id="tempSaveBtn" class="btn btn-outline-secondary rounded-pill px-4">
-                            임시저장
-                        </button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-5 shadow">발행하기</button>
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+
+                        <span id="auto-save-time" class="text-muted small fw-bold ms-2"></span>
+
+                        <div class="d-flex gap-2">
+                            <a href="/" class="btn btn-light rounded-pill px-4">취소</a>
+                            <button type="button" id="tempSaveBtn" class="btn btn-outline-secondary rounded-pill px-4">
+                                임시저장
+                            </button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 shadow">발행하기</button>
+                        </div>
+
                     </div>
                 </form>
             </div>
@@ -469,6 +475,91 @@
         document.getElementById('tempSaveBtn').addEventListener('click', function () {
             savePost(true);
         });
+
+        // [1] 전역 변수 선언: 자동 임시저장을 최적화하기 위한 변수들입니다.
+        // 최초 임시저장 시 백엔드(Django)에서 발급받은 게시글의 고유 PK(id)를 저장할 변수입니다. (초기값은 비어있음)
+        let currentTempPostId = null;
+
+        // 내용이 변경되었을 때만 서버에 요청을 보내기 위해, 가장 마지막에 DB에 저장된 글의 내용을 기억하는 변수입니다.
+        let lastSavedContent = "";
+
+        // [2] 5분(300,000밀리초)마다 반복해서 실행되는 자동 임시저장 타이머를 설정합니다.
+        // 브라우저 백그라운드에서 비동기(async)로 조용히 실행됩니다.
+        setInterval(async () => {
+            // 사용자가 Toast UI 에디터에 작성한 마크다운 텍스트 원본을 가져옵니다.
+            const currentContent = editor.getMarkdown();
+
+            // 사용자가 제목 입력칸(id="title")에 입력한 값을 가져옵니다.
+            const title = document.getElementById('title').value;
+
+            // 만약 제목이나 내용이 아예 없거나,
+            // 혹은 방금 전(5분 전)에 저장했던 내용과 현재 내용이 100% 똑같다면 (사용자가 글을 쓰지 않고 켜두기만 했다면)
+            if (!title || !currentContent || currentContent === lastSavedContent) {
+                // 서버에 쓸데없는 API 요청(트래픽)을 보내지 않고 함수를 즉시 종료(return)합니다.
+                // -> 백엔드 부하를 막아주는 프론트엔드 최선의 방어 로직입니다!
+                return;
+            }
+
+            // 서버로 보낼 데이터를 DRF Serializer가 기대하는 JSON 포맷(객체) 형태로 포장합니다.
+            const payload = {
+                title: title, // 현재 작성 중인 제목
+                content: currentContent, // 현재 작성 중인 본문 내용
+                is_temp: true, // 임시저장 여부를 판단하는 boolean 값 (무조건 true)
+                visibility: 'PRIVATE' // 임시저장 글은 타인에게 노출되면 안 되므로 기본값을 비공개로 설정합니다.
+            };
+
+            try {
+                // currentTempPostId가 비어있다면(null) 처음 저장하는 것이므로 POST 엔드포인트를,
+                // 이미 PK가 있다면 덮어써야 하므로 PUT 엔드포인트(id 포함)를 삼항 연산자로 동적 할당합니다.
+                const url = currentTempPostId ? `/api/v1/post/${currentTempPostId}/` : '/api/v1/post/';
+
+                // HTTP 메서드 또한 PK 유무에 따라 PUT(수정/덮어쓰기) 또는 POST(신규 생성)로 분기합니다.
+                const method = currentTempPostId ? 'PUT' : 'POST';
+
+                // 결정된 URL과 메서드를 사용하여 Django 백엔드 서버에 비동기(fetch) 통신을 요청합니다.
+                const response = await fetch(url, {
+                    method: method, // 동적으로 결정된 HTTP 메서드 (POST or PUT)
+                    headers: {
+                        'Content-Type': 'application/json', // 전송하는 데이터가 JSON 형식임을 백엔드에 명시합니다.
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token') // JWT 토큰을 헤더에 실어 인증을 통과합니다.
+                    },
+                    body: JSON.stringify(payload) // 자바스크립트 객체(payload)를 JSON 문자열로 변환하여 본문(body)에 담아 보냅니다.
+                });
+
+                // HTTP 상태 코드가 200번대(성공)로 떨어졌다면 실행됩니다.
+                if (response.ok) {
+                    // 백엔드가 보내준 응답 데이터(JSON)를 자바스크립트 객체로 파싱합니다.
+                    const data = await response.json();
+
+                    // 처음 POST 요청으로 임시글을 생성했다면, 백엔드가 돌려준 새로운 게시글의 PK(id)를 전역 변수에 저장합니다.
+                    // -> 이제 다음 5분 뒤부터는 이 PK를 사용해 새로운 글을 생성하지 않고 기존 글을 PUT(수정)하게 됩니다!
+                    if (!currentTempPostId && data.id) {
+                        currentTempPostId = data.id;
+                    }
+
+                    // 다음 5분 뒤 비교 연산을 위해, 방금 성공적으로 DB에 저장한 내용을 '마지막 저장 내용' 변수에 덮어씌웁니다.
+                    lastSavedContent = currentContent;
+
+                    // 사용자에게 저장이 완료되었음을 시각적으로 알리기 위해 현재 시간을 구합니다.
+                    const now = new Date();
+                    // 시(Hours)와 분(Minutes)을 추출하여 두 자리 숫자(예: 09:05)로 예쁘게 포맷팅합니다.
+                    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+                    // 화면 우측 하단이나 상단에 몰래(?) 저장 시간을 텍스트로 업데이트해 줍니다.
+                    // (경고창 alert를 띄우면 글을 쓰다가 흐름이 끊기므로 절대 금물입니다!)
+                    const timeDisplay = document.getElementById('auto-save-time');
+                    if (timeDisplay) {
+                        timeDisplay.innerText = `마지막 자동 저장: ${timeString}`;
+                    }
+                }
+            } catch (error) {
+                // 사용자가 눈치채지 못하게 백그라운드에서 돌아가는 기능이므로, 에러가 나더라도 경고창 대신 개발자 도구 콘솔에만 기록합니다.
+                console.error('자동 임시저장 실패:', error);
+            }
+
+        // 타이머의 간격을 설정
+        // 1분(60000) -> 5분(300000)으로 변경했습니다. (만약 10분으로 하시려면 600000을 입력하시면 됩니다.)
+        }, 300000);
 
     });
 
