@@ -4,6 +4,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css"/>
 <style>
+    /* 썸네일 미리보기 박스의 점선 테두리 스타일입니다. */
     .border-dashed {
         border-style: dashed !important;
     }
@@ -27,12 +28,25 @@
                     </div>
 
                     <div class="mb-5">
-                        <label class="form-label fw-bold text-secondary">본문 내용</label>
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <label class="form-label fw-bold text-secondary mb-0">본문 내용</label>
+
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="text-muted small fw-bold">
+                                    글자 수: <span id="text-count" class="text-success">0</span>자
+                                </span>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-warning fw-bold rounded-pill px-3 shadow-sm text-dark"
+                                        data-bs-toggle="modal" data-bs-target="#aiToneModal">
+                                    <i class="bi bi-magic me-1"></i> AI로 글 다듬기
+                                </button>
+                            </div>
+                        </div>
                         <div id="editor"></div>
                     </div>
 
                     <div class="row g-4 mb-4">
-
                         <div class="col-lg-6">
                             <div class="bg-light rounded-4 p-4 h-100 border border-light-subtle">
                                 <h5 class="fw-bold text-dark mb-4"><i class="bi bi-gear-fill text-success me-2"></i>기본
@@ -67,23 +81,22 @@
                                 <h5 class="fw-bold text-dark mb-3"><i class="bi bi-image text-success me-2"></i>대표 썸네일
                                 </h5>
 
-                                <label for="thumbnail" class="form-label text-secondary" style="font-size: 0.8rem;">
-                                    이미지 주소(URL)를 입력해주세요 (파일 업로드 준비 중)
+                                <label for="thumbnail-file" class="form-label text-secondary fw-bold small">
+                                    이미지 파일 업로드 (새로 변경할 경우에만 선택)
                                 </label>
-                                <input type="url" class="form-control border-0 shadow-sm mb-3" id="thumbnail"
-                                       placeholder="https://example.com/image.jpg">
+                                <input type="file" class="form-control border-0 shadow-sm mb-3" id="thumbnail-file"
+                                       accept="image/*">
 
                                 <div id="thumbnail-preview"
-                                     class="rounded-3 border border-2 border-dashed border-secondary border-opacity-25 d-flex align-items-center justify-content-center overflow-hidden flex-grow-1 bg-white"
+                                     class="rounded-3 border border-2 border-dashed border-secondary border-opacity-25 d-flex align-items-center justify-content-center overflow-hidden flex-grow-1 bg-white relative"
                                      style="min-height: 160px;">
                                     <span class="text-muted small"
-                                          id="preview-text">이미지 URL을 입력하면<br>여기에 미리보기가 표시됩니다.</span>
+                                          id="preview-text">이미지를 선택하면<br>여기에 미리보기가 표시됩니다.</span>
                                     <img id="preview-img" src="" class="w-100 h-100 object-fit-cover d-none"
                                          alt="썸네일 미리보기">
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
@@ -96,6 +109,65 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="aiToneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+
+            <div class="modal-header bg-light border-bottom-0 pt-4 px-4 rounded-top-4">
+                <h5 class="modal-title fw-bold" style="color: var(--brand-dark-green);">
+                    <i class="bi bi-magic text-warning me-2"></i>AI 문체 변환기
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4 bg-white">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-secondary small">원본 텍스트 (대충 적어도 찰떡같이!)</label>
+                        <textarea id="ai-source-text" class="form-control border-2" rows="8"
+                                  placeholder="예: 강남역 마라탕 존맛탱 웨이팅 엄청 김..."></textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-secondary small">변환된 텍스트</label>
+                        <div class="position-relative h-100">
+                            <textarea id="ai-result-text" class="form-control bg-light border-0" rows="8"
+                                      placeholder="결과가 여기에 표시됩니다." readonly></textarea>
+
+                            <div id="ai-loading" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-success" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="form-label fw-bold text-secondary small mb-2">원하는 문체를 선택하세요</label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <input type="radio" class="btn-check" name="tone-options" id="tone-pro" value="professional"
+                               checked>
+                        <label class="btn btn-outline-success rounded-pill px-3" for="tone-pro">💻 전문적인 IT</label>
+
+                        <input type="radio" class="btn-check" name="tone-options" id="tone-friendly" value="friendly">
+                        <label class="btn btn-outline-success rounded-pill px-3" for="tone-friendly">😊 친근한 리뷰</label>
+
+                        <input type="radio" class="btn-check" name="tone-options" id="tone-emo" value="emotional">
+                        <label class="btn btn-outline-success rounded-pill px-3" for="tone-emo">🌙 감성 에세이</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light border-top-0 pb-4 px-4 rounded-bottom-4 d-flex justify-content-between">
+                <button type="button" id="btn-ai-convert" class="btn btn-dark rounded-pill px-4">변환하기</button>
+                <button type="button" id="btn-ai-apply" class="btn btn-primary rounded-pill px-4 shadow-sm" disabled>
+                    에디터에 삽입
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -105,79 +177,72 @@
     const segments = window.location.pathname.split('/');
     const currentPostId = segments[segments.indexOf('post') + 1];
     const token = localStorage.getItem('access_token');
+
     let editor;
+    // ✨ 썸네일 최종 URL을 담을 전역 변수
+    let finalImageUrl = "";
 
     document.addEventListener("DOMContentLoaded", async () => {
-        // Toast UI Editor 인스턴스를 생성할 때 설정하는 옵션 객체입니다.
+        if (!token) {
+            alert("로그인이 필요한 서비스입니다.");
+            window.location.href = "/api/v1/user/login-page/";
+            return;
+        }
+
+        // 에디터 초기화
         editor = new toastui.Editor({
-            // 에디터가 렌더링될 HTML 요소의 선택자입니다.
             el: document.querySelector('#editor'),
-            // 에디터의 높이를 설정합니다.
             height: '700px',
-            // 에디터의 초기 입력 모드를 마크다운으로 설정합니다.
             initialEditType: 'markdown',
-            // 마크다운 작성 시 오른쪽에 미리보기를 띄워주는 수직 분할 모드를 사용합니다.
             previewStyle: 'vertical',
-
-
-            // 👇 여기서부터 새롭게 추가되는 이미지 가로채기 훅(hook) 설정입니다!
+            // 이미지 S3 업로드 훅 (write.html과 동일)
             hooks: {
-                // 이미지가 에디터에 추가될 때(드래그 앤 드롭 또는 버튼 클릭) 가로채어 실행되는 함수입니다.
                 addImageBlobHook: async (blob, callback) => {
-                    // 로컬 스토리지에서 사용자의 로그인 인증 토큰(JWT)을 꺼내옵니다.
                     const token = localStorage.getItem('access_token');
-
-                    // 토큰이 없다면 (비정상적인 접근이거나 로그아웃 상태라면)
                     if (!token) {
-                        // 사용자에게 경고창을 띄워 알립니다.
                         alert("이미지를 업로드하려면 로그인이 필요합니다.");
-                        // 함수 실행을 즉시 중단합니다.
                         return;
                     }
-
-                    // 서버 통신 중 발생할 수 있는 에러를 처리하기 위해 try-catch 블록을 엽니다.
                     try {
-                        // 1. 우리 백엔드 서버(PresignedUrlAPIView)에 S3 업로드용 임시 URL을 요청합니다.
-                        // 파일 이름에 특수문자나 한글이 있을 경우를 대비해 encodeURIComponent로 안전하게 인코딩하여 쿼리스트링으로 넘깁니다.
                         const urlResponse = await fetch(`/api/v1/post/image/presigned-url/?filename=${encodeURIComponent(blob.name)}`, {
-                            // 인증된 사용자만 API를 쓸 수 있으므로 헤더에 Bearer 토큰을 담아줍니다.
                             headers: {'Authorization': 'Bearer ' + token}
                         });
-
-                        // HTTP 응답 상태가 200번대(성공)가 아니라면 에러를 발생시켜 catch 블록으로 보냅니다.
                         if (!urlResponse.ok) throw new Error('백엔드 URL 발급 실패');
-
-                        // 백엔드에서 정상적으로 응답해준 데이터(presigned_url, image_url)를 JSON 객체로 변환합니다.
                         const urlData = await urlResponse.json();
 
-                        // 2. 발급받은 Presigned URL(urlData.presigned_url)을 타겟으로 하여 S3에 이미지를 직접 업로드합니다.
                         const s3Response = await fetch(urlData.presigned_url, {
-                            // S3 Presigned URL을 통한 파일 업로드는 PUT HTTP 메서드를 사용해야 합니다.
                             method: 'PUT',
-                            // S3가 이 파일이 이미지임을 올바르게 인식하도록 실제 파일의 MIME 타입(예: image/png)을 헤더에 명시합니다.
                             headers: {'Content-Type': blob.type},
-                            // 실제 이미지 파일 데이터(Blob 객체)를 요청 본문(body)에 담아 쏘아 올립니다.
                             body: blob
                         });
-
-                        // S3 업로드에 실패했을 경우 (CORS 에러나 권한 만료 등) 에러를 발생시킵니다.
                         if (!s3Response.ok) throw new Error('S3 직접 업로드 실패');
 
-                        // 3. 업로드가 완벽하게 성공하면, 백엔드가 미리 만들어준 '최종 접속 이미지 주소(urlData.image_url)'를 추출합니다.
-                        // Toast UI Editor가 제공하는 콜백 함수를 호출하여 에디터 본문에 이미지를 마크다운 문법으로 쏙 집어넣습니다.
-                        // 첫 번째 인자는 이미지 주소, 두 번째 인자는 대체 텍스트(alt 속성)로 사용됩니다.
                         callback(urlData.image_url, blob.name);
-
                     } catch (error) {
-                        // 백엔드 URL 발급이나 S3 업로드 과정에서 에러가 터지면 개발자 도구 콘솔에 빨간 글씨로 기록합니다.
                         console.error('본문 이미지 업로드 오류:', error);
-                        // 일반 사용자도 알 수 있도록 친절하게 알림창을 띄워줍니다.
                         alert('이미지 업로드에 실패했습니다. 네트워크 상태를 확인해주세요.');
                     }
                 }
             }
         });
 
+        // 글자 수 카운트
+        const textCountElement = document.getElementById('text-count');
+        editor.on('change', function () {
+            let text = editor.getMarkdown();
+            let textWithoutSpace = text.replace(/\s/g, '');
+            let length = textWithoutSpace.length;
+            textCountElement.innerText = length;
+            if (length > 0) {
+                textCountElement.classList.add('text-success');
+                textCountElement.classList.remove('text-secondary');
+            } else {
+                textCountElement.classList.add('text-secondary');
+                textCountElement.classList.remove('text-success');
+            }
+        });
+
+        // 맞춤법 검사 허용
         setTimeout(() => {
             const editorInputArea = document.querySelector('.ProseMirror');
             if (editorInputArea) {
@@ -189,7 +254,7 @@
             }
         }, 100);
 
-        // 1. 시리즈 목록 불러오기
+        // 시리즈 목록 불러오기
         try {
             const seriesRes = await fetch('/api/v1/series/my/', {
                 headers: {'Authorization': 'Bearer ' + token}
@@ -198,7 +263,6 @@
                 const seriesData = await seriesRes.json();
                 const seriesList = seriesData.results || seriesData;
                 const seriesSelect = document.getElementById('series');
-
                 seriesList.forEach(series => {
                     const option = document.createElement('option');
                     option.value = series.id;
@@ -210,7 +274,7 @@
             console.error('시리즈 로드 실패', e);
         }
 
-        // 2. 기존 게시글 데이터 불러오기
+        // 기존 게시글 데이터 불러오기
         try {
             const res = await fetch(`/api/v1/post/${currentPostId}/`);
             const data = await res.json();
@@ -222,20 +286,15 @@
                 if (data.series) {
                     document.getElementById('series').value = data.series;
                 }
-
                 if (data.tags && data.tags.length > 0) {
                     document.getElementById('tags').value = data.tags.join(', ');
                 }
 
-                // ✨ 기존 글에 썸네일(URL)이 존재한다면, 입력칸과 미리보기 영역을 채워줍니다.
+                // ✨ 기존 썸네일 불러오기
                 if (data.thumbnail) {
-                    // 입력창에 기존 URL 값을 넣습니다.
-                    document.getElementById('thumbnail').value = data.thumbnail;
-                    // 미리보기 이미지의 src에도 URL을 넣습니다.
+                    finalImageUrl = data.thumbnail;
                     document.getElementById('preview-img').src = data.thumbnail;
-                    // 이미지가 보이도록 클래스(d-none)를 지워줍니다.
                     document.getElementById('preview-img').classList.remove('d-none');
-                    // 글자 안내 문구는 안 보이게 숨깁니다.
                     document.getElementById('preview-text').style.display = 'none';
                 }
 
@@ -245,39 +304,131 @@
             console.error(e);
         }
 
-        // ✨ 썸네일 URL 실시간 미리보기 기능 (글쓰기 페이지와 동일)
-        const thumbnailInput = document.getElementById('thumbnail');
+        // ✨ 썸네일 새로 업로드 로직 (S3 직접 전송)
+        const fileInput = document.getElementById('thumbnail-file');
         const previewImg = document.getElementById('preview-img');
         const previewText = document.getElementById('preview-text');
 
-        thumbnailInput.addEventListener('input', function () {
-            const url = this.value.trim();
-            if (url) {
-                previewImg.src = url;
-                previewImg.classList.remove('d-none');
-                previewText.style.display = 'none';
-            } else {
-                previewImg.classList.add('d-none');
-                previewImg.src = '';
-                previewText.style.display = 'block';
+        fileInput.addEventListener('change', async function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            previewText.innerHTML = '<div class="spinner-border spinner-border-sm text-success"></div><br>S3로 업로드 중...';
+            previewText.style.display = 'block';
+            previewImg.classList.add('d-none');
+
+            try {
+                const urlResponse = await fetch(`/api/v1/post/image/presigned-url/?filename=${encodeURIComponent(file.name)}`, {
+                    headers: {'Authorization': 'Bearer ' + token}
+                });
+                const urlData = await urlResponse.json();
+                if (!urlResponse.ok) throw new Error("URL 발급 실패: " + JSON.stringify(urlData));
+
+                const s3Response = await fetch(urlData.presigned_url, {
+                    method: 'PUT',
+                    headers: {'Content-Type': file.type},
+                    body: file
+                });
+
+                if (s3Response.ok) {
+                    finalImageUrl = urlData.image_url;
+                    previewImg.src = finalImageUrl;
+                    previewImg.classList.remove('d-none');
+                    previewText.style.display = 'none';
+                } else {
+                    throw new Error("S3 직접 업로드 실패: " + s3Response.status);
+                }
+            } catch (error) {
+                console.error("업로드 에러:", error);
+                previewText.innerHTML = '<span class="text-danger">업로드에 실패했습니다.</span>';
+                fileInput.value = "";
             }
         });
 
-        previewImg.addEventListener('error', function () {
-            this.classList.add('d-none');
-            previewText.style.display = 'block';
-            previewText.innerHTML = '<span class="text-danger">이미지를 불러올 수 없습니다.<br>올바른 URL인지 확인해주세요.</span>';
+        // ✨ 빠져있던 AI 문체 변환기 Javascript 로직 1 (변환 버튼)
+        document.getElementById('btn-ai-convert').addEventListener('click', async () => {
+            const text = document.getElementById('ai-source-text').value.trim();
+            const tone = document.querySelector('input[name="tone-options"]:checked').value;
+
+            if (!text) {
+                alert('변환할 텍스트를 입력해주세요.');
+                return;
+            }
+
+            const resultTextArea = document.getElementById('ai-result-text');
+            resultTextArea.value = '';
+            document.getElementById('ai-loading').classList.remove('d-none');
+
+            const convertBtn = document.getElementById('btn-ai-convert');
+            convertBtn.disabled = true;
+            convertBtn.innerText = '변환 중...';
+
+            try {
+                const response = await fetch('/api/ai/tone-convert/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify({text: text, tone: tone})
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert('변환 실패: ' + (errorData.error_detail || errorData.error || '알 수 없는 오류'));
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let isFirstChunk = true;
+
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+
+                    const chunkText = decoder.decode(value, {stream: true});
+
+                    if (isFirstChunk && chunkText) {
+                        document.getElementById('ai-loading').classList.add('d-none');
+                        isFirstChunk = false;
+                    }
+
+                    resultTextArea.value += chunkText;
+                    resultTextArea.scrollTop = resultTextArea.scrollHeight;
+                }
+
+                document.getElementById('btn-ai-apply').disabled = false;
+
+            } catch (error) {
+                console.error('AI Convert Error:', error);
+                alert('서버 통신 중 오류가 발생했습니다.');
+            } finally {
+                document.getElementById('ai-loading').classList.add('d-none');
+                convertBtn.disabled = false;
+                convertBtn.innerText = '변환하기';
+            }
+        });
+
+        // ✨ 빠져있던 AI 문체 변환기 Javascript 로직 2 (삽입 버튼)
+        document.getElementById('btn-ai-apply').addEventListener('click', () => {
+            const resultText = document.getElementById('ai-result-text').value;
+            if (resultText && editor) {
+                editor.insertText('\n\n' + resultText + '\n\n');
+                const modalEl = document.getElementById('aiToneModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+            }
         });
     });
 
+    // 폼 전송 로직
     document.getElementById('editForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const tagsInput = document.getElementById('tags').value;
         const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
         const seriesValue = document.getElementById('series').value;
-        // ✨ 수정한 썸네일 URL을 가져옵니다.
-        const thumbnailUrl = document.getElementById('thumbnail').value.trim();
 
         const payload = {
             title: document.getElementById('title').value,
@@ -285,8 +436,7 @@
             visibility: document.getElementById('visibility').value,
             tags: tagsArray,
             series: seriesValue ? parseInt(seriesValue) : null,
-            // ✨ 썸네일 값도 함께 업데이트 요청을 보냅니다.
-            thumbnail: thumbnailUrl || null
+            thumbnail: finalImageUrl !== "" ? finalImageUrl : null
         };
 
         const res = await fetch(`/api/v1/post/${currentPostId}/`, {
