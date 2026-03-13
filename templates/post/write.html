@@ -31,11 +31,18 @@
                     <div class="mb-5">
                         <div class="d-flex justify-content-between align-items-end mb-2">
                             <label class="form-label fw-bold text-secondary mb-0">본문 내용</label>
-                            <button type="button"
-                                    class="btn btn-sm btn-warning fw-bold rounded-pill px-3 shadow-sm text-dark"
-                                    data-bs-toggle="modal" data-bs-target="#aiToneModal">
-                                <i class="bi bi-magic me-1"></i> AI로 글 다듬기
-                            </button>
+
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="text-muted small fw-bold">
+                                    글자 수: <span id="text-count" class="text-success">0</span>자
+                                </span>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-warning fw-bold rounded-pill px-3 shadow-sm text-dark"
+                                        data-bs-toggle="modal" data-bs-target="#aiToneModal">
+                                    <i class="bi bi-magic me-1"></i> AI로 글 다듬기
+                                </button>
+                            </div>
                         </div>
                         <div id="editor"></div>
                     </div>
@@ -202,6 +209,8 @@
             // (write.html의 경우) 아무것도 입력하지 않았을 때 보여줄 안내 문구입니다.
             placeholder: '자유롭게 이야기를 풀어보세요...',
 
+
+
             // 👇 여기서부터 새롭게 추가되는 이미지 가로채기 훅(hook) 설정입니다!
             hooks: {
                 // 이미지가 에디터에 추가될 때(드래그 앤 드롭 또는 버튼 클릭) 가로채어 실행되는 함수입니다.
@@ -257,6 +266,41 @@
                         alert('이미지 업로드에 실패했습니다. 네트워크 상태를 확인해주세요.');
                     }
                 }
+            }
+        });
+
+        // '글자 수 카운트' 최적화 로직
+        // HTML에서 글자 숫자가 표시될 요소를 DOM에서 찾아 변수에 저장합니다.
+        const textCountElement = document.getElementById('text-count');
+
+        // Toast UI 에디터의 내장 이벤트인 'change' 이벤트를 구독합니다.
+        // 키보드를 칠 때마다 매번 실행됩니다.
+        editor.on('change', function () {
+            // 에디터 안에 입력된 마크다운 텍스트 원본을 가져옵니다.
+            let text = editor.getMarkdown();
+
+            // 공백(스페이스바, 엔터)을 글자 수에서 제외하려면 공백을 지워줍니다.
+            // 정규식 /\s/g 는 모든 종류의 공백(띄어쓰기, 줄바꿈 등)을 의미합니다.
+            // (만약 공백을 포함하고 싶다면 아래 replace 줄을 삭제하시면 됩니다.)
+            let textWithoutSpace = text.replace(/\s/g, '');
+
+            // 공백이 제거된 순수 글자의 길이를 구합니다.
+            let length = textWithoutSpace.length;
+
+            // 계산된 길이를 화면의 HTML 요소에 텍스트로 삽입하여 업데이트합니다.
+            textCountElement.innerText = length;
+
+            // UX 향상을 위해 글자 수가 0일 때는 회색, 1자 이상일 때는 초록색으로 바꿉니다.
+            if (length > 0) {
+                // 글자가 있으면 초록색 클래스(text-success)를 추가합니다.
+                textCountElement.classList.add('text-success');
+                // 회색 클래스는 제거합니다.
+                textCountElement.classList.remove('text-secondary');
+            } else {
+                // 글자가 없으면 회색 클래스(text-secondary)를 추가합니다.
+                textCountElement.classList.add('text-secondary');
+                // 초록색 클래스는 제거합니다.
+                textCountElement.classList.remove('text-success');
             }
         });
 
