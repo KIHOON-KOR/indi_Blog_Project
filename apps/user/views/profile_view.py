@@ -9,7 +9,8 @@ from apps.user.services.profile_service import get_public_profile
 from apps.user.services.users_stat_service import get_user_garden_stats
 from apps.user.serializers.profile_serializer import (
     UserProfileResponseSerializer,
-    UserProfileUpdateSerializer, PublicUserProfileResponseSerializer,
+    UserProfileUpdateSerializer,
+    PublicUserProfileResponseSerializer,
 )
 
 
@@ -98,6 +99,7 @@ class UserProfileAPIView(APIView):
 
 class PublicUserProfileAPIView(APIView):
     """특정 닉네임을 가진 사용자의 공개 프로필 및 활동 통계 정보를 제공합니다."""
+
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -105,7 +107,6 @@ class PublicUserProfileAPIView(APIView):
         summary="타인 공개 프로필 조회 (닉네임 기반)",
         responses={200: PublicUserProfileResponseSerializer},
     )
-
     def get(self, request, nickname):
         # 1. 서비스레이어 호출
         raw_data = get_public_profile(nickname)

@@ -41,6 +41,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "bio": {"required": False},  # 자기소개 생략 가능
         }
 
+
 # 5. 타인에게 보여질 공개용 기본 정보 시리얼라이저 (이메일 제외)
 class PublicUserInfoSerializer(serializers.Serializer):
     nickname = serializers.CharField(help_text="유저 닉네임")
@@ -50,6 +51,7 @@ class PublicUserInfoSerializer(serializers.Serializer):
     )
     # 자기소개 역시 없을 수 있으므로 allow_null 처리
     bio = serializers.CharField(allow_null=True, required=False, help_text="자기소개")
+
 
 # 6. 공개용 프로필 최종 응답 시리얼라이저
 class PublicUserProfileResponseSerializer(serializers.Serializer):

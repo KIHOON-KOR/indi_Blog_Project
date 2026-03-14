@@ -26,6 +26,7 @@ def generate_unique_nickname(base_nickname: str) -> str:
     # 5. 중복 검사를 통과한 고유한 닉네임을 반환
     return nickname
 
+
 class GithubLoginService:
     # 메서드를 인스턴스화 없이 사용할 수 있도록 정적 메서드로 선언합니다.
     @staticmethod
