@@ -1,5 +1,6 @@
 import requests
 from django.conf import settings
+import uuid
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -7,6 +8,23 @@ from apps.user.models.social_account import SocialAccount
 
 User = get_user_model()
 
+
+def generate_unique_nickname(base_nickname: str) -> str:
+    """
+    소셜 로그인 시 중복되지 않는 닉네임을 생성하는 함수입니다.
+    """
+    # 1. 소셜 플랫폼에서 받아온 원본 닉네임을 초기값으로 설정
+    nickname = base_nickname
+
+    # 2. DB에 해당 닉네임이 이미 존재하는지 검사 (존재한다면 while 문 실행)
+    while User.objects.filter(nickname=nickname).exists():
+        # 3. 중복된다면, uuid를 이용해 랜덤한 4자리 영숫자를 생성
+        random_str = uuid.uuid4().hex[:4]
+        # 4. 원본 닉네임 뒤에 랜덤 문자열을 붙여 새로운 닉네임을 만듬 (예: myname_f1a2)
+        nickname = f"{base_nickname}_{random_str}"
+
+    # 5. 중복 검사를 통과한 고유한 닉네임을 반환
+    return nickname
 
 class GithubLoginService:
     # 메서드를 인스턴스화 없이 사용할 수 있도록 정적 메서드로 선언합니다.
@@ -51,7 +69,7 @@ class GithubLoginService:
 
         # 10. 깃허브의 유저 고유 ID와 아이디(login)를 가져옵니다.
         github_id = str(user_json.get("id"))
-        nickname = user_json.get("login")
+        base_nickname = user_json.get("login")
 
         # 11. 깃허브 이메일이 비공개(null)로 올 경우를 대비하여 확실하게 처리합니다.
         email = user_json.get("email")
@@ -78,9 +96,12 @@ class GithubLoginService:
 
                 # 17. 일반 유저도 없다면 새로운 유저를 생성합니다. (UserManager의 create_user 활용)
                 if not user:
+                    # 고유한 닉네임 생성
+                    unique_nickname = generate_unique_nickname(base_nickname)
+
                     user = User.objects.create_user(
                         email=email,
-                        nickname=nickname,
+                        nickname=unique_nickname,
                         password=None,  # 소셜 로그인이므로 비밀번호는 사용 불가 처리됩니다.
                     )
 
@@ -136,7 +157,7 @@ class DiscordLoginService:
 
         # 6. 유저 정보 추출 (디스코드는 id와 username, email을 반환합니다)
         discord_id = str(user_json.get("id"))
-        nickname = user_json.get("username")
+        base_nickname = user_json.get("username")
         email = user_json.get("email")
 
         if not email:
@@ -153,9 +174,11 @@ class DiscordLoginService:
             else:
                 user = User.objects.filter(email=email).first()  # type: ignore
                 if not user:
+                    unique_nickname = generate_unique_nickname(base_nickname)
+
                     user = User.objects.create_user(
                         email=email,
-                        nickname=nickname,
+                        nickname=unique_nickname,
                         password=None,
                     )
                 SocialAccount.objects.create(
