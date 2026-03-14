@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from apps.user.models import User
 
 # 1. 유저 기본 정보를 담을 중첩 시리얼라이저
 class UserInfoSerializer(serializers.Serializer):
@@ -18,3 +19,16 @@ class UserStatsSerializer(serializers.Serializer):
 class UserProfileResponseSerializer(serializers.Serializer):
     user_info = UserInfoSerializer(help_text="유저 기본 정보")
     stats = UserStatsSerializer(help_text="유저 활동 통계")
+
+# 4. 프로필 수정을 위해 요청 데이터를 검증할 시리얼라이저
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        # 클라이언트가 수정할 수 있도록 허용할 필드들만 리스트로 명시
+        fields = ["nickname", "profile_img", "bio"]
+        # 모든 필드를 필수가 아니게(partial update) 만들어 일부만 수정할 수 있게 함
+        extra_kwargs = {
+            "nickname": {"required": False},    # 닉네임 생략 가능
+            "profile_img": {"required": False}, # 프로필 이미지 생략 가능
+            "bio": {"required": False},         # 자기소개 생략 가능
+        }
