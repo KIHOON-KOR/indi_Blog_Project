@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% block title %}마이페이지 - My Blog{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 프로필 이미지를 감싸는 래퍼에 마우스를 올렸을 때 살짝 투명해지도록 전환 효과를 줍니다. */
+    .profile-img-wrapper {
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+    }
+
+    /* 마우스를 올리면 투명도가 80%로 낮아지며 클릭할 수 있다는 느낌을 줍니다. */
+    .profile-img-wrapper:hover {
+        opacity: 0.8;
+    }
+
+    /* 프로필 이미지가 찌그러지지 않고 꽉 차게 들어가도록 object-fit을 설정합니다. */
+    .profile-img {
+        object-fit: cover;
+    }
+
+    /* 카메라 아이콘 뱃지의 위치와 크기를 예쁘게 잡아줍니다. */
+    .img-edit-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background-color: var(--brand-dark-green);
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* 게시글 카드에 마우스를 올렸을 때 위로 살짝 떠오르는 부드러운 애니메이션입니다. */
+    .post-card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+
+    .post-card-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row w-100 justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+
+        <div class="text-white mb-4 d-flex justify-content-between align-items-end">
+            <div>
+                <h2 class="fw-bold mb-1">마이페이지</h2>
+                <p class="opacity-75 mb-0">내 프로필과 성장 기록을 확인하세요.</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex flex-column flex-sm-row gap-4 align-items-center align-items-sm-start">
+
+                    <div class="position-relative flex-shrink-0 profile-img-wrapper"
+                         onclick="document.getElementById('profileImgInput').click();">
+                        <img id="profileImg" src="/static/img/default_profile.png" alt="프로필"
+                             class="rounded-circle border border-2 shadow-sm profile-img"
+                             style="width: 120px; height: 120px;">
+                        <div class="img-edit-badge"><i class="bi bi-camera-fill"></i></div>
+                    </div>
+                    <input type="file" id="profileImgInput" class="d-none" accept="image/*"
+                           onchange="uploadProfileImage(event)">
+
+                    <div class="flex-grow-1 text-center text-sm-start w-100">
+                        <div class="d-flex justify-content-center justify-content-sm-between align-items-center mb-2">
+                            <h3 id="userNickname" class="fw-bold mb-0 text-dark">로딩중...</h3>
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 ms-2"
+                                    data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                <i class="bi bi-pencil me-1"></i>수정
+                            </button>
+                        </div>
+                        <p id="userBio" class="text-secondary mb-4">자기소개가 없습니다.</p>
+
+                        <div class="bg-light rounded-3 p-3 border">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img id="gradeImg" src="" alt="grade"
+                                         style="width: 24px; height: 24px; object-fit: contain;">
+                                    <span id="gradeName" class="fw-bold text-success">로딩중...</span>
+                                </div>
+                                <span class="small text-muted fw-bold">총 <span id="totalPostCount"
+                                                                               class="text-dark">0</span>개의 기록</span>
+                            </div>
+
+                            <div class="progress" style="height: 10px; border-radius: 10px;">
+                                <div id="gradeProgressBar"
+                                     class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                     style="width: 0%;"></div>
+                            </div>
+                            <div class="text-end mt-1">
+                                <span class="small text-muted">다음 레벨까지: <strong id="progressText" class="text-success">0%</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-3 text-white">
+            <h4 class="fw-bold m-0">내 작성 글 <span class="fs-6 fw-normal opacity-75">(최근 글)</span></h4>
+            <a href="/api/v1/post/my/page/" class="text-white opacity-75 text-decoration-none small hover-opacity">전체보기
+                <i class="bi bi-chevron-right"></i></a>
+        </div>
+
+        <div id="myPostList" class="d-flex flex-column gap-3 mb-5">
+            <div class="text-center py-5 bg-white bg-opacity-10 rounded-4">
+                <div class="spinner-border text-light" role="status"></div>
+                <p class="text-white opacity-75 mt-2">작성한 글을 불러오는 중입니다...</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold text-dark">프로필 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-secondary small">닉네임</label>
+                    <input type="text" id="editNickname" class="form-control border-2" placeholder="새로운 닉네임을 입력하세요">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-secondary small">한 줄 소개</label>
+                    <textarea id="editBio" class="form-control border-2" rows="3" placeholder="자신을 표현해보세요!"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="submitProfileUpdate()">저장하기
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 문서의 HTML 렌더링이 끝나면 가장 먼저 실행되는 시작점입니다.
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchUserProfile(); // 프로필 및 통계 정보 가져오기
+        fetchMyPosts();     // 최근 작성 글 가져오기
+
+        // 부트스트랩 모달이 열릴 때마다 기존 정보를 입력창에 자동으로 채워주는 이벤트 리스너입니다.
+        const editModalEl = document.getElementById('editProfileModal');
+        editModalEl.addEventListener('show.bs.modal', function () {
+            // 화면에 표시된 닉네임을 가져와 수정창에 넣습니다.
+            document.getElementById('editNickname').value = document.getElementById('userNickname').innerText;
+            // 화면에 표시된 소개글을 가져옵니다.
+            const bioText = document.getElementById('userBio').innerText;
+            // 기본 문구("자기소개가 없습니다.")라면 빈 칸으로, 아니면 실제 내용을 수정창에 넣습니다.
+            document.getElementById('editBio').value = bioText === '자기소개가 없습니다.' ? '' : bioText;
+        });
+    });
+
+    // 로컬 스토리지에서 보안 토큰을 꺼내오는 헬퍼(도우미) 함수입니다.
+    function getAccessToken() {
+        return localStorage.getItem('access_token');
+    }
+
+    // 1. [유저 프로필 및 통계 조회]
+    async function fetchUserProfile() {
+        try {
+            // 백엔드 API에 GET 요청을 보내 내 정보를 요구합니다.
+            const response = await fetch('/api/v1/user/profile/', {
+                method: 'GET',
+                // 내가 누군지 증명하기 위해 헤더에 토큰을 실어 보냅니다.
+                headers: {'Authorization': `Bearer ${getAccessToken()}`}
+            });
+
+            // 토큰 만료 등 에러가 발생하면 catch 블록으로 던집니다.
+            if (!response.ok) throw new Error('프로필 정보를 불러오지 못했습니다.');
+
+            // 응답 데이터를 JSON 객체로 변환합니다.
+            const data = await response.json();
+
+            // 가져온 닉네임을 화면에 텍스트로 박아넣습니다.
+            document.getElementById('userNickname').innerText = data.user_info.nickname;
+            // 가져온 소개글을 넣되, 비어있으면 기본 문구를 넣습니다.
+            document.getElementById('userBio').innerText = data.user_info.bio || '자기소개가 없습니다.';
+
+            // 프로필 이미지 URL이 있다면
+            if (data.user_info.profile_img) {
+                // img 태그의 주소(src)를 변경하여 사진을 띄웁니다.
+                document.getElementById('profileImg').src = data.user_info.profile_img;
+            }
+
+            // 백엔드가 보내준 통계 데이터(등급, 경험치 등)를 별도 변수에 담습니다.
+            const stats = data.stats;
+
+            // 통계 데이터가 정상적으로 넘어왔다면 화면을 업데이트합니다.
+            if (stats) {
+                // 총 게시글 수 업데이트
+                document.getElementById('totalPostCount').innerText = stats.total_post_count;
+                // 현재 등급 이름 업데이트
+                document.getElementById('gradeName').innerText = stats.current_grade.label;
+                // 현재 등급 아이콘 이미지 업데이트
+                document.getElementById('gradeImg').src = stats.current_grade.imgUrl;
+
+                // 자연스러운 애니메이션을 위해 0.1초 딜레이를 주고 프로그레스 바 길이를 늘립니다.
+                setTimeout(() => {
+                    document.getElementById('gradeProgressBar').style.width = `${stats.progress_percent}%`;
+                }, 100);
+                // 진행률 퍼센트 숫자를 텍스트로 업데이트합니다.
+                document.getElementById('progressText').innerText = `${stats.progress_percent}%`;
+            }
+        } catch (error) {
+            // 에러 내용을 개발자 콘솔에 띄웁니다.
+            console.error(error);
+            // 유저에게 토큰이 만료되었음을 알리고 다시 로그인을 유도할 수 있습니다.
+            // alert('인증이 만료되었거나 오류가 발생했습니다.');
+        }
+    }
+
+    // 2. [최근 작성 글 목록 불러오기]
+    async function fetchMyPosts() {
+        // 리스트가 들어갈 부모 컨테이너 요소를 찾습니다.
+        const postListContainer = document.getElementById('myPostList');
+
+        try {
+            // 내 글 목록을 가져오는 API 엔드포인트에 요청을 보냅니다.
+            const response = await fetch('/api/v1/post/my/', {
+                method: 'GET',
+                headers: {'Authorization': `Bearer ${getAccessToken()}`}
+            });
+
+            // 에러가 나면 예외를 발생시킵니다.
+            if (!response.ok) throw new Error('게시글을 불러오지 못했습니다.');
+
+            // 응답 데이터를 JSON으로 변환합니다.
+            const data = await response.json();
+
+            // 백엔드 페이지네이션 설정에 따라 배열의 위치가 다를 수 있으므로 안전하게 추출합니다.
+            const postArray = Array.isArray(data) ? data : (data.results || data.data || []);
+
+            // 작성한 글이 하나도 없다면
+            if (postArray.length === 0) {
+                // 스피너를 지우고 예쁜 안내 문구 카드를 삽입한 뒤 함수를 종료합니다.
+                postListContainer.innerHTML = `
+                    <div class="card border-0 bg-white bg-opacity-75 rounded-4 text-center py-5">
+                        <div class="card-body">
+                            <i class="bi bi-journal-x fs-1 text-secondary mb-3"></i>
+                            <p class="text-secondary mb-0">아직 작성한 글이 없습니다. 첫 씨앗을 틔워보세요!</p>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            // 기존에 돌고 있던 로딩 스피너를 깨끗하게 비웁니다.
+            postListContainer.innerHTML = '';
+
+            // 최신 글 5개만 자르기(slice) 한 뒤 반복문을 돕니다. (마이페이지이므로 요약본만 보여줌)
+            postArray.slice(0, 5).forEach(post => {
+                // 클릭 시 해당 포스트의 상세 페이지로 넘어가는 HTML a 태그 덩어리를 만듭니다.
+                // 부트스트랩 클래스를 이용해 흰색 카드에 둥근 모서리, 그림자 호버 효과를 줍니다.
+                const postHtml = `
+                    <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
+                        <div class="card border-0 shadow-sm rounded-4 post-card-hover p-3 p-md-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-truncate me-3">
+                                    <h5 class="fw-bold mb-1 text-truncate">${post.title}</h5>
+                                    <div class="small text-muted d-flex align-items-center gap-2">
+                                        <span><i class="bi bi-calendar3"></i> ${new Date(post.created_at).toLocaleDateString()}</span>
+                                        <span><i class="bi bi-heart-fill text-danger opacity-75"></i> ${post.likes_count || 0}</span>
+                                    </div>
+                                </div>
+                                <i class="bi bi-chevron-right text-success fs-5"></i>
+                            </div>
+                        </div>
+                    </a>
+                `;
+                // 만들어진 카드 HTML을 부모 컨테이너의 맨 밑에 계속 추가합니다.
+                postListContainer.insertAdjacentHTML('beforeend', postHtml);
+            });
+
+        } catch (error) {
+            // 네트워크 오류 시 사용자에게 알립니다.
+            console.error(error);
+            postListContainer.innerHTML = '<p class="text-danger text-center bg-white p-3 rounded-3">글 목록을 불러오는데 실패했습니다.</p>';
+        }
+    }
+
+    // 3. [프로필 사진 수정 (S3 업로드)]
+    async function uploadProfileImage(event) {
+        // 사용자가 파일 선택창에서 고른 첫 번째 파일을 변수에 담습니다.
+        const file = event.target.files[0];
+        // 선택을 취소했다면 함수를 종료합니다.
+        if (!file) return;
+
+        // 업로드 중임을 알리기 위해 기존 프로필 사진을 반투명하게 만듭니다.
+        document.getElementById('profileImg').style.opacity = '0.5';
+
+        try {
+            // (1단계) 백엔드에 S3에 올릴 수 있는 임시 허가증(Presigned URL)을 요청합니다.
+            const presignedReqUrl = `/api/v1/post/image/presigned-url/?filename=${encodeURIComponent(file.name)}&domain=profile`;
+            const getUrlResponse = await fetch(presignedReqUrl, {
+                method: 'GET',
+                headers: {'Authorization': `Bearer ${getAccessToken()}`}
+            });
+
+            // 허가증 발급에 실패하면 에러를 던집니다.
+            if (!getUrlResponse.ok) throw new Error('업로드 URL을 발급받지 못했습니다.');
+
+            // 백엔드가 준 허가증(url)과 최종 이미지 주소(image_url)를 꺼냅니다.
+            const urlData = await getUrlResponse.json();
+            const {presigned_url, image_url} = urlData;
+
+            // (2단계) 허가증 주소(presigned_url)로 파일을 쏴서 AWS S3에 직접 업로드합니다.
+            const s3Response = await fetch(presigned_url, {
+                method: 'PUT',
+                body: file,
+                // 파일 확장자에 맞는 MIME 타입을 헤더에 꼭 명시해야 S3가 사진으로 인식합니다.
+                headers: {'Content-Type': file.type}
+            });
+
+            // S3 업로드에 실패하면 에러를 던집니다.
+            if (!s3Response.ok) throw new Error('S3 이미지 업로드에 실패했습니다.');
+
+            // (3단계) 업로드 성공! 백엔드 내 정보 DB에 새로운 사진 주소를 덮어쓰기(PATCH) 합니다.
+            const patchResponse = await fetch('/api/v1/user/profile/', {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${getAccessToken()}`,
+                    // JSON 데이터 전송임을 알립니다.
+                    'Content-Type': 'application/json'
+                },
+                // 새로 발급받은 S3 이미지 링크를 프로필 이미지 속성에 담아 보냅니다.
+                body: JSON.stringify({profile_img: image_url})
+            });
+
+            if (!patchResponse.ok) throw new Error('프로필 이미지 업데이트에 실패했습니다.');
+
+            // (4단계) 모든 작업이 끝났으므로 화면의 프로필 사진 src를 즉시 교체합니다.
+            document.getElementById('profileImg').src = image_url;
+
+        } catch (error) {
+            // 중간에 실패한 단계가 있다면 에러 메시지를 띄웁니다.
+            console.error("업로드 에러:", error);
+            alert(error.message);
+        } finally {
+            // 성공하든 실패하든, 반투명했던 사진을 다시 원상복구 시킵니다.
+            document.getElementById('profileImg').style.opacity = '1';
+            // 같은 파일을 연달아 다시 올려도 이벤트가 감지되도록 input 값을 비워줍니다.
+            event.target.value = '';
+        }
+    }
+
+    // 4. [닉네임 및 자기소개 텍스트 수정 완료 요청]
+    async function submitProfileUpdate() {
+        // 모달창 입력칸에 적힌 닉네임과 소개글을 가져오고, 양옆 공백을 자릅니다(trim).
+        const newNickname = document.getElementById('editNickname').value.trim();
+        const newBio = document.getElementById('editBio').value.trim();
+
+        // 닉네임을 다 지워버렸다면 경고창을 띄우고 중단합니다.
+        if (!newNickname) {
+            alert("닉네임은 비워둘 수 없습니다.");
+            return;
+        }
+
+        try {
+            // 백엔드의 프로필 수정 API에 PATCH 요청을 보냅니다.
+            const response = await fetch('/api/v1/user/profile/', {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${getAccessToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                // 변경된 닉네임과 소개글을 JSON 문자열로 묶어서 보냅니다.
+                body: JSON.stringify({
+                    nickname: newNickname,
+                    bio: newBio
+                })
+            });
+
+            // 닉네임 중복 등의 에러가 발생했다면
+            if (!response.ok) {
+                const errorData = await response.json();
+                // 백엔드가 준 구체적인 에러 메시지가 있다면 그걸 띄우고, 아니면 기본 메시지를 던집니다.
+                throw new Error(errorData.nickname ? errorData.nickname[0] : '프로필 수정에 실패했습니다.');
+            }
+
+            // 수정이 완료되어 돌아온 내 최신 프로필 데이터를 변수에 담습니다.
+            const data = await response.json();
+
+            // 새로고침 할 필요 없이 즉각적으로 화면의 닉네임과 소개글을 갱신해 줍니다.
+            document.getElementById('userNickname').innerText = data.user_info.nickname;
+            document.getElementById('userBio').innerText = data.user_info.bio || '자기소개가 없습니다.';
+
+            // 우측 상단 네비게이션 바에 있는 내 닉네임 로컬 데이터도 갱신합니다. (안하면 옛날 닉네임이 뜸)
+            localStorage.setItem('nickname', data.user_info.nickname);
+            // 네비게이션 렌더링 함수를 다시 호출해 즉시 반영시킵니다.
+            if (typeof checkLoginStatus === 'function') checkLoginStatus();
+
+            // 열려있는 Bootstrap 모달창을 찾아서 닫아주는 안전한 로직입니다.
+            const modalEl = document.getElementById('editProfileModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+        } catch (error) {
+            // 중복 닉네임 등 에러 발생 시 사용자에게 알림창을 띄웁니다.
+            console.error(error);
+            alert(error.message);
+        }
+    }
+</script>
+{% endblock %}
