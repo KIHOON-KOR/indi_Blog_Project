@@ -23,12 +23,21 @@ class PresignedUrlAPIView(APIView):
         tags=["이미지"],
         summary="S3 Presigned URL 발급",
         parameters=[
+            # 1. 원본 파일명을 받기 위한 파라미터
             OpenApiParameter(
                 name="filename",
                 description="업로드할 파일의 원본 이름 (예: my_photo.png)",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 required=True,
+            ),
+            # 2. 이미지가 저장될 도메인(폴더)을 구분하기 위한 파라미터
+            OpenApiParameter(
+                name="domain",
+                description="이미지 사용 목적 (post_thumbnail 또는 profile)",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
             )
         ],
     )
@@ -40,16 +49,26 @@ class PresignedUrlAPIView(APIView):
                 {"error": "filename은 필수입니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. 파일 이름 충돌(덮어쓰기)을 막기 위해 고유한 파일명을 생성합니다.
-        # 확장자(ext)를 분리한 뒤, 임의의 고유 문자열(uuid)을 붙여줍니다.
+        # 2. 프론트엔드에서 보낸 도메인 값을 추출 (기본값은 'post_thumbnail'로 설정하여 하위 호환성 유지)
+        domain = request.query_params.get("domain", "post_thumbnail")
+
+        # 3. 파일 이름에서 마지막 '.'을 기준으로 확장자만 분리
         ext = filename.split(".")[-1]
+        # 고유한 파일명을 생성하기 위해 uuid4를 사용하고 확장자를 다시 붙임
         unique_filename = f"{uuid.uuid4().hex}.{ext}"
 
-        # 3. S3 버킷 내에 저장될 최종 경로를 생성합니다. (예: post/thumbnails/2026/03/08/고유문자열.png)
+        # 오늘 날짜를 YYYY/MM/DD 형식의 문자열로 만듬
         today = datetime.now().strftime("%Y/%m/%d")
-        object_name = f"post/thumbnails/{today}/{unique_filename}"
 
-        # 4. boto3 S3 클라이언트를 생성합니다. (settings.py에 적어둔 환경변수를 가져옵니다)
+        # 4. 도메인에 따라 S3에 저장될 최종 경로(폴더)를 다르게 설정
+        if domain == "profile":
+            # 프로필 이미지일 경우 user/profiles 폴더에 저장
+            object_name = f"user/profiles/{today}/{unique_filename}"
+        else:
+            # 기본 게시글 썸네일일 경우 기존 경로를 유지
+            object_name = f"post/thumbnails/{today}/{unique_filename}"
+
+        # 5. boto3 S3 클라이언트를 생성 (settings.py에 적어둔 환경변수를 가져옵니다)
         s3_client = boto3.client(
             "s3",
             region_name=settings.AWS_S3_REGION_NAME,
@@ -60,23 +79,21 @@ class PresignedUrlAPIView(APIView):
         )
 
         try:
-            # 5. 대망의 Presigned URL 생성 부분입니다! (가장 핵심)
-            # 'put_object'는 S3에 파일을 올리는 작업을 의미합니다.
+            # 6. S3에 파일을 직접 업로드할 수 있는 10분(600초)짜리 임시 URL을 발급
             presigned_url = s3_client.generate_presigned_url(
                 "put_object",
                 Params={
-                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
-                    "Key": object_name,  # 저장될 경로
-                    "ContentType": f"image/{ext}",  # 파일 형식 지정 (필수)
+                    "Bucket": settings.AWS_STORAGE_BUCKET_NAME,  # 저장될 버킷 이름
+                    "Key": object_name,  # 저장될 S3 내의 경로
+                    "ContentType": f"image/{ext}",  # 파일의 컨텐츠 타입
                 },
                 ExpiresIn=600,  # 이 URL의 유효기간을 600초(10분)로 설정합니다. 10분이 지나면 쓸 수 없는 휴지조각이 됩니다.
             )
 
-            # 6. S3에 파일이 저장된 후, 프론트엔드가 사용할 이미지의 최종 접속 주소를 만들어 줍니다.
-            # 이 주소를 나중에 게시글 저장 API로 보내게 됩니다.
+            # 7. S3에 파일이 저장된 후, 업로드가 완료된 후 프론트엔드가 DB에 저장 요청을 보낼 때 사용할 실제 이미지 URL
             image_url = f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{object_name}"
 
-            # 7. 프론트엔드에게 임시 업로드 URL과 최종 이미지 URL을 모두 넘겨줍니다.
+            # 8. 발급받은 임시 URL과 최종 URL을 클라이언트에게 응답
             return Response(
                 {"presigned_url": presigned_url, "image_url": image_url},
                 status=status.HTTP_200_OK,
