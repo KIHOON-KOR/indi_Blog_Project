@@ -14,6 +14,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
 
     nickname = models.CharField(
         max_length=50,
+        unique=True,
     )
 
     profile_img = models.CharField(max_length=255, null=True, blank=True)

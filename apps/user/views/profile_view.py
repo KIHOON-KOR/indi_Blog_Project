@@ -1,14 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema
 from typing import cast
 
 from apps.user.models import User
+from apps.user.services.profile_service import get_public_profile
 from apps.user.services.users_stat_service import get_user_garden_stats
 from apps.user.serializers.profile_serializer import (
     UserProfileResponseSerializer,
     UserProfileUpdateSerializer,
+    PublicUserProfileResponseSerializer,
 )
 
 
@@ -93,3 +95,23 @@ class UserProfileAPIView(APIView):
         response_serializer = UserProfileResponseSerializer(instance=raw_data)
 
         return Response(response_serializer.data)
+
+
+class PublicUserProfileAPIView(APIView):
+    """특정 닉네임을 가진 사용자의 공개 프로필 및 활동 통계 정보를 제공합니다."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["회원관리"],
+        summary="타인 공개 프로필 조회 (닉네임 기반)",
+        responses={200: PublicUserProfileResponseSerializer},
+    )
+    def get(self, request, nickname):
+        # 1. 서비스레이어 호출
+        raw_data = get_public_profile(nickname)
+
+        # 2. 서비스 레이어에서 가져온 딕셔너리 데이터를 시리얼라이저에 넣어 JSON 형태로 직렬화 준비
+        serializer = PublicUserProfileResponseSerializer(instance=raw_data)
+
+        return Response(serializer.data)
