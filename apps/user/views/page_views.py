@@ -15,6 +15,7 @@ def mypage_view(request):
     """마이페이지 화면(HTML)을 렌더링합니다."""
     return render(request, "user/mypage.html")
 
+
 def public_profile_page(request, nickname):
     """
     타인의 공개 프로필 화면(HTML)을 렌더링하는 함수입니다.
