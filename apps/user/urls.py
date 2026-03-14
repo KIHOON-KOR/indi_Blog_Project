@@ -26,7 +26,7 @@ urlpatterns = [
         GithubLoginCallbackAPIView.as_view(),
         name="github_callback",
     ),
-    path('garden-stats/', UserGardenStatsAPIView.as_view(), name='user-garden-stats'),
+    path("garden-stats/", UserGardenStatsAPIView.as_view(), name="user-garden-stats"),
     # 소셜로그인(Discord)
     path("login/discord/", DiscordLoginAPIView.as_view(), name="discord_login"),
     path(

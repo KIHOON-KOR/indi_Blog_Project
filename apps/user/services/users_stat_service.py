@@ -99,7 +99,7 @@ def get_user_garden_stats(user):
 
     # 3. 날짜 포맷팅: 프론트엔드에서 사용하기 쉽게 'YYYY-M-D' 문자열로 변환
     formatted_dates = [
-        f"{date.year}-{date.month}-{date.day}" if hasattr(date, 'year') else str(date)
+        f"{date.year}-{date.month}-{date.day}" if hasattr(date, "year") else str(date)
         for date in post_dates
     ]
 
