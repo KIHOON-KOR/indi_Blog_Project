@@ -38,7 +38,7 @@ class PresignedUrlAPIView(APIView):
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 required=False,
-            )
+            ),
         ],
     )
     def get(self, request):

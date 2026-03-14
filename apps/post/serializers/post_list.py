@@ -49,7 +49,9 @@ class PostListSerializer(serializers.ModelSerializer):
     """목록 조회를 위한 시리얼라이저"""
 
     author_nickname = serializers.CharField(source="user.nickname", read_only=True)
-    author_profile_image = serializers.CharField(source="user.profile_img", read_only=True)
+    author_profile_image = serializers.CharField(
+        source="user.profile_img", read_only=True
+    )
     author_grade_image = serializers.SerializerMethodField()
 
     likes_count = serializers.IntegerField(read_only=True)

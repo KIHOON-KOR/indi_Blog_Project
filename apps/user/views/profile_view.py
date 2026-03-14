@@ -6,7 +6,10 @@ from typing import cast
 
 from apps.user.models import User
 from apps.user.services.users_stat_service import get_user_garden_stats
-from apps.user.serializers.profile_serializer import UserProfileResponseSerializer, UserProfileUpdateSerializer
+from apps.user.serializers.profile_serializer import (
+    UserProfileResponseSerializer,
+    UserProfileUpdateSerializer,
+)
 
 
 class UserProfileAPIView(APIView):
@@ -17,7 +20,7 @@ class UserProfileAPIView(APIView):
     @extend_schema(
         tags=["회원관리"],
         summary="마이페이지 프로필 조회",
-        responses={200: UserProfileResponseSerializer}
+        responses={200: UserProfileResponseSerializer},
     )
     def get(self, request):
         # 1. User 타입 지정
@@ -39,7 +42,7 @@ class UserProfileAPIView(APIView):
                 "current_grade": stats_data["current_grade"],
                 "next_grade": stats_data["next_grade"],
                 "progress_percent": stats_data["progress_percent"],
-            }
+            },
         }
 
         # 4. 조립된 데이터를 시리얼라이저에 넣어 검증 및 직렬화(JSON 변환 준비)를 수행
@@ -52,7 +55,9 @@ class UserProfileAPIView(APIView):
         tags=["회원관리"],
         summary="마이페이지 프로필 수정",
         request=UserProfileUpdateSerializer,  # Swagger 문서에 어떤 형태의 요청이 필요한지 명시합니다.
-        responses={200: UserProfileResponseSerializer}  # 수정 성공 시 최신 프로필 데이터를 반환함을 명시합니다.
+        responses={
+            200: UserProfileResponseSerializer
+        },  # 수정 성공 시 최신 프로필 데이터를 반환함을 명시합니다.
     )
     def patch(self, request):
         # 1. User 타입 지정
@@ -81,7 +86,7 @@ class UserProfileAPIView(APIView):
                 "current_grade": stats_data["current_grade"],
                 "next_grade": stats_data["next_grade"],
                 "progress_percent": stats_data["progress_percent"],
-            }
+            },
         }
 
         # 6. 응답용 시리얼라이저에 조립한 데이터를 넣어 검증
