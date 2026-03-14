@@ -51,6 +51,12 @@ class ErrorMessage(Enum):
         "이메일은 필수 입력값입니다.",
     )
 
+    USER_NOT_FOUND = (
+        status.HTTP_404_NOT_FOUND,
+        "user_not_found",
+        "존재하지 않는 유저입니다.",
+    )
+
     # --- 포스트/댓글/시리즈 관련  ---
     POST_NOT_FOUND = (
         status.HTTP_404_NOT_FOUND,

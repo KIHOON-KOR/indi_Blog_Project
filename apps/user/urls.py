@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.user.views.login import LoginAPIView
 from apps.user.views.page_views import login_page, signup_page, mypage_view
-from apps.user.views.profile_view import UserProfileAPIView
+from apps.user.views.profile_view import UserProfileAPIView, PublicUserProfileAPIView
 from apps.user.views.signup import SignupAPIView
 from apps.user.views.social_login import (
     GithubLoginAPIView,
@@ -30,6 +30,8 @@ urlpatterns = [
     ),
     path("garden-stats/", UserGardenStatsAPIView.as_view(), name="user-garden-stats"),
     path("profile/", UserProfileAPIView.as_view(), name="user-profile"),
+    path("profile/<str:nickname>/", PublicUserProfileAPIView.as_view(), name="public-user-profile"),
+
     # 소셜로그인(Discord)
     path("login/discord/", DiscordLoginAPIView.as_view(), name="discord_login"),
     path(
