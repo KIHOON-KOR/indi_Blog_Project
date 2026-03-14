@@ -167,7 +167,10 @@
                                             <span class="ms-1 d-flex align-items-center">
                                                 ${profileImgHtml}
                                                 ${gradeImgHtml}
-                                                <span class="text-success fw-bold ms-1">${post.author_nickname || '익명'}</span>
+                                                ${post.author_nickname
+                                                    ? `<a href="/api/v1/user/profile-page/${post.author_nickname}/" class="text-success fw-bold ms-1 text-decoration-none">${post.author_nickname}</a>`
+                                                    : `<span class="text-success fw-bold ms-1">익명</span>`
+                                                }
                                             </span>
                                         </span>
                                         <span>| ${date}</span>
