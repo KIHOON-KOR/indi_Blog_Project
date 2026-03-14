@@ -60,11 +60,19 @@
                     <h1 id="post-title" class="fw-bold display-6 mb-3" style="color: var(--brand-dark-green);"></h1>
 
                     <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small d-flex align-items-center"> by
-                            <img id="post-author-grade" src="" alt="grade" class="d-none ms-1 me-1"
+                        <div class="text-muted small d-flex align-items-center">
+                            by
+                            <img id="post-author-profile" src="" alt="profile"
+                                 class="rounded-circle shadow-sm d-none ms-2 me-1"
+                                 style="width: 26px; height: 26px; object-fit: cover; border: 1px solid #dee2e6;">
+
+                            <img id="post-author-grade" src="" alt="grade" class="d-none me-1"
                                  style="width: 20px; height: 20px; object-fit: contain;">
-                            <span id="post-author" class="text-success fw-bold"></span> |
-                            <span id="post-date" class="ms-1"></span>
+
+                            <span id="post-author" class="text-success fw-bold"></span>
+
+                            <span class="ms-2">|</span>
+                            <span id="post-date" class="ms-2"></span>
                             <span id="post-visibility-badge" class="ms-2"></span>
                         </div>
                         <div id="author-actions" class="d-none">
@@ -185,9 +193,24 @@
                 // 작성일을 현지 날짜 포맷(YYYY.MM.DD)으로 변환하여 삽입합니다.
                 document.getElementById('post-date').innerText = new Date(post.created_at).toLocaleDateString();
 
-                // 게시글 작성자의 등급 이미지 처리
-                // HTML에서 등급 이미지를 보여줄 img 요소를 가져옵니다.
+                // ✨ 1. [추가된 코드] HTML에서 프로필 이미지를 넣을 <img> 태그 요소를 찾아옵니다.
+                const authorProfileImg = document.getElementById('post-author-profile');
+
+                // ✨ 2. [추가된 코드] 백엔드에서 준 프로필 이미지가 있으면 그 주소를, 없으면 기본 프로필 이미지 주소를 변수에 담습니다.
+                const profileUrl = post.author_profile_image ? post.author_profile_image : '/static/img/default_profile.png';
+
+                // ✨ 3. [추가된 코드] 찾아온 <img> 태그의 주소(src)를 방금 구한 주소로 교체합니다.
+                authorProfileImg.src = profileUrl;
+
+                // ✨ 4. [추가된 코드] <img> 태그를 숨기고 있던 'd-none' 클래스를 제거하여 화면에 짜잔하고 나타나게 합니다.
+                authorProfileImg.classList.remove('d-none');
+
+                // 5. 등급 이미지 처리 (기존 코드 유지)
                 const authorGradeImg = document.getElementById('post-author-grade');
+                if (post.author_grade_image) {
+                    authorGradeImg.src = post.author_grade_image;
+                    authorGradeImg.classList.remove('d-none');
+                }
 
                 // 백엔드 응답(post)에 작성자의 등급 이미지 주소(author_grade_image)가 포함되어 있는지 확인합니다.
                 if (post.author_grade_image) {
@@ -349,41 +372,48 @@
                 const currentNickname = localStorage.getItem('nickname');
 
                 // 반복문을 통해 서버에서 받은 댓글 목록을 하나씩 꺼내어 처리합니다.
+                // 서버에서 받아온 댓글 배열을 하나씩 돌면서 화면에 그리는 반복문입니다.
                 comments.forEach(comment => {
-                    // 댓글 작성일을 현지 날짜 포맷으로 변환합니다.
+                    // 1. 날짜 변환 및 내 댓글인지 확인하는 로직 (기존과 동일)
                     const date = new Date(comment.created_at).toLocaleDateString();
-                    // 현재 로그인한 닉네임과 댓글 작성자 닉네임이 같은지 확인하여 내 댓글인지 판별합니다.
                     const isMyComment = currentNickname && currentNickname === comment.author_nickname;
 
-                    // 내 댓글이라면 수정/삭제 버튼 HTML을 생성하고, 아니면 빈 문자열을 넣습니다.
+                    // 2. 수정/삭제 버튼 및 등급 이미지 생성 (기존과 동일)
                     const actionHtml = isMyComment
                             ? `<button onclick="toggleEditMode(${comment.id})" class="btn btn-link text-secondary p-0 text-decoration-none" style="font-size: 0.8rem;">수정</button>
-                                           <button onclick="deleteComment(${comment.id})" class="btn btn-link text-danger p-0 text-decoration-none ms-2" style="font-size: 0.8rem;">삭제</button>`
+                               <button onclick="deleteComment(${comment.id})" class="btn btn-link text-danger p-0 text-decoration-none ms-2" style="font-size: 0.8rem;">삭제</button>`
                             : '';
 
-                    // ✨ [새로 추가된 코드] 댓글 작성자의 등급 이미지 HTML 생성
-                    // 백엔드에서 등급 이미지를 보내줬다면 img 태그를 만들고, 없다면 빈 문자열을 만듭니다.
                     const gradeImgHtml = comment.author_grade_image
                             ? `<img src="${comment.author_grade_image}" alt="grade" class="me-1" style="width: 18px; height: 18px; object-fit: contain;">`
                             : '';
 
-                    // 개별 댓글의 전체 HTML 구조를 백틱(`)을 사용해 문자열로 조합합니다.
+                    // ✨ 3. [추가된 방어 로직] 댓글 작성자의 프로필 이미지 주소가 없으면 기본 이미지를 쓰도록 설정합니다.
+                    const profileImgUrl = comment.author_profile_image ? comment.author_profile_image : '/static/img/default_profile.png';
+
+                    // ✨ 4. [추가된 코드] 닉네임 왼쪽에 들어갈 동그란 프로필 이미지 HTML 조각을 만듭니다. (크기는 24px)
+                    const profileImgHtml = `<img src="${profileImgUrl}" alt="profile" class="rounded-circle shadow-sm me-2" style="width: 24px; height: 24px; object-fit: cover; border: 1px solid #dee2e6;">`;
+
+                    // 5. 댓글 카드 1개의 전체 HTML을 백틱(`)으로 묶어 생성합니다.
                     const commentHtml = `
-                                    <div class="card border-0 bg-light-subtle rounded-4" id="comment-${comment.id}">
-                                        <div class="card-body p-4">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <div class="d-flex align-items-center">
-                                                    ${gradeImgHtml}
-                                                    <span class="fw-bold text-success">${comment.author_nickname || '익명'}</span>
-                                                    <span class="text-muted ms-2" style="font-size: 0.8rem;">${date}</span>
-                                                </div>
-                                                <div class="d-flex gap-2">
-                                                    ${actionHtml}
-                                                </div>
-                                            </div>
-                                            <div id="comment-content-${comment.id}" class="comment-content-box text-dark" style="white-space: pre-wrap;">${comment.content}</div>
-                                            `;
-                    // 완성된 댓글 HTML을 댓글 목록 컨테이너(container)의 맨 끝(beforeend)에 추가합니다.
+                        <div class="card border-0 bg-light-subtle rounded-4" id="comment-${comment.id}">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center">
+                                        ${profileImgHtml}
+                                        ${gradeImgHtml}
+                                        <span class="fw-bold text-success">${comment.author_nickname || '익명'}</span>
+                                        <span class="text-muted ms-2" style="font-size: 0.8rem;">${date}</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        ${actionHtml}
+                                    </div>
+                                </div>
+                                <div id="comment-content-${comment.id}" class="comment-content-box text-dark" style="white-space: pre-wrap;">${comment.content}</div>
+                            </div>
+                        </div>
+                    `;
+                    // 7. 완성된 댓글 1개를 화면 컨테이너에 추가합니다.
                     container.insertAdjacentHTML('beforeend', commentHtml);
                 });
 

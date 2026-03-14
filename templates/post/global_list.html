@@ -137,32 +137,48 @@
 
                 container.innerHTML = '';
 
+                // 전체 게시글 배열을 순회하며 하나씩 처리하는 반복문입니다.
                 posts.forEach(post => {
+                    // 1. 작성일을 현지 날짜 문자열(예: 2024. 05. 20)로 변환합니다.
                     const date = new Date(post.created_at).toLocaleDateString();
 
-                    // 백엔드에서 등급 이미지를 받았다면 img 태그를 만들고, 아니면 빈 문자열을 넣습니다.
+                    // 2. 백엔드에서 등급 이미지를 받았다면 img 태그를 만들고, 아니면 빈 문자열을 넣습니다.
                     const gradeImgHtml = post.author_grade_image
                             ? `<img src="${post.author_grade_image}" alt="grade" class="me-1" style="width: 18px; height: 18px; object-fit: contain;">`
                             : '';
 
-                    // 닉네임을 보여주는 span 태그 바로 앞에 gradeImgHtml 변수를 삽입했습니다.
+                    // 3. 프로필 이미지가 없으면 깨지지 않게 기본 이미지를 띄우는 방어 로직입니다.
+                    const profileImgUrl = post.author_profile_image ? post.author_profile_image : '/static/img/default_profile.png';
+
+                    // 4. 동그랗고 그림자가 살짝 들어간 예쁜 프로필 이미지 HTML 조각을 만듭니다.
+                    const profileImgHtml = `<img src="${profileImgUrl}" alt="profile" class="rounded-circle shadow-sm me-1" style="width: 24px; height: 24px; object-fit: cover; border: 1px solid #dee2e6;">`;
+
+                    // 5. 게시글 1개에 해당하는 전체 HTML 구조를 짭니다.
                     const postHtml = `
-                                            <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
-                                                <div class="d-flex w-100 justify-content-between align-items-center">
-                                                    <div class="text-truncate" style="max-width: 75%;">
-                                                        <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
-                                                            <h5 class="mb-1 fw-bold">${post.title}</h5>
-                                                        </a>
-                                                        <small class="text-muted d-flex align-items-center gap-2">
-                                                            <span class="d-flex align-items-center">by ${gradeImgHtml} <span class="text-success fw-bold ms-1">${post.author_nickname || '익명'}</span></span>
-                                                            <span>| ${date}</span>
-                                                            <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
-                                                        </small>
-                                                    </div>
-                                                    ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded">` : ''}
-                                                </div>
-                                            </div>
-                                        `;
+                        <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div class="text-truncate" style="max-width: 75%;">
+                                    <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
+                                        <h5 class="mb-1 fw-bold">${post.title}</h5>
+                                    </a>
+                                    <small class="text-muted d-flex align-items-center gap-2 mt-1">
+                                        <span class="d-flex align-items-center">
+                                            by
+                                            <span class="ms-1 d-flex align-items-center">
+                                                ${profileImgHtml}
+                                                ${gradeImgHtml}
+                                                <span class="text-success fw-bold ms-1">${post.author_nickname || '익명'}</span>
+                                            </span>
+                                        </span>
+                                        <span>| ${date}</span>
+                                        <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
+                                    </small>
+                                </div>
+                                ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 60px; height: 60px; object-fit: cover;" class="rounded shadow-sm">` : ''}
+                            </div>
+                        </div>
+                    `;
+                    // 7. 완성된 HTML 조각을 화면 컨테이너의 맨 밑에 이어 붙입니다.
                     container.insertAdjacentHTML('beforeend', postHtml);
                 });
 
