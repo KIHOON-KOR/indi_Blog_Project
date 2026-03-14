@@ -91,15 +91,15 @@ def get_user_garden_stats(user):
     """
 
     # 1. DB 조회: 해당 유저의 정상 발행된 글을 가져오고 총 개수를 구함
-    user_posts = Post.objects.filter(author=user, is_temp=False)
+    user_posts = Post.objects.filter(user=user, is_temp=False)
     total_count = user_posts.count()
 
     # 2. 날짜 추출: 히트맵을 위해 날짜(created_at)만 뽑아내어 리스트로 만듬 (본문 데이터 배제)
-    post_dates = list(user_posts.values_list("created_at__date", flat=True))
+    post_dates = list(user_posts.values_list("created_at__date", flat=True).distinct())
 
     # 3. 날짜 포맷팅: 프론트엔드에서 사용하기 쉽게 'YYYY-M-D' 문자열로 변환
     formatted_dates = [
-        date.strftime("%Y-%-m-%-d") if hasattr(date, "strftime") else str(date)
+        f"{date.year}-{date.month}-{date.day}" if hasattr(date, 'year') else str(date)
         for date in post_dates
     ]
 
@@ -124,7 +124,7 @@ def get_user_garden_stats(user):
 
         # ZeroDivisionError를 방지 및 정확한 퍼센트를 산출
         if required_for_next > 0:
-            progress_percent = (earned_in_current / required_for_next) * 100
+            progress_percent = int((earned_in_current / required_for_next) * 100)
 
     # 8. 계산된 모든 데이터를 딕셔너리 형태로 반환 (JSON 직렬화 가능 형태)
     return {
