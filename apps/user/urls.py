@@ -10,6 +10,7 @@ from apps.user.views.social_login import (
     DiscordLoginAPIView,
     DiscordLoginCallbackAPIView,
 )
+from apps.user.views.users_stat_view import UserGardenStatsAPIView
 
 urlpatterns = [
     path("login/", LoginAPIView.as_view(), name="login"),
@@ -25,6 +26,7 @@ urlpatterns = [
         GithubLoginCallbackAPIView.as_view(),
         name="github_callback",
     ),
+    path("garden-stats/", UserGardenStatsAPIView.as_view(), name="user-garden-stats"),
     # 소셜로그인(Discord)
     path("login/discord/", DiscordLoginAPIView.as_view(), name="discord_login"),
     path(
