@@ -47,6 +47,9 @@ GRADE_SETTINGS = [
 
 class PostDetailSerializer(serializers.ModelSerializer):
     author_nickname = serializers.CharField(source="user.nickname", read_only=True)
+    author_profile_image = serializers.CharField(
+        source="user.profile_img", read_only=True
+    )
     author_grade_image = serializers.SerializerMethodField()
 
     tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")  # type: ignore
@@ -64,6 +67,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
             "content",
             "thumbnail",
             "author_nickname",
+            "author_profile_image",
             "author_grade_image",
             "created_at",
             "visibility",
