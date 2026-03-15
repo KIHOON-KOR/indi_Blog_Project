@@ -22,7 +22,7 @@ environ.Env.read_env(
 SECRET_KEY = env("SECRET_KEY")  # 보안을 위해 비밀키를 환경변수에서 가져옵니다.
 DEBUG = env("DEBUG")  # 디버그 모드 여부를 환경변수에서 가져옵니다.
 
-ALLOWED_HOSTS = ["*"]  # 모든 호스트에서의 접속을 허용합니다. (개발 환경용 설정)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
 AUTH_USER_MODEL = "user.User"  # 장고 기본 유저 모델 대신 커스텀 유저 모델(apps.user.User)을 사용하도록 설정합니다.
 
@@ -271,3 +271,21 @@ DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 
 # Ai 설정
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+
+
+# 배포 환경(Nginx + HTTPS)을 위한 보안 설정
+
+# Nginx 같은 프록시 서버가 클라이언트의 HTTPS 접속을 받아서 HTTP로 넘겨줄 때,
+# Django가 원래 요청이 HTTPS였음을 파악할 수 있게 헤더를 지정합니다.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# 배포 환경(DEBUG=False)일 때만 엄격한 쿠키 보안 정책을 적용합니다.
+if not DEBUG:
+    # 세션 쿠키를 HTTPS 연결에서만 전송하도록 강제합니다. (해커가 쿠키를 가로채는 것을 방지)
+    SESSION_COOKIE_SECURE = True
+
+    # CSRF 보안 쿠키도 HTTPS 연결에서만 전송하도록 강제합니다.
+    CSRF_COOKIE_SECURE = True
+
+    # 브라우저가 XSS 공격을 통해 쿠키(세션 등)에 접근하는 것을 자바스크립트 레벨에서 차단합니다.
+    SESSION_COOKIE_HTTPONLY = True
