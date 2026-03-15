@@ -1,15 +1,14 @@
 import logging
 from django.conf import settings
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from apps.ai.prompts.tone_prompts import TONE_MAPPING
 from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
 
-
+# 현재 파일의 이름(__name__)을 기반으로 로거 인스턴스를 생성하여 로그를 추적하기 쉽게 함
 logger = logging.getLogger(__name__)
-
-genai.configure(api_key=settings.GEMINI_API_KEY)  # type: ignore
 
 
 def convert_text_tone(text: str, tone: str) -> str:  # type: ignore
@@ -19,22 +18,19 @@ def convert_text_tone(text: str, tone: str) -> str:  # type: ignore
         if not system_prompt:
             raise BaseCustomException(ErrorMessage.UNSUPPORTED_TONE)
 
-        # 2. Gemini 모델 인스턴스를 생성합니다.
-        model = genai.GenerativeModel(
-            # 빠르고 가벼운 flash 모델을 사용
-            model_name="gemini-flash-latest",
-            # 앞에서 찾은 시스템 프롬프트를 모델의 기본 지시사항으로 주입
-            system_instruction=system_prompt,
-        )
+        # 2. 새로운 google.genai의 Client 인스턴스를 생성하면서 환경변수(settings)의 API 키를 주입
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-        # 3. 스트리밍 모드로 텍스트 생성 요청
-        response = model.generate_content(
-            # 변환할 원본 텍스트를 첫 번째 인자로 전달
-            text,
-            # 스트리밍 옵션을 켜서, 생성 즉시 응답을 받도록 설정
-            stream=True,
-            # 결과물 생성을 위한 세부 설정값을 전달
-            generation_config=genai.types.GenerationConfig(
+        # 3. GenerativeModel 인스턴스를 따로 만들지 않고, Client를 통해 바로 스트리밍 생성을 요청
+        response = client.models.generate_content_stream(
+            # 속도와 성능이 모두 뛰어난 최신의 gemini-2.5-flash 모델을 명시적으로 지정
+            model="gemini-2.5-flash",
+            # 사용자가 블로그 글로 변환하고자 하는 원본 텍스트를 전달
+            contents=text,
+            # 4. 모델의 지시사항, 온도 등의 세부 옵션은 GenerateContentConfig 객체에 묶어서 전달
+            config=types.GenerateContentConfig(
+                # 앞에서 찾은 시스템 프롬프트를 모델의 기본 지시사항으로 주입
+                system_instruction=system_prompt,
                 # 자연스럽고 적절한 변환을 위해 창의성 정도(온도)를 0.7로 설정
                 temperature=0.7,
                 # 블로그 글이 잘리지 않도록 넉넉하게 토큰 제한을 2500으로 제한
@@ -42,7 +38,7 @@ def convert_text_tone(text: str, tone: str) -> str:  # type: ignore
             ),
         )
 
-        # 4. 스트리밍 응답 객체(response)에서 생성되는 텍스트 조각(chunk)을 순회
+        # 5. 스트리밍 응답 객체(response)에서 생성되는 텍스트 조각(chunk)을 순회
         for chunk in response:
             # 조각 안에 텍스트 데이터가 정상적으로 존재하는지 확인
             if chunk.text:
