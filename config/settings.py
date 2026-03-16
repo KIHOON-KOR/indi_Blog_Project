@@ -214,16 +214,6 @@ VERIFICATION_CODE_LENGTH = int(os.getenv("VERIFICATION_CODE_LENGTH", "6"))
 VERIFICATION_TOKEN_BYTES = int(os.getenv("VERIFICATION_TOKEN_BYTES", "32"))
 VERIFICATION_CODE_CHARS = os.getenv("VERIFICATION_CODE_CHARS", "1234567890")
 
-# Celery 설정 (비동기 작업용)
-CELERY_BROKER_URL = os.environ.get(
-    "REDIS_URL", "redis://localhost:6379/0"
-)  # 메시지 브로커 주소입니다.
-CELERY_RESULT_BACKEND = os.environ.get(
-    "REDIS_URL", "redis://localhost:6379/0"
-)  # 작업 결과 저장소입니다.
-CELERY_ACCEPT_CONTENT = ["json"]  # 데이터 교환 시 JSON 형식을 허용합니다.
-CELERY_TASK_SERIALIZER = "json"  # 작업 데이터 직렬화 방식입니다.
-CELERY_RESULT_SERIALIZER = "json"  # 결과 데이터 직렬화 방식입니다.
 
 # AWS S3 기본 설정
 
