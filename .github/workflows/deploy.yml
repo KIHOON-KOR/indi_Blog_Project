@@ -19,7 +19,7 @@ jobs:
           # 아래 script 부분이 깃허브 로봇이 서버에 접속해서 대신 쳐줄 명령어들입니다.
           script: |
             cd ~/indi_Blog_Project
-            git pull origin main
+            git pull origin develop
             sudo docker compose -f docker-compose.prod.yml down
             sudo docker compose -f docker-compose.prod.yml up --build -d
             sudo docker system prune -f
