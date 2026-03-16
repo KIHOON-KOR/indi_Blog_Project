@@ -1,0 +1,25 @@
+name: Deploy to EC2
+
+# 어떤 상황일 때 이 스크립트를 실행할지 정합니다.
+on:
+  push:
+    branches: [ "main" ] # main 브랜치에 코드가 push(또는 merge) 될 때만 작동합니다.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # 깃허브가 빌려주는 임시 컴퓨터(우분투)에서 실행됩니다.
+
+    steps:
+      - name: SSH로 EC2에 접속해서 배포 명령어 실행하기
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          # 아래 script 부분이 깃허브 로봇이 서버에 접속해서 대신 쳐줄 명령어들입니다.
+          script: |
+            cd ~/indi_Blog_Project
+            git pull origin main
+            sudo docker compose -f docker-compose.prod.yml down
+            sudo docker compose -f docker-compose.prod.yml up --build -d
+            sudo docker system prune -f
