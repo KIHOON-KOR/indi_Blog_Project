@@ -11,6 +11,7 @@ from rest_framework import status
 import urllib.parse
 from django.urls import reverse
 
+
 class GithubLoginAPIView(APIView):
     """
     1. 유저가 '깃허브 로그인' 버튼을 눌렀을 때 깃허브 서버로 보내주는 역할만 합니다.
@@ -24,7 +25,7 @@ class GithubLoginAPIView(APIView):
 
         # 2. reverse로 'login_page'의 경로를 찾고, build_absolute_uri로 현재 도메인이 포함된 절대 경로를 동적으로 생성합니다.
         # 이렇게 하면 로컬/배포 환경에 상관없이 현재 서버의 도메인이 올바르게 반영됩니다.
-        redirect_uri = request.build_absolute_uri(reverse('login_page'))
+        redirect_uri = request.build_absolute_uri(reverse("login_page"))
 
         # 3. 깃허브의 권한 인증 페이지 URL을 만듭니다.
         github_auth_url = f"https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}"
@@ -77,7 +78,7 @@ class DiscordLoginAPIView(APIView):
         client_id = settings.DISCORD_CLIENT_ID
 
         # 1. 기본 로그인 페이지 URL을 현재 호스트에 맞춰 동적으로 생성합니다.
-        base_redirect_uri = request.build_absolute_uri(reverse('login_page'))
+        base_redirect_uri = request.build_absolute_uri(reverse("login_page"))
 
         # 2. 디스코드 콜백임을 식별하기 위해 쿼리 파라미터를 덧붙입니다.
         redirect_uri = f"{base_redirect_uri}?provider=discord"
@@ -100,7 +101,7 @@ class DiscordLoginCallbackAPIView(APIView):
 
         # 1. 토큰 요청 시에도 권한 요청 시 보냈던 완벽히 동일한 redirect_uri를 전달해야 합니다.
         # 따라서 현재 환경에 맞는 동적 URL을 다시 한번 만들어 줍니다.
-        base_redirect_uri = request.build_absolute_uri(reverse('login_page'))
+        base_redirect_uri = request.build_absolute_uri(reverse("login_page"))
         redirect_uri = f"{base_redirect_uri}?provider=discord"
 
         if not code:
