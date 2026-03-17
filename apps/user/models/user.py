@@ -26,6 +26,10 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     # 관리자 사이트 접속 권한 여부: True면 admin 페이지 접속 가능
     is_staff = models.BooleanField(default=False)
 
+    is_email_verified = models.BooleanField(
+        default=False,
+    )
+
     objects = UserManager()
 
     # 로그인 시 식별자로 사용할 필드를 지정합니다. 여기서는 'email'을 아이디로 씁니다.
