@@ -7,6 +7,7 @@ User = get_user_model()
 
 class SignupService:
     """회원가입 관련 비즈니스 로직 클래스"""
+
     @staticmethod
     def create_user(validated_data: dict):
         """
@@ -30,7 +31,7 @@ class SignupService:
             email=email,
             nickname=nickname,
             password=password,
-            is_email_verified=True # 인증을 통과한 사람이므로 이메일 인증 여부를 True로 설정
+            is_email_verified=True,  # 인증을 통과한 사람이므로 이메일 인증 여부를 True로 설정
         )
 
         # 보안 및 최적화(회원가입이 무사히 끝났으므로, 더 이상 필요 없는 인증 캐시를 레디스에서 삭제)

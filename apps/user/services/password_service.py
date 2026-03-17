@@ -22,7 +22,11 @@ class PasswordResetService:
 
         # 유저가 일반 비밀번호가 없다면 (즉, 소셜 로그인 계정이라면)
         if not user.has_usable_password():
-            raise ValidationError({"detail": "소셜 로그인으로 가입된 계정입니다. 해당 소셜 플랫폼으로 로그인해주세요."})
+            raise ValidationError(
+                {
+                    "detail": "소셜 로그인으로 가입된 계정입니다. 해당 소셜 플랫폼으로 로그인해주세요."
+                }
+            )
 
         # 6자리 인증번호 생성 및 레디스 저장
         code = str(random.randint(100000, 999999))  # 무작위 6자리 숫자 생성
@@ -49,7 +53,9 @@ class PasswordResetService:
 
         # 1. 인증번호 일치 여부 확인
         if not saved_code or saved_code != code:
-            raise ValidationError({"detail": "인증번호가 일치하지 않거나 만료되었습니다."})
+            raise ValidationError(
+                {"detail": "인증번호가 일치하지 않거나 만료되었습니다."}
+            )
 
         # 2. 비밀번호 변경 적용
         user = User.objects.filter(email=email).first()

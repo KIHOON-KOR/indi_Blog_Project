@@ -5,7 +5,8 @@ from django.conf import settings
 
 
 class EmailVerificationService:
-    """ 이메일 인증 관련 핵심 로직들을 모아둔 서비스 클래스"""
+    """이메일 인증 관련 핵심 로직들을 모아둔 서비스 클래스"""
+
     @staticmethod
     def send_verification_code(email: str) -> None:
         """이메일 주소를 넘겨받아 인증번호를 발송하는 함수"""

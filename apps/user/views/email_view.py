@@ -3,13 +3,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from apps.user.serializers.email_serializer import EmailSendSerializer, EmailVerifySerializer
+from apps.user.serializers.email_serializer import (
+    EmailSendSerializer,
+    EmailVerifySerializer,
+)
 from apps.user.services.email_service import EmailVerificationService
 
 
 class EmailSendView(APIView):
     """이메일 발송 요청을 처리하는 API 뷰"""
+
     permission_classes = [AllowAny]
+
     def post(self, request):
         # 1. 입력데이터 검증
         serializer = EmailSendSerializer(data=request.data)
@@ -22,13 +27,15 @@ class EmailSendView(APIView):
 
         return Response(
             {"message": "인증번호가 이메일로 발송되었습니다."},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
 class EmailVerifyView(APIView):
     """사용자가 입력한 인증번호를 검증하는 API 뷰"""
+
     permission_classes = [AllowAny]
+
     def post(self, request):
         # 1. 입력데이터 검증
         serializer = EmailVerifySerializer(data=request.data)
@@ -40,15 +47,14 @@ class EmailVerifyView(APIView):
         code = serializer.validated_data.get("code")
 
         # 4. 서비스레이어 호출
-        is_verified = EmailVerificationService.verify_code(email,code)
+        is_verified = EmailVerificationService.verify_code(email, code)
 
         if is_verified:
             return Response(
-                {"message": "이메일 인증이 완료되었습니다."},
-                status=status.HTTP_200_OK
+                {"message": "이메일 인증이 완료되었습니다."}, status=status.HTTP_200_OK
             )
 
         return Response(
             {"message": "인증번호가 일치하지 않거나 만료되었습니다."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )

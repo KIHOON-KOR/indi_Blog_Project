@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class EmailSendSerializer(serializers.Serializer):
     # 입력값이 이메일 형식(text@test.com)인지 자동으로 검증해 주는 필드
     email = serializers.EmailField(
@@ -10,8 +11,8 @@ class EmailSendSerializer(serializers.Serializer):
         # 형식이 틀렸을경우 보여줄 메세지
         error_messages={
             "invalid": "올바른 이메일 형식이 아닙니다.",
-            "required": "이메일을 입력해주세요."
-        }
+            "required": "이메일을 입력해주세요.",
+        },
     )
 
     def validate_email(self, value):
@@ -31,6 +32,6 @@ class EmailVerifySerializer(serializers.Serializer):
         error_messages={
             "required": "인증번호를 입력해주세요.",
             "max_length": "인증번호는 6자리입니다.",
-            "min_length": "인증번호는 6자리입니다."
-        }
+            "min_length": "인증번호는 6자리입니다.",
+        },
     )

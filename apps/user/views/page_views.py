@@ -24,6 +24,7 @@ def public_profile_page(request, nickname):
     # 템플릿 변수로 닉네임을 넘겨줍니다.
     return render(request, "user/public_profile.html", {"nickname": nickname})
 
+
 def password_reset_page(request):
     """
     비밀번호 찾기 HTML 템플릿을 화면에 그려주는 렌더링 함수입니다.
