@@ -1,6 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from apps.user.views.email_view import EmailSendView, EmailVerifyView
 from apps.user.views.login import LoginAPIView
 from apps.user.views.page_views import (
     login_page,
@@ -22,6 +23,11 @@ urlpatterns = [
     path("login/", LoginAPIView.as_view(), name="login"),
     path("signup/", SignupAPIView.as_view(), name="signup"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # 이메일
+    path("email/send/", EmailSendView.as_view(), name="email_send"),
+    path("email/verify/", EmailVerifyView.as_view(), name="email_verify"),
+
     # 브라우저 접속용
     path("login-page/", login_page, name="login_page"),
     path("signup-page/", signup_page, name="signup_page"),
