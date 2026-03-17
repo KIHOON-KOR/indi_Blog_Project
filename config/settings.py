@@ -279,3 +279,41 @@ if not DEBUG:
 
     # 브라우저가 XSS 공격을 통해 쿠키(세션 등)에 접근하는 것을 자바스크립트 레벨에서 차단합니다.
     SESSION_COOKIE_HTTPONLY = True
+
+
+# ==========================================
+# 이메일 발송 설정 (SMTP) - Gmail
+
+# Django에서 기본 제공하는 SMTP 이메일 발송 엔진 사용
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# 구글의 메일 서버 주소를 지정
+EMAIL_HOST = 'smtp.gmail.com'
+# 구글 SMTP 서버와 통신하기 위한 권장 포트 번호(587)
+EMAIL_PORT = 587
+# 메일 전송 과정의 보안을 위해 TLS 암호화를 사용
+EMAIL_USE_TLS = True
+
+#이메일을 발송할 구글 계정 주소
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+# 구글 계정의 '앱 비밀번호'(일반 비밀번호 아님)
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+# 수신자에게 보여질 '보내는 사람'의 기본 주소
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+# 2. 캐시(Cache) 설정
+CACHES = {
+    "default": {  # 기본으로 사용할 캐시 설정의 이름
+        "BACKEND": "django_redis.cache.RedisCache",  # django-redis 패키지의 캐시 엔진을 사용한다고 선언
+
+        # 127.0.0.1 (로컬호스트)의 6379 포트(Redis 기본 포트)에 접속하며, 1번 데이터베이스(/1)를 사용하겠다는 주소
+        "LOCATION": "redis://127.0.0.1:6379/1",
+
+        "OPTIONS": {  # Redis 연결에 필요한 세부 옵션들을 설정
+            # Django와 Redis를 이어주는 기본 클라이언트 객체를 지정
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# ==========================================
