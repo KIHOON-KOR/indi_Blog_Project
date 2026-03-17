@@ -5,7 +5,10 @@ from drf_spectacular.utils import extend_schema
 from typing import cast
 
 from apps.user.models import User
-from apps.user.services.profile_service import get_public_profile, check_nickname_available
+from apps.user.services.profile_service import (
+    get_public_profile,
+    check_nickname_available,
+)
 from apps.user.services.users_stat_service import get_user_garden_stats
 from apps.user.serializers.profile_serializer import (
     UserProfileResponseSerializer,
@@ -131,7 +134,4 @@ class CheckNicknameAPIView(APIView):
         # 3. 서비스레이어 호출
         is_available, detail_message = check_nickname_available(request.user, nickname)
 
-        return Response({
-            "is_available": is_available,
-            "detail": detail_message
-        })
+        return Response({"is_available": is_available, "detail": detail_message})

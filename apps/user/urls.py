@@ -14,7 +14,11 @@ from apps.user.views.password_view import (
     PasswordResetRequestView,
     PasswordResetConfirmView,
 )
-from apps.user.views.profile_view import UserProfileAPIView, PublicUserProfileAPIView, CheckNicknameAPIView
+from apps.user.views.profile_view import (
+    UserProfileAPIView,
+    PublicUserProfileAPIView,
+    CheckNicknameAPIView,
+)
 from apps.user.views.signup import SignupAPIView
 from apps.user.views.social_login import (
     GithubLoginAPIView,
