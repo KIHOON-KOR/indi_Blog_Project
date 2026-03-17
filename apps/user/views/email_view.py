@@ -1,3 +1,4 @@
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +9,7 @@ from apps.user.services.email_service import EmailVerificationService
 
 class EmailSendView(APIView):
     """이메일 발송 요청을 처리하는 API 뷰"""
+    permission_classes = [AllowAny]
     def post(self, request):
         # 1. 입력데이터 검증
         serializer = EmailSendSerializer(data=request.data)
@@ -25,7 +27,8 @@ class EmailSendView(APIView):
 
 
 class EmailVerifyView(APIView):
-    """# 사용자가 입력한 인증번호를 검증하는 API 뷰"""
+    """사용자가 입력한 인증번호를 검증하는 API 뷰"""
+    permission_classes = [AllowAny]
     def post(self, request):
         # 1. 입력데이터 검증
         serializer = EmailVerifySerializer(data=request.data)
