@@ -181,6 +181,7 @@ class DiscordLoginService:
                         email=email,
                         nickname=unique_nickname,
                         password=None,
+                        is_email_verified=True,
                     )
                 SocialAccount.objects.create(
                     user=user, provider="discord", social_id=discord_id
