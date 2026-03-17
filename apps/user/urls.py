@@ -9,6 +9,7 @@ from apps.user.views.page_views import (
     mypage_view,
     public_profile_page,
 )
+from apps.user.views.password_view import PasswordResetRequestView, PasswordResetConfirmView
 from apps.user.views.profile_view import UserProfileAPIView, PublicUserProfileAPIView
 from apps.user.views.signup import SignupAPIView
 from apps.user.views.social_login import (
@@ -27,6 +28,10 @@ urlpatterns = [
     # 이메일
     path("email/send/", EmailSendView.as_view(), name="email_send"),
     path("email/verify/", EmailVerifyView.as_view(), name="email_verify"),
+
+    # 비밀번호 찾기
+    path("password/reset/request/", PasswordResetRequestView.as_view(), name="password_reset_request"),
+    path("password/reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
 
     # 브라우저 접속용
     path("login-page/", login_page, name="login_page"),
