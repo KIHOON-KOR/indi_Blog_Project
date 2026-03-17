@@ -5,7 +5,10 @@ from drf_spectacular.utils import extend_schema
 from typing import cast
 
 from apps.user.models import User
-from apps.user.services.profile_service import get_public_profile
+from apps.user.services.profile_service import (
+    get_public_profile,
+    check_nickname_available,
+)
 from apps.user.services.users_stat_service import get_user_garden_stats
 from apps.user.serializers.profile_serializer import (
     UserProfileResponseSerializer,
@@ -115,3 +118,20 @@ class PublicUserProfileAPIView(APIView):
         serializer = PublicUserProfileResponseSerializer(instance=raw_data)
 
         return Response(serializer.data)
+
+
+class CheckNicknameAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 1. URL에 포함된 '?nickname=값' 에서 값을 꺼냄
+        nickname = request.query_params.get("nickname", "").strip()
+
+        # 2. 만약 닉네임이 비어있다면, 뷰 단에서 즉시 에러를 반환합니다.
+        if not nickname:
+            return Response({"detail": "닉네임을 입력해주세요."}, status=400)
+
+        # 3. 서비스레이어 호출
+        is_available, detail_message = check_nickname_available(request.user, nickname)
+
+        return Response({"is_available": is_available, "detail": detail_message})

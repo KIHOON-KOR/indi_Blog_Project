@@ -135,7 +135,13 @@
             <div class="modal-body px-4">
                 <div class="mb-3">
                     <label class="form-label fw-bold text-secondary small">닉네임</label>
-                    <input type="text" id="editNickname" class="form-control border-2" placeholder="새로운 닉네임을 입력하세요">
+
+                    <div class="input-group">
+                        <input type="text" id="editNickname" class="form-control border-2" placeholder="새로운 닉네임을 입력하세요">
+                        <button class="btn btn-outline-secondary" type="button" onclick="checkNickname()">중복확인</button>
+                    </div>
+
+                    <div id="nicknameFeedback" class="form-text mt-1"></div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold text-secondary small">한 줄 소개</label>
@@ -154,6 +160,9 @@
 
 {% block extra_js %}
 <script>
+    // [새로 추가된 부분] 중복 확인을 통과했는지 상태를 기억하는 전역 변수입니다. (초기값: 통과못함)
+    let isNicknameVerified = false;
+
     // 문서의 HTML 렌더링이 끝나면 가장 먼저 실행되는 시작점입니다.
     document.addEventListener("DOMContentLoaded", () => {
         fetchUserProfile(); // 프로필 및 통계 정보 가져오기
@@ -168,6 +177,30 @@
             const bioText = document.getElementById('userBio').innerText;
             // 기본 문구("자기소개가 없습니다.")라면 빈 칸으로, 아니면 실제 내용을 수정창에 넣습니다.
             document.getElementById('editBio').value = bioText === '자기소개가 없습니다.' ? '' : bioText;
+
+            // [새로 추가된 부분] 모달이 열릴 때 피드백 메시지도 초기화해 줍니다.
+            const feedbackEl = document.getElementById('nicknameFeedback');
+            if (feedbackEl) {
+                feedbackEl.innerText = '';
+                feedbackEl.className = 'form-text mt-1';
+            }
+            // 모달을 새로 열었으니 중복 확인 상태도 초기화합니다.
+            isNicknameVerified = false;
+        });
+
+        // [새로 추가된 부분] 사용자가 닉네임 입력칸에 키보드로 글자를 칠 때마다 감지하는 이벤트입니다.
+        document.getElementById('editNickname').addEventListener('input', function () {
+            // 입력값이 단 한 글자라도 바뀌면, 기존에 통과했던 중복 검사 내역을 무효 처리(false)합니다.
+            isNicknameVerified = false;
+
+            // 피드백 메시지를 보여주던 HTML 요소를 찾습니다.
+            const feedbackEl = document.getElementById('nicknameFeedback');
+            if (feedbackEl) {
+                // 닉네임이 바뀌었으므로 다시 검사를 하라는 안내 문구로 변경합니다.
+                feedbackEl.innerText = '닉네임 변경 시 중복확인을 다시 진행해주세요.';
+                // 텍스트를 기본 안내 색상인 회색(text-secondary)으로 바꿉니다.
+                feedbackEl.className = 'form-text mt-1 text-secondary';
+            }
         });
     });
 
@@ -363,59 +396,102 @@
         }
     }
 
-    // 4. [닉네임 및 자기소개 텍스트 수정 완료 요청]
+    // [새로 추가된 부분] 4. [닉네임 중복 확인 버튼 클릭 시 실행되는 함수]
+    async function checkNickname() {
+        // 입력창에 현재 적혀있는 값을 가져오고, 앞뒤 공백을 자릅니다.
+        const newNickname = document.getElementById('editNickname').value.trim();
+        const feedbackEl = document.getElementById('nicknameFeedback');
+
+        // 입력칸을 비워둔 상태로 확인 버튼을 누른 경우 방어
+        if (!newNickname) {
+            feedbackEl.innerText = '닉네임을 입력해주세요.';
+            feedbackEl.className = 'form-text mt-1 text-danger';
+            return;
+        }
+
+        // 통신 대기 중임을 사용자에게 알림
+        feedbackEl.innerText = '중복 검사 중...';
+        feedbackEl.className = 'form-text mt-1 text-secondary';
+
+        try {
+            // 백엔드의 중복 검사 API 호출 (이전 답변에서 만든 백엔드 API와 통신)
+            const response = await fetch(`/api/v1/user/check-nickname/?nickname=${encodeURIComponent(newNickname)}`, {
+                method: 'GET',
+                headers: {'Authorization': `Bearer ${getAccessToken()}`}
+            });
+
+            // JSON 결과 변환
+            const data = await response.json();
+
+            if (data.is_available) {
+                // 백엔드에서 사용 가능(True) 판정을 받으면 초록색 메시지 출력
+                feedbackEl.innerText = data.detail;
+                feedbackEl.className = 'form-text mt-1 text-success';
+                // 이제 저장 버튼을 눌러도 되도록 상태를 true로 변경
+                isNicknameVerified = true;
+            } else {
+                // 사용 불가(False) 판정을 받으면 빨간색 메시지 출력
+                feedbackEl.innerText = data.detail;
+                feedbackEl.className = 'form-text mt-1 text-danger';
+                // 상태는 false로 유지
+                isNicknameVerified = false;
+            }
+        } catch (error) {
+            console.error(error);
+            feedbackEl.innerText = '검사 중 오류가 발생했습니다.';
+            feedbackEl.className = 'form-text mt-1 text-danger';
+        }
+    }
+
+    // 5. [수정된 부분] [닉네임 및 자기소개 텍스트 수정 완료 요청]
     async function submitProfileUpdate() {
-        // 모달창 입력칸에 적힌 닉네임과 소개글을 가져오고, 양옆 공백을 자릅니다(trim).
         const newNickname = document.getElementById('editNickname').value.trim();
         const newBio = document.getElementById('editBio').value.trim();
+        // [새로 추가된 부분] 원래 사용하던 내 닉네임을 가져옵니다.
+        const currentNickname = document.getElementById('userNickname').innerText;
 
-        // 닉네임을 다 지워버렸다면 경고창을 띄우고 중단합니다.
         if (!newNickname) {
             alert("닉네임은 비워둘 수 없습니다.");
             return;
         }
 
+        // [새로 추가된 부분] [방어 로직] 닉네임을 바꿨는데 중복 확인 검사를 안 받았다면 통신을 차단합니다.
+        if (newNickname !== currentNickname && !isNicknameVerified) {
+            alert("닉네임 중복 확인을 먼저 진행해주세요.");
+            return; // 여기서 함수 실행을 즉시 멈춥니다.
+        }
+
         try {
-            // 백엔드의 프로필 수정 API에 PATCH 요청을 보냅니다.
             const response = await fetch('/api/v1/user/profile/', {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${getAccessToken()}`,
                     'Content-Type': 'application/json'
                 },
-                // 변경된 닉네임과 소개글을 JSON 문자열로 묶어서 보냅니다.
                 body: JSON.stringify({
                     nickname: newNickname,
                     bio: newBio
                 })
             });
 
-            // 닉네임 중복 등의 에러가 발생했다면
             if (!response.ok) {
                 const errorData = await response.json();
-                // 백엔드가 준 구체적인 에러 메시지가 있다면 그걸 띄우고, 아니면 기본 메시지를 던집니다.
                 throw new Error(errorData.nickname ? errorData.nickname[0] : '프로필 수정에 실패했습니다.');
             }
 
-            // 수정이 완료되어 돌아온 내 최신 프로필 데이터를 변수에 담습니다.
             const data = await response.json();
 
-            // 새로고침 할 필요 없이 즉각적으로 화면의 닉네임과 소개글을 갱신해 줍니다.
             document.getElementById('userNickname').innerText = data.user_info.nickname;
             document.getElementById('userBio').innerText = data.user_info.bio || '자기소개가 없습니다.';
 
-            // 우측 상단 네비게이션 바에 있는 내 닉네임 로컬 데이터도 갱신합니다. (안하면 옛날 닉네임이 뜸)
             localStorage.setItem('nickname', data.user_info.nickname);
-            // 네비게이션 렌더링 함수를 다시 호출해 즉시 반영시킵니다.
             if (typeof checkLoginStatus === 'function') checkLoginStatus();
 
-            // 열려있는 Bootstrap 모달창을 찾아서 닫아주는 안전한 로직입니다.
             const modalEl = document.getElementById('editProfileModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
 
         } catch (error) {
-            // 중복 닉네임 등 에러 발생 시 사용자에게 알림창을 띄웁니다.
             console.error(error);
             alert(error.message);
         }

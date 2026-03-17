@@ -34,3 +34,23 @@ def get_public_profile(nickname: str) -> dict:
             ],  # 다음 등급까지의 퍼센트
         },
     }
+
+
+def check_nickname_available(current_user, nickname: str) -> tuple[bool, str]:
+    """
+    닉네임 중복 여부를 검사하고 (사용가능여부_Boolean, 메시지_String) 형태의 튜플로 반환합니다.
+    """
+
+    # 1. 사용자가 입력한 닉네임이 자신의 현재 닉네임과 완전히 똑같은 경우
+    if current_user.nickname == nickname:
+        return True, "현재 사용 중인 닉네임입니다."
+
+    # 2. DB의 User 테이블에서 입력받은 닉네임과 일치하는 데이터가 존재하는지(exists) 확인
+    is_exist = User.objects.filter(nickname=nickname).exists()
+
+    # 3. 만약 이미 누군가 사용 중인 닉네임이라면
+    if is_exist:
+        return False, "이미 사용 중인 닉네임입니다."
+
+    # 4. 위의 두 조건에 모두 걸리지 않았다면 완전히 새로운 닉네임이므로
+    return True, "사용 가능한 닉네임입니다."
