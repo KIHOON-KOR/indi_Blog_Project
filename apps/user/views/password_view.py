@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +9,7 @@ from apps.user.services.password_service import PasswordResetService
 
 class PasswordResetRequestView(APIView):
     """비밀번호 재설정 '인증번호 발송'을 처리하는 뷰"""
+    permission_classes = [AllowAny]
     def post(self, request):
         # 1. 입력데이터 검증
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -27,6 +29,7 @@ class PasswordResetRequestView(APIView):
 
 class PasswordResetConfirmView(APIView):
     """비밀번호 '변경 (인증번호 확인)'을 처리하는 뷰"""
+    permission_classes = [AllowAny]
     def post(self, request):
         # 1. 입력데이터 검증
         serializer = PasswordResetConfirmSerializer(data=request.data)

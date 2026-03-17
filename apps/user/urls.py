@@ -7,7 +7,7 @@ from apps.user.views.page_views import (
     login_page,
     signup_page,
     mypage_view,
-    public_profile_page,
+    public_profile_page, password_reset_page,
 )
 from apps.user.views.password_view import PasswordResetRequestView, PasswordResetConfirmView
 from apps.user.views.profile_view import UserProfileAPIView, PublicUserProfileAPIView
@@ -40,6 +40,8 @@ urlpatterns = [
     path(
         "profile-page/<str:nickname>/", public_profile_page, name="public_profile_page"
     ),
+    path("password-reset-page/", password_reset_page, name="password_reset_page"),
+
     # 소셜로그인(GitHub)
     path("login/github/", GithubLoginAPIView.as_view(), name="github_login"),
     path(
