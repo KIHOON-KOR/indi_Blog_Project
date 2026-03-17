@@ -77,6 +77,16 @@ services:
     networks:
       - app_network
 
+# 4. Redis 캐시 서버 (이메일 인증번호 저장용) [새로 추가된 부분]
+  redis:
+    image: redis:7
+    container_name: blog_redis_prod   # 배포용 이름으로 지정
+    restart: always                   # 서버 재시작 시 항상 같이 켜지도록 설정
+    # 배포 환경이므로 외부(ports)로 포트를 열지 않습니다.
+    # 오직 내부 app_network를 통해서 backend만 접근 가능하므로 매우 안전합니다.
+    networks:
+      - app_network
+
 # 서비스들이 데이터를 저장하거나 공유할 볼륨(가상 폴더)을 선언합니다.
 volumes:
   # 데이터베이스 영구 저장을 위한 볼륨
