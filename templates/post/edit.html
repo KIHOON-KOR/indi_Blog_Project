@@ -271,12 +271,18 @@
             const data = await res.json();
 
             if (res.ok) {
+                // 제목 입력 칸에 백엔드에서 받아온 기존 제목을 채워 넣습니다.
                 document.getElementById('title').value = data.title;
+                // 공개 설정 드롭다운을 기존 상태(공개/비공개)로 맞춥니다.
                 document.getElementById('visibility').value = data.visibility;
 
-                if (data.series) {
-                    document.getElementById('series').value = data.series;
+                // 백엔드에서 내려주는 시리즈 ID의 키값은 'series_id' 이므로 이에 맞춰 검사
+                if (data.series_id) {
+                    // 글이 속해있던 시리즈가 존재한다면, 시리즈 선택 드롭다운의 값을 해당 ID로 변경하여 선택 상태로 만듬
+                    document.getElementById('series').value = data.series_id;
                 }
+
+                // 태그 배열이 존재하고 1개 이상이라면 쉼표 단위 문자열로 변환하여 입력 칸에 채웁니다.
                 if (data.tags && data.tags.length > 0) {
                     document.getElementById('tags').value = data.tags.join(', ');
                 }
