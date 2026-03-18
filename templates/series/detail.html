@@ -69,7 +69,7 @@
             // [수정] 백엔드 시리얼라이저에서 'series_name'을 내려주도록 변경했으므로,
             // 첫 번째 게시글 정보에서 시리즈 이름을 꺼내와서 H1 태그에 이쁘게 출력합니다. (없을 경우를 대비해 기본값 설정)
             const seriesName = posts[0].series_name || "시리즈 연재 목록";
-            titleElement.textContent = `📚 ${seriesName}`;
+            titleElement.textContent = seriesName;
 
             // 로딩 스피너가 들어있던 컨테이너를 깨끗하게 비웁니다.
             container.innerHTML = '';
