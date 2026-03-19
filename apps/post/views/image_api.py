@@ -16,7 +16,6 @@ class PresignedUrlAPIView(APIView):
     S3에 직접 이미지를 업로드할 수 있는 임시 URL(Presigned URL)을 발급합니다.
     """
 
-    # 이미지는 로그인한(인증된) 사용자만 올릴 수 있도록 제한합니다. (해킹/도배 방지)
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -42,7 +41,7 @@ class PresignedUrlAPIView(APIView):
         ],
     )
     def get(self, request):
-        # 1. 프론트엔드가 보낸 원본 파일 이름을 가져옵니다.
+        # 1. 프론트엔드가 보낸 원본 파일 이름을 가져옴
         filename = request.query_params.get("filename")
         if not filename:
             return Response(
@@ -68,7 +67,7 @@ class PresignedUrlAPIView(APIView):
             # 기본 게시글 썸네일일 경우 기존 경로를 유지
             object_name = f"post/thumbnails/{today}/{unique_filename}"
 
-        # 5. boto3 S3 클라이언트를 생성 (settings.py에 적어둔 환경변수를 가져옵니다)
+        # 5. boto3 S3 클라이언트를 생성 (settings.py에 적어둔 환경변수를 가져옴)
         s3_client = boto3.client(
             "s3",
             region_name=settings.AWS_S3_REGION_NAME,

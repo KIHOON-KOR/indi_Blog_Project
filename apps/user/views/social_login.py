@@ -20,17 +20,17 @@ class GithubLoginAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # 1. settings에 저장된 클라이언트 ID를 가져옵니다.
+        # 1. settings에 저장된 클라이언트 ID를 가져옴
         client_id = settings.GITHUB_CLIENT_ID
 
-        # 2. reverse로 'login_page'의 경로를 찾고, build_absolute_uri로 현재 도메인이 포함된 절대 경로를 동적으로 생성합니다.
-        # 이렇게 하면 로컬/배포 환경에 상관없이 현재 서버의 도메인이 올바르게 반영됩니다.
+        # 2. reverse로 'login_page'의 경로를 찾고, build_absolute_uri로 현재 도메인이 포함된 절대 경로를 동적으로 생성
+        # 이렇게 하면 로컬/배포 환경에 상관없이 현재 서버의 도메인이 올바르게 반영됨
         redirect_uri = request.build_absolute_uri(reverse("login_page"))
 
-        # 3. 깃허브의 권한 인증 페이지 URL을 만듭니다.
+        # 3. 깃허브의 권한 인증 페이지 URL을 만듬
         github_auth_url = f"https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}"
 
-        # 4. 유저의 브라우저를 깃허브 로그인 창으로 강제 이동(리다이렉트) 시킵니다.
+        # 4. 유저의 브라우저를 깃허브 로그인 창으로 강제 이동(리다이렉트) 시킴
         return redirect(github_auth_url)
 
 
@@ -74,16 +74,16 @@ class DiscordLoginAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # 디스코드 클라이언트 ID를 가져옵니다.
+        # 디스코드 클라이언트 ID를 가져옴
         client_id = settings.DISCORD_CLIENT_ID
 
-        # 1. 기본 로그인 페이지 URL을 현재 호스트에 맞춰 동적으로 생성합니다.
+        # 1. 기본 로그인 페이지 URL을 현재 호스트에 맞춰 동적으로 생성
         base_redirect_uri = request.build_absolute_uri(reverse("login_page"))
 
-        # 2. 디스코드 콜백임을 식별하기 위해 쿼리 파라미터를 덧붙입니다.
+        # 2. 디스코드 콜백임을 식별하기 위해 쿼리 파라미터를 덧붙임
         redirect_uri = f"{base_redirect_uri}?provider=discord"
 
-        # 3. URL에 들어갈 수 있도록 특수문자(:, /, ? 등)를 안전하게 인코딩합니다.
+        # 3. URL에 들어갈 수 있도록 특수문자(:, /, ? 등)를 안전하게 인코딩
         encoded_redirect_uri = urllib.parse.quote(redirect_uri)
 
         discord_auth_url = f"https://discord.com/api/oauth2/authorize?client_id={client_id}&redirect_uri={encoded_redirect_uri}&response_type=code&scope=identify%20email"
@@ -94,13 +94,13 @@ class DiscordLoginAPIView(APIView):
 class DiscordLoginCallbackAPIView(APIView):
     permission_classes = [AllowAny]
 
-    # 프론트엔드가 fetch로 POST 요청을 보내므로 POST로 받습니다.
+    # 프론트엔드가 fetch로 POST 요청을 보내므로 POST로 받음
     def post(self, request):
         # 인가 코드를 가져옵니다.
         code = request.data.get("code")
 
-        # 1. 토큰 요청 시에도 권한 요청 시 보냈던 완벽히 동일한 redirect_uri를 전달해야 합니다.
-        # 따라서 현재 환경에 맞는 동적 URL을 다시 한번 만들어 줍니다.
+        # 1. 토큰 요청 시에도 권한 요청 시 보냈던 완벽히 동일한 redirect_uri를 전달해야 함
+        # 따라서 현재 환경에 맞는 동적 URL을 다시 한번 만들어 줌
         base_redirect_uri = request.build_absolute_uri(reverse("login_page"))
         redirect_uri = f"{base_redirect_uri}?provider=discord"
 
