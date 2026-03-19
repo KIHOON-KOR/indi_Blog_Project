@@ -13,7 +13,7 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
     """
     게시글을 생성하고 태그를 대량(Bulk)으로 처리하여 최적화한 로직입니다.
     """
-    # 1. 입력 데이터에서 태그 목록을 분리합니다.
+    # 1. 입력 데이터에서 태그 목록을 분리
     tags_names = validated_data.pop("tags", [])
 
     # 2. 클라이언트가 전달한 시리즈 객체를 뽑음 (없으면 None)
@@ -23,11 +23,11 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
     if series and series.user != author:
         raise BaseCustomException(ErrorMessage.SERIES_PERMISSION_DENIED)
 
-    # 3. 요약(summary)이 없을 경우 본문에서 앞부분을 추출하여 저장합니다.
+    # 3. 요약(summary)이 없을 경우 본문에서 앞부분을 추출하여 저장
     content = validated_data["content"]
     summary = validated_data.get("summary") or content[:150]
 
-    # 4. 게시글을 먼저 생성합니다.
+    # 4. 게시글을 먼저 생성
     post = Post.objects.create(
         user=author,
         title=validated_data["title"],
@@ -41,19 +41,19 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
 
     # 5. 태그 최적화 처리 (N+1 문제 해결)
     if tags_names:
-        # 5-1. 이미 존재하는 태그들을 한 번에 조회합니다.
+        # 5-1. 이미 존재하는 태그들을 한 번에 조회
         existing_tags = Tag.objects.filter(name__in=tags_names)
         existing_tag_names = {tag.name for tag in existing_tags}
 
-        # 5-2. DB에 없는 새로운 태그들만 선별하여 한 번에 생성(bulk_create)합니다.
+        # 5-2. DB에 없는 새로운 태그들만 선별하여 한 번에 생성(bulk_create)
         new_tag_names = set(tags_names) - existing_tag_names
         if new_tag_names:
             Tag.objects.bulk_create([Tag(name=name) for name in new_tag_names])
 
-        # 4-3. 연결할 모든 태그 객체를 다시 가져옵니다.
+        # 4-3. 연결할 모든 태그 객체를 다시 가져옴
         all_tags = Tag.objects.filter(name__in=tags_names)
 
-        # 4-4. PostTag(중간 테이블) 데이터도 bulk_create로 한 번에 저장합니다.
+        # 4-4. PostTag(중간 테이블) 데이터도 bulk_create로 한 번에 저장
         PostTag.objects.bulk_create([PostTag(post=post, tag=tag) for tag in all_tags])
 
     return post
