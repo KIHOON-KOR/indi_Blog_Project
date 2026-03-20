@@ -1,9 +1,8 @@
 
 
 # 🌿 나만의 기술 블로그 플랫폼 (Coding Garden)
-<p align="center">
-  <img src="https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/19/82603493b2f749b4a2011163191040d3.png" alt="프로젝트 표지" width="100%">
-</p>
+<div align="center"><img width="2048" height="2048" alt="indi_0_0" src="https://github.com/user-attachments/assets/a6826052-d479-4a41-87d0-9c5ec921fed8" />
+</div>
 
 ---
 <div align=center> 
