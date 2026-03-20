@@ -1,9 +1,9 @@
-<div align=center>
+
 
 # 🌿 나만의 기술 블로그 플랫폼 (Coding Garden)
-<div align="center">
-        <img src="https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/19/82603493b2f749b4a2011163191040d3.png" alt="ERD 다이어그램" width="100%" />
-</div>
+<p align="center">
+  <img src="https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/19/82603493b2f749b4a2011163191040d3.png" alt="프로젝트 표지" width="100%">
+</p>
 
 ---
 <div align=center> 
@@ -21,6 +21,7 @@
 
 ---
 ## 🗓️ 프로젝트 기간
+
 <div align="center">
 
 ### 2026년 2월 15일 ~ 2026년 3월 20일 (개인 프로젝트)
@@ -44,6 +45,7 @@
 
 ---
 ## 📊 ERD
+
 <div align="center">
     <a href="https://dbdiagram.io/d/%EA%B0%9C%EC%9D%B8%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EB%B8%94%EB%A1%9C%EA%B7%B8-69746791bd82f5fce2775210" target="_blank">
         <img src="https://hoon-blog-uploader-0112.s3.ap-northeast-2.amazonaws.com/post/thumbnails/2026/03/19/bb6c92bd62c34bbd9d0d04e069daafaf.png" alt="ERD 다이어그램" width="100%" />
@@ -194,7 +196,7 @@
 ---
 # 📂 프로젝트 구조
 
----
+```
 ```text
 📦 Coding Garden
 ├── 📂 apps                     # 도메인별 핵심 애플리케이션 모음
@@ -219,3 +221,6 @@
 ├── 📄 manage.py                # Django 관리 명령어 진입점
 ├── 📄 poetry.lock              # 패키지 의존성 잠금 파일
 └── 📄 pyproject.toml           # Poetry 기반 의존성 및 프로젝트 환경 설정
+
+```
+
