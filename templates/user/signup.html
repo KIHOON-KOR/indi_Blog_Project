@@ -175,14 +175,82 @@
         }
     });
 
-    // 5. 최종 [회원가입] 폼 제출 시 방어 로직 (프론트엔드 문지기)
-    document.getElementById('signup-form').addEventListener('submit', function (e) { // 회원가입 폼이 제출(Submit)될 때 실행됩니다.
-        if (!isEmailVerified) {                                   // 만약 이메일 인증이 완료되지 않은 상태라면
-            e.preventDefault();                                   // 폼이 백엔드로 넘어가는 것을 강제로 막아버립니다.
-            alert("이메일 인증을 먼저 완료해주세요!");                // 경고창을 띄워 사용자에게 알려줍니다.
-            document.getElementById('email').focus();             // 사용자의 커서를 다시 이메일 칸으로 이동시켜줍니다.
+    // 5. 최종 회원가입 폼 제출 이벤트 로직
+    // HTML에 작성된 id와 동일하게 'signupForm'으로 수정하여 이벤트를 정확히 연결
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
+
+        // 브라우저가 멋대로 페이지를 새로고침하는 현상을 무조건 막아줌
+        e.preventDefault();
+
+        // 이메일 인증을 안 했다면 가입을 막고 이메일 칸으로 커서를 이동시킴
+        if (!isEmailVerified) {
+            alert("이메일 인증을 먼저 완료해주세요!");
+            document.getElementById('email').focus();
+            return; // 함수 실행을 여기서 멈춰서 서버로 데이터를 보내지 않음
         }
-        // 인증이 완료된 상태(isEmailVerified == true)라면, e.preventDefault()가 실행되지 않아 정상적으로 백엔드(/user/signup/)로 데이터가 전송됩니다.
+
+        // 사용자가 입력한 데이터들을 HTML 요소에서 꺼내와 변수에 담음
+        const email = document.getElementById('email').value;
+        const nickname = document.getElementById('nickname').value;
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('passwordConfirm').value;
+
+        // 비밀번호와 비밀번호 확인 칸에 적은 내용이 똑같은지 검사하는 '프론트엔드 방어 로직'을 추가
+        if (password !== passwordConfirm) {
+            alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요.");
+            document.getElementById('passwordConfirm').focus();
+            return;
+        }
+
+        // 가입 버튼을 누른 후, 사용자가 버튼을 여러 번 눌러 중복 가입되는 것을 막기 위해 버튼을 잠금
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.disabled = true;
+        submitBtn.innerText = "회원가입 처리 중...";
+
+        try {
+            // 새로고침 없이 백엔드 회원가입 API로 데이터를 몰래 쏴주는 fetch 비동기 통신을 시작
+            const response = await fetch('/api/v1/user/signup/', {
+                method: 'POST', // 데이터를 생성하므로 POST 방식을 사용
+                headers: {
+                    'Content-Type': 'application/json', // 데이터를 JSON 형태로 보낸다고 알림
+                    'X-CSRFToken': csrftoken            // Django의 보안 검사를 통과하기 위한 토큰
+                },
+                // 이메일, 닉네임, 비밀번호를 JSON 문자열로 예쁘게 포장해서 보냄
+                body: JSON.stringify({
+                    email: email,
+                    nickname: nickname,
+                    password: password
+                })
+            });
+
+            // 백엔드에서 돌아온 대답(성공/실패 등)을 JSON 형태로 해독
+            const data = await response.json();
+
+            if (response.ok) {
+                // 백엔드 응답이 201 Created 등 성공적이라면, 축하 알림을 띄움
+                alert("회원가입이 성공적으로 완료되었습니다! 로그인 페이지로 이동합니다.");
+                // 가입이 완료되었으므로 깔끔하게 로그인 페이지로 사용자를 이동
+                window.location.href = "/api/v1/user/login-page/";
+            } else {
+                // 이메일 중복, 닉네임 중복 등 백엔드에서 빠꾸를 먹였다면 에러를 보여줌
+                let errorMsg = "회원가입에 실패했습니다.";
+                // DRF 특성상 배열 형태로 에러가 올 수 있으므로 이를 안전하게 꺼내옴
+                if (data.email) errorMsg = data.email[0];
+                else if (data.nickname) errorMsg = data.nickname[0];
+                else if (data.password) errorMsg = data.password[0];
+                else if (data.message) errorMsg = data.message;
+
+                alert(errorMsg);
+            }
+        } catch (error) {
+            // 서버가 꺼져있거나 인터넷이 끊기는 등 아예 통신이 안 된 경우의 예외 처리
+            alert("서버 통신 중 오류가 발생했습니다.");
+        } finally {
+            // 가입에 실패했거나 통신이 끝났다면, 사용자가 다시 시도할 수 있도록 버튼의 잠금을 풀어줌
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+        }
     });
 </script>
 {% endblock %}
