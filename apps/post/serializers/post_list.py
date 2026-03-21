@@ -78,9 +78,24 @@ class PostListSerializer(serializers.ModelSerializer):
             "series_name",
         ]
 
-    # 등급 이미지 URL을 계산하는 메서드
+    # 1. 시리얼라이저가 실행될 때 유저별 글 개수를 기억할 딕셔너리 준비
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._author_counts = {}
+
+    # 2. 등급 이미지 URL을 계산하는 메서드 최적화
     def get_author_grade_image(self, obj):
-        total_count = Post.objects.filter(user=obj.user).count()
+        user_id = obj.user_id
+
+        # 만약 이 유저의 글 개수를 아직 계산한 적이 없다면? -> 딱 1번만 DB에서 카운트 쿼리 실행
+        if user_id not in self._author_counts:
+            self._author_counts[user_id] = Post.objects.filter(
+                user_id=user_id,
+                deleted_at__isnull=True  # (꿀팁) 기존 코드에 휴지통에 간 글을 제외하는 로직이 빠져있어서 추가했습니다!
+            ).count()
+
+        # 이미 계산된 유저라면 쿼리 없이 딕셔너리에서 바로 꺼내옴 (N+1 방어)
+        total_count = self._author_counts[user_id]
 
         for grade in GRADE_SETTINGS:
             if total_count >= grade["min"]:
