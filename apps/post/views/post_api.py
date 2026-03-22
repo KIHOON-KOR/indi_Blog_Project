@@ -178,7 +178,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(tags=["포스트"], summary="게시글 상세 조회")
     def get(self, request: Request, post_id: int):
         # 1. 서비스 레이어를 호출할 때 request.user도 함께 넘겨줌
-        post = get_post_detail(post_id, user=request.user)
+        post = get_post_detail(post_id, user=request.user)  # type: ignore
 
         # 2. 게시글이 없는 경우 예외 발생
         if not post:

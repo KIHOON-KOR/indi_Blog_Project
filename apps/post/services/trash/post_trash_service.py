@@ -19,8 +19,7 @@ def get_trashed_posts(*, user: User) -> QuerySet[Post]:
         # 휴지통 목록에서도 작성자나 시리즈 이름이 노출될 수 있으므로 JOIN으로 N+1 방지
         qs.select_related("user", "series")
         # 태그 정보 노출 시 발생하는 추가 쿼리 방지
-        .prefetch_related("tags")
-        .order_by("-deleted_at")
+        .prefetch_related("tags").order_by("-deleted_at")
     )
 
 

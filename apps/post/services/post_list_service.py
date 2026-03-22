@@ -1,4 +1,12 @@
-from django.db.models import QuerySet, Q, Count, Subquery, OuterRef, IntegerField, Exists
+from django.db.models import (
+    QuerySet,
+    Q,
+    Count,
+    Subquery,
+    OuterRef,
+    IntegerField,
+    Exists,
+)
 from apps.post.models import Post, Like
 from apps.user.models import User
 
@@ -17,7 +25,7 @@ def get_global_posts(
             # OuterRef("user_id"): 이 하위 작업 지시서가 '메인 쿼리'의 데이터와 연결되는 고리
             # "메인 쿼리에서 현재 보고 있는 그 게시글의 작성자(user_id)와 같은 사람의 글만 찾아라"
             user_id=OuterRef("user_id"),
-            deleted_at__isnull=True
+            deleted_at__isnull=True,
         )
         # user_id를 기준으로 데이터를 그룹화(GROUP BY)할 준비
         .values("user_id")
@@ -60,7 +68,9 @@ def get_global_posts(
             likes_count=Count("likes", distinct=True),
             # 3. 서브쿼리 결합: "게시글을 가져올 때, 위에서 만든 하위 작업 지시서(author_posts_count)도
             # 데이터베이스 안에서 같이 실행해서, 그 결과를 author_total_posts 라는 이름으로 붙여서 줘!"
-            author_total_posts=Subquery(author_posts_count, output_field=IntegerField())
+            author_total_posts=Subquery(
+                author_posts_count, output_field=IntegerField()
+            ),
         )
         .order_by("-created_at")
     )
@@ -82,7 +92,7 @@ def get_my_published_posts(
             # OuterRef("user_id"): 이 하위 작업 지시서가 '메인 쿼리'의 데이터와 연결되는 고리
             # "메인 쿼리에서 현재 보고 있는 그 게시글의 작성자(user_id)와 같은 사람의 글만 찾아라"
             user_id=OuterRef("user_id"),
-            deleted_at__isnull=True
+            deleted_at__isnull=True,
         )
         # user_id를 기준으로 데이터를 그룹화(GROUP BY)할 준비
         .values("user_id")
@@ -126,7 +136,9 @@ def get_my_published_posts(
             likes_count=Count("likes", distinct=True),
             # 3. 서브쿼리 결합: "게시글을 가져올 때, 위에서 만든 하위 작업 지시서(author_posts_count)도
             # 데이터베이스 안에서 같이 실행해서, 그 결과를 author_total_posts 라는 이름으로 붙여서 줘!"
-            author_total_posts=Subquery(author_posts_count, output_field=IntegerField())
+            author_total_posts=Subquery(
+                author_posts_count, output_field=IntegerField()
+            ),
         )
         .order_by("-created_at")
     )
@@ -159,10 +171,7 @@ def get_post_detail(post_id: int, user: User | None = None) -> Post | None:
 
     # 1. 서브쿼리: 작성자의 총 게시글 수 계산 (등급 이미지용)
     author_posts_count = (
-        Post.objects.filter(
-            user_id=OuterRef("user_id"),
-            deleted_at__isnull=True
-        )
+        Post.objects.filter(user_id=OuterRef("user_id"), deleted_at__isnull=True)
         .values("user_id")
         .annotate(count=Count("id"))
         .values("count")
@@ -178,17 +187,16 @@ def get_post_detail(post_id: int, user: User | None = None) -> Post | None:
             # 좋아요 개수 카운트
             likes_count=Count("likes", distinct=True),
             # [낭비 2 해결] 작성자의 총 게시글 수를 서브쿼리로 가져와 시리얼라이저 N+1 방지
-            author_total_posts=Subquery(author_posts_count, output_field=IntegerField())
+            author_total_posts=Subquery(
+                author_posts_count, output_field=IntegerField()
+            ),
         )
     )
 
     # 3. [낭비 3 해결] 좋아요 여부(is_liked) 서브쿼리 처리
     if user and user.is_authenticated:
         # 현재 게시글(OuterRef("id"))에 현재 접속한 유저(user)가 좋아요를 눌렀는지 확인하는 서브쿼리
-        is_liked_subquery = Like.objects.filter(
-            post_id=OuterRef("id"),
-            user=user
-        )
+        is_liked_subquery = Like.objects.filter(post_id=OuterRef("id"), user=user)
         # Exists를 사용하면 조건에 맞는 데이터가 존재하면 True, 없으면 False를 'is_liked_by_user' 필드로 반환
         qs = qs.annotate(is_liked_by_user=Exists(is_liked_subquery))
 
