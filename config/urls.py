@@ -22,6 +22,10 @@ urlpatterns: list[URLPattern | URLResolver] = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    if "silk" in settings.INSTALLED_APPS:
+        urlpatterns += [
+            path("silk/", include("silk.urls", namespace="silk")),
+        ]
 
     if "drf_spectacular" in settings.INSTALLED_APPS:
         urlpatterns += [

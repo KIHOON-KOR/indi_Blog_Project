@@ -78,12 +78,17 @@ class PostListSerializer(serializers.ModelSerializer):
             "series_name",
         ]
 
-    # 등급 이미지 URL을 계산하는 메서드
+    # 등급 이미지 URL을 계산하는 메서드 최적화
     def get_author_grade_image(self, obj):
-        total_count = Post.objects.filter(user=obj.user).count()
+        # 1. 쿼리셋의 annotate(Subquery)를 통해 미리 계산되어 넘어온 author_total_posts 값을 가져옴
+        total_count = getattr(obj, "author_total_posts", 0)
 
+        # 2. 미리 정의된 GRADE_SETTINGS 리스트를 순회하며 적절한 등급을 찾음
         for grade in GRADE_SETTINGS:
+            # 유저의 총 게시글 수가 특정 등급의 최소 기준치(min) 이상인지 확인
             if total_count >= grade["min"]:
+                # 조건을 가장 먼저 만족하는(가장 높은 등급의) 이미지를 반환
                 return grade["imgUrl"]
 
+        # 3. 모든 조건을 만족하지 못할 경우 안전 장치(Fallback)로 가장 낮은 등급의 이미지를 반환
         return GRADE_SETTINGS[-1]["imgUrl"]

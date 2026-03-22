@@ -315,3 +315,7 @@ CACHES = {
 }
 
 # ==========================================
+# DEBUG가 True일 때(즉, 로컬 개발 환경일 때)만 Silk를 활성화
+if DEBUG:
+    INSTALLED_APPS.append("silk")
+    MIDDLEWARE.insert(0, "silk.middleware.SilkyMiddleware")
