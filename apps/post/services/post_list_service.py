@@ -136,14 +136,20 @@ def get_my_temp_posts(*, user: User) -> QuerySet[Post]:
     """
     내가 작성한 임시 저장글 목록만 가져옵니다. (임시글 관리 페이지용)
     """
+    # 1. 쿼리셋 생성: 로그인한 유저의 임시글 중 삭제되지 않은 글만 명확하게 필터링
+    qs = Post.objects.filter(
+        user=user,
+        is_temp=True,
+        deleted_at__isnull=True,
+    )
+
+    # 2. N+1 방지(JOIN 및 Prefetch) 적용 후 반환
     return (
-        Post.objects.filter(
-            user=user,
-            is_temp=True,
-            deleted_at__isnull=True,
-        )
+        # 작성자(user)와 시리즈(series) 정보를 JOIN으로 한 번에 가져와 시리얼라이저 N+1 방지
+        qs.select_related("user", "series")
+        # 게시글에 달린 태그(tags) 정보도 IN 쿼리를 통해 한 번에 묶어서 가져옴
         .prefetch_related("tags")
-        .annotate(likes_count=Count("likes", distinct=True))
+        # 임시글은 최근에 작성/수정한 순서대로 보는 것이 편하므로 생성일 역순(최신순) 정렬 적용
         .order_by("-created_at")
     )
 
