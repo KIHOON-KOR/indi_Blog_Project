@@ -78,27 +78,17 @@ class PostListSerializer(serializers.ModelSerializer):
             "series_name",
         ]
 
-    # 1. 시리얼라이저가 실행될 때 유저별 글 개수를 기억할 딕셔너리 준비
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._author_counts = {}
-
-    # 2. 등급 이미지 URL을 계산하는 메서드 최적화
+    # 등급 이미지 URL을 계산하는 메서드 최적화
     def get_author_grade_image(self, obj):
-        user_id = obj.user_id
+        # 1. 쿼리셋의 annotate(Subquery)를 통해 미리 계산되어 넘어온 author_total_posts 값을 가져옴
+        total_count = getattr(obj, "author_total_posts", 0)
 
-        # 만약 이 유저의 글 개수를 아직 계산한 적이 없다면? -> 딱 1번만 DB에서 카운트 쿼리 실행
-        if user_id not in self._author_counts:
-            self._author_counts[user_id] = Post.objects.filter(
-                user_id=user_id,
-                deleted_at__isnull=True  # (꿀팁) 기존 코드에 휴지통에 간 글을 제외하는 로직이 빠져있어서 추가했습니다!
-            ).count()
-
-        # 이미 계산된 유저라면 쿼리 없이 딕셔너리에서 바로 꺼내옴 (N+1 방어)
-        total_count = self._author_counts[user_id]
-
+        # 2. 미리 정의된 GRADE_SETTINGS 리스트를 순회하며 적절한 등급을 찾음
         for grade in GRADE_SETTINGS:
+            # 유저의 총 게시글 수가 특정 등급의 최소 기준치(min) 이상인지 확인
             if total_count >= grade["min"]:
+                # 조건을 가장 먼저 만족하는(가장 높은 등급의) 이미지를 반환
                 return grade["imgUrl"]
 
+        # 3. 모든 조건을 만족하지 못할 경우 안전 장치(Fallback)로 가장 낮은 등급의 이미지를 반환
         return GRADE_SETTINGS[-1]["imgUrl"]
