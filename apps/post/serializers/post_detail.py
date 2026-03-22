@@ -79,29 +79,17 @@ class PostDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_author_grade_image(self, obj):
-        # 1. 작성자(obj.user)가 지금까지 작성한 글 중에서 삭제되지 않은(deleted_at__isnull=True) 전체 글의 개수를 카운트
-        total_count = Post.objects.filter(
-            user=obj.user, deleted_at__isnull=True
-        ).count()
+        # DB에서 미리 계산해준 'author_total_posts' 값을 바로 사용(쿼리 낭비 X)
+        total_count = getattr(obj, "author_total_posts", 0)
 
-        # 2. GRADE_SETTINGS를 위에서부터 순회하며 개수(min) 조건을 충족하는 등급 이미지를 찾음
+        # 미리 정의된 GRADE_SETTINGS를 순회하며 조건 검사
         for grade in GRADE_SETTINGS:
             if total_count >= grade["min"]:
-                return grade[
-                    "imgUrl"
-                ]  # 조건을 만족하면 바로 해당 이미지 URL을 반환하고 종료
+                return grade["imgUrl"]
 
-        # 3. 만약 매칭되는게 없다면 (혹시 모를 에러 방지용) 제일 기본 씨앗 이미지를 반환
         return GRADE_SETTINGS[-1]["imgUrl"]
 
     def get_is_liked(self, obj) -> bool:
-        # 1. 뷰(View)에서 넘겨준 context 안에서 현재 요청(request) 객체를 가져옴
-        request = self.context.get("request")
-
-        # 2. 요청 객체가 존재하고, 로그인된 사용자(is_authenticated)일 경우에만 검사
-        if request and request.user.is_authenticated:
-            # 3. 현재 게시글(obj)의 좋아요(likes) 목록 중에 현재 로그인한 유저가 있는지(exists) 확인하여 True/False를 반환
-            return obj.likes.filter(user=request.user).exists()
-
-        # 4. 로그인하지 않은 사용자라면 무조건 False(좋아요 안 누름)를 반환
-        return False
+        # Service에서 Exists 서브쿼리를 통해 True/False 값을 'is_liked_by_user'로 붙여주기
+        # DB를 찌르지 않고 해당 값을 가져오기만 함 (비로그인 상태이거나 값이 없으면 기본값 False 반환)
+        return getattr(obj, "is_liked_by_user", False)

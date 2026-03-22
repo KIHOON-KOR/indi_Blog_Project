@@ -177,14 +177,14 @@ class PostDetailAPIView(APIView):
 
     @extend_schema(tags=["포스트"], summary="게시글 상세 조회")
     def get(self, request: Request, post_id: int):
-        # 1. 서비스 레이어를 호출
-        post = get_post_detail(post_id)
+        # 1. 서비스 레이어를 호출할 때 request.user도 함께 넘겨줌
+        post = get_post_detail(post_id, user=request.user)
 
-        # 2. 게시글이 없는 경우(None), 커스텀 예외를 발생
+        # 2. 게시글이 없는 경우 예외 발생
         if not post:
             raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
-        # 이렇게 해야 Serializer 내부에서 현재 접속한 유저가 누구인지 알 수 있음
+        # 3. 데이터 반환
         return Response(PostDetailSerializer(post, context={"request": request}).data)
 
     @extend_schema(tags=["포스트"], summary="게시글 수정", request=PostCreateSerializer)

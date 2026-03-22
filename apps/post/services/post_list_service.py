@@ -1,5 +1,5 @@
-from django.db.models import QuerySet, Q, Count, Subquery, OuterRef, IntegerField
-from apps.post.models import Post
+from django.db.models import QuerySet, Q, Count, Subquery, OuterRef, IntegerField, Exists
+from apps.post.models import Post, Like
 from apps.user.models import User
 
 
@@ -154,14 +154,42 @@ def get_my_temp_posts(*, user: User) -> QuerySet[Post]:
     )
 
 
-def get_post_detail(post_id: int) -> Post:
-    """
-    특정 ID의 게시글을 상세 조회합니다. (삭제되지 않은 글만)
-    """
-    return (
-        Post.objects.select_related("user")  # type: ignore
-        .filter(id=post_id, deleted_at__isnull=True)
-        .prefetch_related("tags")
-        .annotate(likes_count=Count("likes", distinct=True))
-        .first()
+def get_post_detail(post_id: int, user: User | None = None) -> Post | None:
+    """특정 ID의 게시글을 상세 조회합니다. (삭제되지 않은 글만)"""
+
+    # 1. 서브쿼리: 작성자의 총 게시글 수 계산 (등급 이미지용)
+    author_posts_count = (
+        Post.objects.filter(
+            user_id=OuterRef("user_id"),
+            deleted_at__isnull=True
+        )
+        .values("user_id")
+        .annotate(count=Count("id"))
+        .values("count")
     )
+
+    # 2. 메인 쿼리셋 생성 및 최적화 (N+1 방지 및 Annotation)
+    qs = (
+        Post.objects.filter(id=post_id, deleted_at__isnull=True)
+        # [낭비 1 해결] 시리얼라이저의 N+1 쿼리 방지를 위해 "series" 조인 추가
+        .select_related("user", "series")
+        .prefetch_related("tags")
+        .annotate(
+            # 좋아요 개수 카운트
+            likes_count=Count("likes", distinct=True),
+            # [낭비 2 해결] 작성자의 총 게시글 수를 서브쿼리로 가져와 시리얼라이저 N+1 방지
+            author_total_posts=Subquery(author_posts_count, output_field=IntegerField())
+        )
+    )
+
+    # 3. [낭비 3 해결] 좋아요 여부(is_liked) 서브쿼리 처리
+    if user and user.is_authenticated:
+        # 현재 게시글(OuterRef("id"))에 현재 접속한 유저(user)가 좋아요를 눌렀는지 확인하는 서브쿼리
+        is_liked_subquery = Like.objects.filter(
+            post_id=OuterRef("id"),
+            user=user
+        )
+        # Exists를 사용하면 조건에 맞는 데이터가 존재하면 True, 없으면 False를 'is_liked_by_user' 필드로 반환
+        qs = qs.annotate(is_liked_by_user=Exists(is_liked_subquery))
+
+    return qs.first()
