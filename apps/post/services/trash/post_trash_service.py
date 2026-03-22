@@ -8,9 +8,18 @@ from django.db.models import Count
 
 def get_trashed_posts(*, user: User) -> QuerySet[Post]:
     """사용자의 삭제된 게시글(휴지통) 목록을 조회합니다."""
+    # 1. 쿼리셋 생성: 로그인한 유저의 글 중 '삭제된(휴지통)' 글만 필터링
+    qs = Post.objects.filter(
+        user=user,
+        deleted_at__isnull=False,
+    )
+
+    # 2. N+1 문제 방지 및 정렬 후 최종 반환
     return (
-        Post.objects.filter(user=user, deleted_at__isnull=False)
-        .annotate(likes_count=Count("likes", distinct=True))
+        # 휴지통 목록에서도 작성자나 시리즈 이름이 노출될 수 있으므로 JOIN으로 N+1 방지
+        qs.select_related("user", "series")
+        # 태그 정보 노출 시 발생하는 추가 쿼리 방지
+        .prefetch_related("tags")
         .order_by("-deleted_at")
     )
 
