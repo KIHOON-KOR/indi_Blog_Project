@@ -147,6 +147,24 @@ REST_FRAMEWORK = {  # Django Rest Framework 전역 설정입니다.
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "EXCEPTION_HANDLER": "apps.core.exceptions.handler.custom_exception_handler",  # 에러 응답 형식을 커스텀 핸들러로 관리합니다.
+    # Throttling
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        # AnonRateThrottle과 UserRateThrottle이 작동하기 위해 반드시 필요한 기본 설정
+        "anon": "100/day",  # 익명 유저: 하루 100회로 제한하여 무분별한 API 호출 및 Swagger 긁어가기를 방지합니다.
+        "user": "1000/day",
+        # 분당/시간당/일당 허용 횟수를 지정
+        "email_send": "3/min",  # 이메일 발송은 1분에 3회까지만 허용 (봇 방어)
+        "login_attempt": "5/min",  # 로그인 시도는 1분에 5회까지만 허용 (브루트포스 방어)
+    },
+    # 프록시 IP 식별 설정
+    # 클라이언트가 보낸 HTTP_X_FORWARDED_FOR 헤더를 기반으로 진짜 유저의 IP를 찾음
+    # 만약 유저가 악의적으로 가짜 IP를 헤더에 섞어 보내더라도 (IP Spoofing 방어)
+    # 신뢰하는 프록시(로드밸런서, Nginx 등)의 개수만큼 뒤에서부터 역추적하여 진짜 IP를 찾아냄
+    "NUM_PROXIES": 1,
 }
 
 # 9. JWT 설정

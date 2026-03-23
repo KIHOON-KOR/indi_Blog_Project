@@ -3,6 +3,7 @@ from django.conf import settings
 import uuid
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from requests import RequestException
 from rest_framework_simplejwt.tokens import RefreshToken
 from apps.user.models.social_account import SocialAccount
 
@@ -44,29 +45,53 @@ class GithubLoginService:
         # 3. 깃허브 API가 JSON 형태로 응답하도록 헤더를 설정
         headers = {"Accept": "application/json"}
 
-        # 4. 깃허브 서버로 POST 요청을 보내 토큰을 발급받음
-        token_req = requests.post(token_req_url, data=data, headers=headers)
+        try:
+            # 4. 깃허브 서버로 POST 요청을 보내 토큰을 발급받음
+            token_req = requests.post(
+                token_req_url,
+                data=data,
+                headers=headers,
+                timeout=7,  # [최우선 방어] 5초 안에 응답이 없으면 즉시 Timeout 에러를 발생시켜 무한 대기를 막음
+            )
 
-        # 5. 응답받은 JSON 데이터에서 access_token 값만 추출
-        token_json = token_req.json()
-        error = token_json.get("error")
+            # [응답 방어] HTTP 상태 코드가 200번대가 아닌 4xx, 5xx 에러라면 즉시 HTTPError 예외를 던짐
+            token_req.raise_for_status()
 
-        # 6. 토큰 발급 중 에러가 발생했다면 예외를 발생시킴
-        if error is not None:
-            raise ValueError("GitHub 토큰을 받아오는데 실패했습니다.")
+            # 5. 응답받은 JSON 데이터에서 access_token 값만 추출
+            token_json = token_req.json()
 
-        access_token = token_json.get("access_token")
+            # 6. GitHub API 특성상 200 OK를 주면서 본문에 error를 담아 보내는 경우가 있어 이를 한 번 더 검증
+            if "error" in token_json:
+                raise ValueError("GitHub 토큰을 받아오는데 실패했습니다.")
 
-        # 7. 발급받은 토큰으로 깃허브 유저 정보를 요청할 URL
-        user_req_url = "https://api.github.com/user"
+            access_token = token_json.get(
+                "access_token"
+            )  # 액세스 토큰을 안전하게 꺼냅니다.
 
-        # 8. 토큰을 Authorization 헤더에 담아 GET 요청을 보냄
-        user_req = requests.get(
-            user_req_url, headers={"Authorization": f"Bearer {access_token}"}
-        )
+            # 7. 발급받은 토큰으로 깃허브 유저 정보를 요청할 URL
+            user_req_url = "https://api.github.com/user"
 
-        # 9. 응답받은 유저 정보를 JSON 객체로 변환
-        user_json = user_req.json()
+            # 8. 토큰을 Authorization 헤더에 담아 GET 요청을 보냄
+            user_req = requests.get(
+                user_req_url,
+                headers={
+                    "Authorization": f"Bearer {access_token}"
+                },  # 헤더에 토큰을 실어 보냅니다.
+                timeout=5,  # 여기도 마찬가지로 5초 타임아웃을 걸어 서버가 뻗는 것을 방지합니다.
+            )
+
+            # 상태 코드가 정상이 아니면 예외를 던짐
+            user_req.raise_for_status()
+
+            # 9. 응답받은 유저 정보를 JSON 객체로 변환
+            user_json = user_req.json()
+
+            # 위 requests.post 나 requests.get 과정에서 Timeout, ConnectionError, HTTPError가 터지면 모두 이 곳으로 빠짐
+        except RequestException as e:
+            # 서버(Django)가 500 에러를 뿜으며 죽지 않도록, 커스텀 예외 메시지로 감싸서 프론트엔드에 예쁘게 전달
+            raise ValueError(
+                f"GitHub 서버와 통신 중 지연 혹은 오류가 발생했습니다. (상세: {e})"
+            )
 
         # 10. 깃허브의 유저 고유 ID와 아이디(login)를 가져옴
         github_id = str(user_json.get("id"))
@@ -140,21 +165,44 @@ class DiscordLoginService:
         # 3. 디스코드 API 권장 헤더 포맷
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-        # 4. 토큰 요청
-        token_req = requests.post(token_req_url, data=data, headers=headers)
-        token_json = token_req.json()
+        try:
+            # 4. 디스코드 서버로 POST 요청을 보내 토큰을 발급받음 (주석 수정)
+            token_req = requests.post(
+                token_req_url,
+                data=data,
+                headers=headers,
+                timeout=7,  # [최우선 방어] 7초 안에 응답 없으면 Timeout 발생
+            )
 
-        if "error" in token_json:
-            raise ValueError("Discord 토큰을 받아오는데 실패했습니다.")
+            # [응답 방어] 상태 코드가 200번대가 아니면 예외 발생
+            token_req.raise_for_status()
+            token_json = token_req.json()
 
-        access_token = token_json.get("access_token")
+            # 디스코드 API 에러 검증 (에러 메시지 수정)
+            if "error" in token_json:
+                raise ValueError("Discord 토큰을 받아오는데 실패했습니다.")
 
-        # 5. 유저 정보 요청 URL
-        user_req_url = "https://discord.com/api/users/@me"
-        user_req = requests.get(
-            user_req_url, headers={"Authorization": f"Bearer {access_token}"}
-        )
-        user_json = user_req.json()
+            access_token = token_json.get("access_token")
+
+            # 7. 발급받은 토큰으로 디스코드 유저 정보를 요청할 URL
+            user_req_url = "https://discord.com/api/users/@me"
+
+            # 8. 토큰을 Authorization 헤더에 담아 GET 요청을 보냄
+            user_req = requests.get(
+                user_req_url,
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=5,
+            )
+
+            # 상태 코드가 정상이 아니면 예외 던짐
+            user_req.raise_for_status()
+            user_json = user_req.json()
+
+        except RequestException as e:
+            # 에러 메시지도 디스코드로 수정!
+            raise ValueError(
+                f"Discord 서버와 통신 중 지연 혹은 오류가 발생했습니다. (상세: {e})"
+            )
 
         # 6. 유저 정보 추출 (디스코드는 id와 username, email을 반환)
         discord_id = str(user_json.get("id"))

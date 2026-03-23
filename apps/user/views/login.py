@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-
+from rest_framework.throttling import ScopedRateThrottle
 from apps.user.serializers.login_serializer import LoginSerializer
 from apps.user.services.login_service import UserService
 
@@ -11,6 +11,12 @@ from apps.user.services.login_service import UserService
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
+
+    # 해당 뷰에 IP 기반으로 요청 횟수를 제한하는 ScopedRateThrottle을 장착
+    throttle_classes = [ScopedRateThrottle]
+
+    # settings.py에 정의된 'login_attempt' (예: 5/min) 룰을 적용하도록 이름을 매칭
+    throttle_scope = "login_attempt"
 
     @extend_schema(
         tags=["회원관리"],
