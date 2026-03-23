@@ -147,6 +147,16 @@ REST_FRAMEWORK = {  # Django Rest Framework 전역 설정입니다.
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "EXCEPTION_HANDLER": "apps.core.exceptions.handler.custom_exception_handler",  # 에러 응답 형식을 커스텀 핸들러로 관리합니다.
+    # Throttling
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        # 분당/시간당/일당 허용 횟수를 지정
+        'email_send': '3/min',     # 이메일 발송은 1분에 3회까지만 허용 (봇 방어)
+        'login_attempt': '5/min',  # 로그인 시도는 1분에 5회까지만 허용 (브루트포스 방어)
+    }
 }
 
 # 9. JWT 설정

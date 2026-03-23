@@ -2,7 +2,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-
+from rest_framework.throttling import ScopedRateThrottle
 from apps.user.serializers.email_serializer import (
     EmailSendSerializer,
     EmailVerifySerializer,
@@ -12,8 +12,13 @@ from apps.user.services.email_service import EmailVerificationService
 
 class EmailSendView(APIView):
     """이메일 발송 요청을 처리하는 API 뷰"""
-
     permission_classes = [AllowAny]
+
+    # 악의적인 이메일 폭탄(SMTP 쿼터 초과 공격)을 막기 위해 쓰로틀링을 장착
+    throttle_classes = [ScopedRateThrottle]
+
+    # settings.py에 정의된 'email_send' (예: 3/min) 룰을 적용
+    throttle_scope = 'email_send'
 
     def post(self, request):
         # 1. 입력데이터 검증
