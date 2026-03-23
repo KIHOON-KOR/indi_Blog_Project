@@ -1,6 +1,9 @@
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+from apps.ai.serializers.tone_serializer import ToneConvertSerializer
 from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
 from django.http import StreamingHttpResponse
@@ -8,15 +11,20 @@ from apps.ai.services.openai_service import convert_text_tone
 
 
 class ToneConverterAPIView(APIView):
-    def post(self, request, *args, **kwargs):
-        # 클라이언트가 보낸 JSON 데이터 중 'text'를 가져옴
-        text = request.data.get("text")
-        # 클라이언트가 보낸 JSON 데이터 중 'tone'을 가져옴
-        tone = request.data.get("tone")
+    # 무차별 요청(Rate Limiting) 방어를 위해 쓰로틀링 장착
+    # settings.py의 DEFAULT_THROTTLE_RATES에 설정된 규칙(예: 분당 10회 등)을 따르게 됨
+    throttle_classes = [UserRateThrottle, AnonRateThrottle]
 
-        # text나 tone 중 하나라도 비어있다면 (유효성 검사 실패)
-        if not text or not tone:
-            raise BaseCustomException(ErrorMessage.INVALID_INPUT)
+    def post(self, request, *args, **kwargs):
+        # 1. 시리얼라이저를 통한 엄격한 검증 (단순 딕셔너리 추출 대체)
+        serializer = ToneConvertSerializer(data=request.data)
+
+        # 2. 유효성 검사 실패 시 (글자 수 초과 등) 즉시 400 에러를 반환하여 AI 호출을 차단합니다.
+        serializer.is_valid(raise_exception=True)
+
+        # 3. 안전하게 검증이 끝난 데이터만 꺼내어 사용합니다.
+        text = serializer.validated_data.get("text")
+        tone = serializer.validated_data.get("tone")
 
         try:
             # Gemini 서비스 함수를 호출하여 결과를 받아옴
