@@ -425,13 +425,13 @@
 
             if (data.is_available) {
                 // 백엔드에서 사용 가능(True) 판정을 받으면 초록색 메시지 출력
-                feedbackEl.innerText = data.detail;
+                feedbackEl.innerText = data.message;
                 feedbackEl.className = 'form-text mt-1 text-success';
                 // 이제 저장 버튼을 눌러도 되도록 상태를 true로 변경
                 isNicknameVerified = true;
             } else {
                 // 사용 불가(False) 판정을 받으면 빨간색 메시지 출력
-                feedbackEl.innerText = data.detail;
+                feedbackEl.innerText = data.message;
                 feedbackEl.className = 'form-text mt-1 text-danger';
                 // 상태는 false로 유지
                 isNicknameVerified = false;
@@ -476,7 +476,16 @@
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.nickname ? errorData.nickname[0] : '프로필 수정에 실패했습니다.');
+
+                // [수정] 변경된 응답 포맷 대응
+                let errMsg = '프로필 수정에 실패했습니다.';
+                if (errorData.code === 'invalid_input' && errorData.details && errorData.details.nickname) {
+                    errMsg = errorData.details.nickname[0];
+                } else if (errorData.message) {
+                    errMsg = errorData.message;
+                }
+
+                throw new Error(errMsg);
             }
 
             const data = await response.json();

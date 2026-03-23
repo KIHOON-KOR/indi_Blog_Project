@@ -111,6 +111,12 @@
                 body: JSON.stringify({email: email})            // 사용자 이메일을 JSON 문자열로 변환하여 본문에 담아 보냅니다.
             });
 
+            // [추가] 429 에러(Throttling)를 가장 먼저 체크하여 봇 공격/연타에 대응합니다.
+            if (response.status === 429) {
+                alert("이메일 발송 요청이 너무 많습니다. 잠시 후(또는 1분 뒤) 다시 시도해주세요.");
+                return; // 즉시 함수를 종료합니다.
+            }
+
             const data = await response.json();                   // 서버에서 돌아온 응답(성공/실패 메시지)을 JSON으로 해석합니다.
 
             if (response.ok) {                                    // 서버 응답이 200번대(성공)라면
@@ -120,8 +126,9 @@
             } else {
                 // DRF가 보내는 에러 형식({"email": ["..."]})을 예쁘게 뽑아서 보여줍니다.
                 let errorMsg = "이메일 발송에 실패했습니다.";
-                if (data.email && data.email.length > 0) {
-                    errorMsg = data.email[0]; // "이미 가입된 이메일입니다." 또는 "올바른 형식이 아닙니다."
+                // data.email 대신 바뀐 포맷인 data.details.email 을 찾도록 수정
+                if (data.code === 'invalid_input' && data.details && data.details.email) {
+                    errorMsg = data.details.email[0];
                 } else if (data.message) {
                     errorMsg = data.message;
                 }
@@ -236,38 +243,21 @@
                 // [리뷰] 실패했을 때, 사용자에게 보여줄 기본 에러 메시지 뼈대를 준비합니다.
                 let errorMsg = "회원가입에 실패했습니다.";
 
-                // [리뷰/개선] DRF는 폼 검증 에러 시 {"필드명": ["에러내용"]} 처럼 배열 형태로 에러를 반환합니다.
-                // [리뷰] 닉네임 에러가 배열 형태로 왔다면 최우선적으로 해당 메시지를 꺼내옵니다.
-                if (data.nickname && Array.isArray(data.nickname)) {
-                    errorMsg = `닉네임 오류: ${data.nickname[0]}`;
-                }
-                // [리뷰] 이메일이 이미 존재하거나 형식이 틀렸을 때의 메시지를 꺼내옵니다.
-                else if (data.email && Array.isArray(data.email)) {
-                    errorMsg = `이메일 오류: ${data.email[0]}`;
-                }
-                // [리뷰] 비밀번호 길이가 짧거나 형식이 틀렸을 때의 메시지를 꺼내옵니다.
-                else if (data.password && Array.isArray(data.password)) {
-                    errorMsg = `비밀번호 오류: ${data.password[0]}`;
-                }
-                // [리뷰] 특정 필드 에러가 아닌 인증/권한 에러(예: "이메일 인증이 완료되지 않았습니다.")를 잡아냅니다.
-                else if (data.detail) {
-                    errorMsg = data.detail;
-                }
-                // [리뷰] 백엔드에서 커스텀하게 {"message": "에러내용"} 형태로 보낸 응답을 잡아냅니다.
-                else if (data.message) {
+                // [수정] 바뀐 백엔드 에러 포맷에 맞게 에러 메시지 추출 로직을 단순화합니다.
+                if (data.code === 'invalid_input' && data.details) {
+                    if (data.details.nickname) errorMsg = `닉네임 오류: ${data.details.nickname[0]}`;
+                    else if (data.details.email) errorMsg = `이메일 오류: ${data.details.email[0]}`;
+                    else if (data.details.password) errorMsg = `비밀번호 오류: ${data.details.password[0]}`;
+                } else if (data.message) {
+                    // 커스텀 예외나 DRF 기본 예외에서 던져준 'message'를 사용합니다.
                     errorMsg = data.message;
-                }
-                // [리뷰/개선] 위 조건에 아무것도 안 걸리는 예상치 못한 에러 구조일 경우를 대비한 최후의 방어막입니다.
-                else if (typeof data === 'object' && Object.keys(data).length > 0) {
-                    const firstKey = Object.keys(data)[0]; // 첫 번째 키값을 찾아냄
-                    errorMsg = `입력값 오류 (${firstKey}): ${data[firstKey]}`;
                 }
 
                 // [리뷰] 최종적으로 걸러진 진짜 실패 원인을 사용자에게 알림창으로 친절하게 띄워줍니다.
                 alert(errorMsg);
 
                 // [개선] 닉네임 중복 에러였다면 사용자가 바로 수정할 수 있도록 닉네임 입력칸에 커서를 깜빡이게 해줍니다.
-                if (data.nickname) {
+                if (data.code === 'invalid_input' && data.details && data.details.nickname) {
                     document.getElementById('nickname').focus();
                 }
             }

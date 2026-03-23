@@ -17,7 +17,7 @@ try:
     gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 except Exception as e:
     logger.error(f"Gemini Client 초기화 실패: {e}")
-    gemini_client = None  # 환경변수 문제 등으로 실패할 경우를 대비한 방어 로직
+    gemini_client = None  # type: ignore
 
 
 def convert_text_tone(text: str, tone: str):
@@ -64,7 +64,10 @@ def convert_text_tone(text: str, tone: str):
 
         # HTTP 상태 코드를 500으로 바꿀 수는 없지만, 프론트엔드가 에러임을 알 수 있게
         # event: error 라는 커스텀 이벤트를 발생시켜 에러 메시지를 보냄
-        error_payload = json.dumps({"error": "AI 텍스트 생성 중 일시적인 서버 오류가 발생했습니다."}, ensure_ascii=False)
+        error_payload = json.dumps(
+            {"error": "AI 텍스트 생성 중 일시적인 서버 오류가 발생했습니다."},
+            ensure_ascii=False,
+        )
 
         # 프론트엔드는 이 형태를 받으면 정상 데이터 처리를 멈추고 에러 팝업을 띄울 수 있습니다.
         yield f"event: error\ndata: {error_payload}\n\n".encode("utf-8")

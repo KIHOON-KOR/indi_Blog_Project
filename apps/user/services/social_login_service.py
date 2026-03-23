@@ -51,7 +51,7 @@ class GithubLoginService:
                 token_req_url,
                 data=data,
                 headers=headers,
-                timeout=7  # [최우선 방어] 5초 안에 응답이 없으면 즉시 Timeout 에러를 발생시켜 무한 대기를 막음
+                timeout=7,  # [최우선 방어] 5초 안에 응답이 없으면 즉시 Timeout 에러를 발생시켜 무한 대기를 막음
             )
 
             # [응답 방어] HTTP 상태 코드가 200번대가 아닌 4xx, 5xx 에러라면 즉시 HTTPError 예외를 던짐
@@ -64,7 +64,9 @@ class GithubLoginService:
             if "error" in token_json:
                 raise ValueError("GitHub 토큰을 받아오는데 실패했습니다.")
 
-            access_token = token_json.get("access_token")  # 액세스 토큰을 안전하게 꺼냅니다.
+            access_token = token_json.get(
+                "access_token"
+            )  # 액세스 토큰을 안전하게 꺼냅니다.
 
             # 7. 발급받은 토큰으로 깃허브 유저 정보를 요청할 URL
             user_req_url = "https://api.github.com/user"
@@ -72,8 +74,10 @@ class GithubLoginService:
             # 8. 토큰을 Authorization 헤더에 담아 GET 요청을 보냄
             user_req = requests.get(
                 user_req_url,
-                headers={"Authorization": f"Bearer {access_token}"},  # 헤더에 토큰을 실어 보냅니다.
-                timeout=5  # 여기도 마찬가지로 5초 타임아웃을 걸어 서버가 뻗는 것을 방지합니다.
+                headers={
+                    "Authorization": f"Bearer {access_token}"
+                },  # 헤더에 토큰을 실어 보냅니다.
+                timeout=5,  # 여기도 마찬가지로 5초 타임아웃을 걸어 서버가 뻗는 것을 방지합니다.
             )
 
             # 상태 코드가 정상이 아니면 예외를 던짐
@@ -85,7 +89,9 @@ class GithubLoginService:
             # 위 requests.post 나 requests.get 과정에서 Timeout, ConnectionError, HTTPError가 터지면 모두 이 곳으로 빠짐
         except RequestException as e:
             # 서버(Django)가 500 에러를 뿜으며 죽지 않도록, 커스텀 예외 메시지로 감싸서 프론트엔드에 예쁘게 전달
-            raise ValueError(f"GitHub 서버와 통신 중 지연 혹은 오류가 발생했습니다. (상세: {e})")
+            raise ValueError(
+                f"GitHub 서버와 통신 중 지연 혹은 오류가 발생했습니다. (상세: {e})"
+            )
 
         # 10. 깃허브의 유저 고유 ID와 아이디(login)를 가져옴
         github_id = str(user_json.get("id"))
@@ -165,7 +171,7 @@ class DiscordLoginService:
                 token_req_url,
                 data=data,
                 headers=headers,
-                timeout=7  # [최우선 방어] 7초 안에 응답 없으면 Timeout 발생
+                timeout=7,  # [최우선 방어] 7초 안에 응답 없으면 Timeout 발생
             )
 
             # [응답 방어] 상태 코드가 200번대가 아니면 예외 발생
@@ -185,7 +191,7 @@ class DiscordLoginService:
             user_req = requests.get(
                 user_req_url,
                 headers={"Authorization": f"Bearer {access_token}"},
-                timeout=5
+                timeout=5,
             )
 
             # 상태 코드가 정상이 아니면 예외 던짐
@@ -194,7 +200,9 @@ class DiscordLoginService:
 
         except RequestException as e:
             # 에러 메시지도 디스코드로 수정!
-            raise ValueError(f"Discord 서버와 통신 중 지연 혹은 오류가 발생했습니다. (상세: {e})")
+            raise ValueError(
+                f"Discord 서버와 통신 중 지연 혹은 오류가 발생했습니다. (상세: {e})"
+            )
 
         # 6. 유저 정보 추출 (디스코드는 id와 username, email을 반환)
         discord_id = str(user_json.get("id"))

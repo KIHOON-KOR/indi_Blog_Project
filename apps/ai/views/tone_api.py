@@ -4,8 +4,6 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from apps.ai.serializers.tone_serializer import ToneConvertSerializer
-from apps.core.exceptions.base import BaseCustomException
-from apps.core.exceptions.messages import ErrorMessage
 from django.http import StreamingHttpResponse
 from apps.ai.services.openai_service import convert_text_tone
 

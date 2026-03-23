@@ -16,7 +16,7 @@ class LoginAPIView(APIView):
     throttle_classes = [ScopedRateThrottle]
 
     # settings.py에 정의된 'login_attempt' (예: 5/min) 룰을 적용하도록 이름을 매칭
-    throttle_scope = 'login_attempt'
+    throttle_scope = "login_attempt"
 
     @extend_schema(
         tags=["회원관리"],
