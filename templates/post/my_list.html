@@ -199,30 +199,35 @@
 
                     // '발행일' 앞에 작성자 정보(등급 이미지 + 닉네임)를 추가했습니다.
                     const postHtml = `
-                                                <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
-                                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                                        <div class="text-truncate" style="max-width: calc(100% - 70px);">
-                                                            <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
-                                                                <h5 class="mb-1 fw-bold">${post.title}</h5>
-                                                            </a>
-                                                            <small class="text-muted d-flex align-items-center gap-2 mt-1">
-                                                                <span class="d-flex align-items-center">by ${gradeImgHtml} <span class="text-success fw-bold ms-1">${post.author_nickname || '나'}</span></span>
-                                                                <span>| ${date}</span>
-                                                                <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
-                                                                <span class="badge ${badgeClass} bg-opacity-10 text-${isPublic ? 'success' : 'secondary'} rounded-pill px-2 ms-1" style="font-size: 0.7rem;">
-                                                                    ${isPublic ? '' : '🔒 '}${badgeText}
-                                                                </span>
-                                                            </small>
-                                                        </div>
+                        <div class="list-group-item list-group-item-action border-0 px-4 py-3 border-bottom bg-transparent">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div class="text-truncate" style="max-width: calc(100% - 70px);">
+                                    <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
+                                        <h5 class="mb-1 fw-bold">${post.title}</h5>
+                                    </a>
 
-                                                        ${post.thumbnail ? `
+                                    <p class="mb-1 text-muted text-truncate" style="font-size: 0.9rem;">
+                                        ${post.summary || '내용이 없습니다.'}
+                                    </p>
+
+                                    <small class="text-muted d-flex align-items-center gap-2 mt-1">
+                                        <span class="d-flex align-items-center">by ${gradeImgHtml} <span class="text-success fw-bold ms-1">${post.author_nickname || '나'}</span></span>
+                                        <span>| ${date}</span>
+                                        <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
+                                        <span class="badge ${badgeClass} bg-opacity-10 text-${isPublic ? 'success' : 'secondary'} rounded-pill px-2 ms-1" style="font-size: 0.7rem;">
+                                            ${isPublic ? '' : '🔒 '}${badgeText}
+                                        </span>
+                                    </small>
+                                </div>
+
+                                ${post.thumbnail ? `
                             <div class="ms-3 flex-shrink-0">
                             <img src="${post.thumbnail}" alt="thumbnail" style="width: 60px; height: 60px; object-fit: cover;" class="rounded-3 shadow-sm border">
                             </div>
                             ` : ''}
-                                                    </div>
-                                                </div>
-                                            `;
+                            </div>
+                        </div>
+                    `;
                     // 완성된 HTML 텍스트를 게시글 목록 컨테이너의 맨 마지막 요소로 이어 붙입니다.
                     container.insertAdjacentHTML('beforeend', postHtml);
                 });
