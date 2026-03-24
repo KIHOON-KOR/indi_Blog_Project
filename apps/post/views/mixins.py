@@ -11,7 +11,9 @@ class PostListMixin:
         series_id_str = request.query_params.get("series")
 
         # 2. 값이 존재하고 숫자로만 이루어져 있다면 정수(int)로 변환하고, 아니라면 None을 할당
-        series_id = int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        series_id = (
+            int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        )
 
         # 3. URL에서 '?tag=문자열' 값을 꺼내옴 (태그 필터링용)
         tag_name = request.query_params.get("tag")

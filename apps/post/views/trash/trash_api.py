@@ -37,7 +37,7 @@ class TrashAPIView(APIView, PostListMixin):
             queryset=posts,
             serializer_class=PostListSerializer,
             request=request,
-            context={"request": request}
+            context={"request": request},
         )
 
 

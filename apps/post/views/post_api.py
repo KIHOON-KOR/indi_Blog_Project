@@ -23,7 +23,6 @@ from drf_spectacular.types import OpenApiTypes
 from .mixins import PostListMixin
 
 
-
 class PostAPIView(APIView, PostListMixin):
     """포스트 등록 및 전체 목록 조회를 담당합니다."""
 
@@ -66,9 +65,9 @@ class PostAPIView(APIView, PostListMixin):
 
         # 3. Mixin의 페이지네이션 메서드를 호출하여 결과물(Response)을 바로 반환
         return self.get_paginated_response(
-            queryset=posts,                      # 페이징할 대상 데이터
-            serializer_class=PostListSerializer, # 직렬화에 사용할 시리얼라이저 클래스
-            request=request                      # 현재 요청 객체
+            queryset=posts,  # 페이징할 대상 데이터
+            serializer_class=PostListSerializer,  # 직렬화에 사용할 시리얼라이저 클래스
+            request=request,  # 현재 요청 객체
         )
 
     @extend_schema(
@@ -136,9 +135,7 @@ class MyPostAPIView(APIView, PostListMixin):
 
         # 4. 페이지네이션 처리 및 응답 반환 역시 Mixin을 활용하여 한 줄로 압축합니다.
         return self.get_paginated_response(
-            queryset=posts,
-            serializer_class=PostListSerializer,
-            request=request
+            queryset=posts, serializer_class=PostListSerializer, request=request
         )
 
 

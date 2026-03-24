@@ -32,9 +32,7 @@ class MyTempAPIView(APIView, PostListMixin):
 
         # 3. 페이지 네이션 적용
         return self.get_paginated_response(
-            queryset=posts,
-            serializer_class=PostListSerializer,
-            request=request
+            queryset=posts, serializer_class=PostListSerializer, request=request
         )
 
 

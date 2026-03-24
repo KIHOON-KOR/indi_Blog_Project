@@ -5,6 +5,7 @@ from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
 from django.db import IntegrityError
 
+
 def add_post_like(*, post_id: int, user: User) -> None:
     """게시글 좋아요를 등록하는 서비스 로직입니다."""
 
