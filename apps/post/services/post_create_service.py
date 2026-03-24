@@ -6,6 +6,7 @@ from apps.core.exceptions.base import BaseCustomException
 from apps.tags.models import Tag, PostTag
 from apps.post.models import Post
 from apps.user.models import User
+from django.utils.html import strip_tags
 
 
 @transaction.atomic
@@ -25,9 +26,11 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
 
     # 3. 요약(summary)이 없을 경우 본문에서 앞부분을 추출하여 저장
     content = validated_data["content"]
-    summary = validated_data.get("summary") or content[:150]
 
-    # 4. 게시글을 먼저 생성
+    # 4. strip_tags(content)를 통해 HTML 태그(<p>, <div> 등)를 모두 제거한 순수 텍스트만 추출
+    summary = validated_data.get("summary") or strip_tags(content)[:150]
+
+    # 5. 게시글을 먼저 생성
     post = Post.objects.create(
         user=author,
         title=validated_data["title"],
@@ -39,21 +42,21 @@ def create_post(*, author: User, validated_data: dict[str, Any]):
         series=series,
     )
 
-    # 5. 태그 최적화 처리 (N+1 문제 해결)
+    # 6. 태그 최적화 처리 (N+1 문제 해결)
     if tags_names:
-        # 5-1. 이미 존재하는 태그들을 한 번에 조회
+        # 6-1. 이미 존재하는 태그들을 한 번에 조회
         existing_tags = Tag.objects.filter(name__in=tags_names)
         existing_tag_names = {tag.name for tag in existing_tags}
 
-        # 5-2. DB에 없는 새로운 태그들만 선별하여 한 번에 생성(bulk_create)
+        # 6-2. DB에 없는 새로운 태그들만 선별하여 한 번에 생성(bulk_create)
         new_tag_names = set(tags_names) - existing_tag_names
         if new_tag_names:
             Tag.objects.bulk_create([Tag(name=name) for name in new_tag_names])
 
-        # 4-3. 연결할 모든 태그 객체를 다시 가져옴
+        # 6-3. 연결할 모든 태그 객체를 다시 가져옴
         all_tags = Tag.objects.filter(name__in=tags_names)
 
-        # 4-4. PostTag(중간 테이블) 데이터도 bulk_create로 한 번에 저장
+        # 6-4. PostTag(중간 테이블) 데이터도 bulk_create로 한 번에 저장
         PostTag.objects.bulk_create([PostTag(post=post, tag=tag) for tag in all_tags])
 
     return post

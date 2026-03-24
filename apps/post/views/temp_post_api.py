@@ -10,12 +10,13 @@ from apps.post.services.post_list_service import (
     get_my_temp_posts,
 )
 from apps.post.services.post_manage_service import restore_temp_post, soft_delete_post
+from apps.post.views.mixins import PostListMixin
 from apps.user.models import User
 from apps.post.serializers.post_list import PostListSerializer
 from apps.core.pagination import PostPageNumberPagination
 
 
-class MyTempAPIView(APIView):
+class MyTempAPIView(APIView, PostListMixin):
     """임시 저장글 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticated]
@@ -30,15 +31,9 @@ class MyTempAPIView(APIView):
         posts = get_my_temp_posts(user=user)
 
         # 3. 페이지 네이션 적용
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(posts, request, view=self)
-
-        if page is not None:
-            return paginator.get_paginated_response(
-                PostListSerializer(page, many=True).data
-            )
-
-        return Response(PostListSerializer(posts, many=True).data)
+        return self.get_paginated_response(
+            queryset=posts, serializer_class=PostListSerializer, request=request
+        )
 
 
 class MyTempManageAPIView(APIView):

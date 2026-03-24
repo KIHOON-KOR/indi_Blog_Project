@@ -161,6 +161,11 @@
                                     <a href="/api/v1/post/${post.id}/page/" class="text-decoration-none text-dark">
                                         <h5 class="mb-1 fw-bold">${post.title}</h5>
                                     </a>
+
+                                    <p class="mb-1 text-muted text-truncate" style="font-size: 0.9rem;">
+                                        ${post.summary || '내용이 없습니다.'}
+                                    </p>
+
                                     <small class="text-muted d-flex align-items-center gap-2 mt-1">
                                         <span class="d-flex align-items-center">
                                             by
@@ -168,19 +173,20 @@
                                                 ${profileImgHtml}
                                                 ${gradeImgHtml}
                                                 ${post.author_nickname
-                                                    ? `<a href="/api/v1/user/profile-page/${post.author_nickname}/" class="text-success fw-bold ms-1 text-decoration-none">${post.author_nickname}</a>`
-                                                    : `<span class="text-success fw-bold ms-1">익명</span>`
-                                                }
-                                            </span>
-                                        </span>
-                                        <span>| ${date}</span>
-                                        <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
-                                    </small>
-                                </div>
-                                ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 60px; height: 60px; object-fit: cover;" class="rounded shadow-sm">` : ''}
-                            </div>
-                        </div>
-                    `;
+                            ? `<a href="/api/v1/user/profile-page/${post.author_nickname}/" class="text-success fw-bold ms-1 text-decoration-none">${post.author_nickname}</a>`
+                :
+                    `<span class="text-success fw-bold ms-1">익명</span>`
+                }
+            </span>
+            </span>
+                <span>| ${date}</span>
+                <span class="text-danger"><i class="bi bi-heart-fill"></i> ${post.likes_count || 0}</span>
+            </small>
+            </div>
+                    ${post.thumbnail ? `<img src="${post.thumbnail}" style="width: 60px; height: 60px; object-fit: cover;" class="rounded shadow-sm">` : ''}
+            </div>
+            </div>
+                `;
                     // 7. 완성된 HTML 조각을 화면 컨테이너의 맨 밑에 이어 붙입니다.
                     container.insertAdjacentHTML('beforeend', postHtml);
                 });
