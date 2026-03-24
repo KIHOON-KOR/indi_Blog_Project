@@ -3,7 +3,7 @@ from apps.post.models.like import Like
 from apps.user.models import User
 from apps.core.exceptions.base import BaseCustomException
 from apps.core.exceptions.messages import ErrorMessage
-
+from django.db import IntegrityError
 
 def add_post_like(*, post_id: int, user: User) -> None:
     """게시글 좋아요를 등록하는 서비스 로직입니다."""
@@ -15,7 +15,11 @@ def add_post_like(*, post_id: int, user: User) -> None:
         raise BaseCustomException(ErrorMessage.POST_NOT_FOUND)
 
     # 2. Like 객체를 가져오거나 생성
-    Like.objects.get_or_create(post=post, user=user)
+    try:
+        Like.objects.get_or_create(post=post, user=user)
+    except IntegrityError:
+        # 이미 좋아요가 눌려있는 경우의 안전한 처리
+        pass
 
 
 def remove_post_like(*, post_id: int, user: User) -> None:
