@@ -20,9 +20,11 @@ from apps.post.serializers.post_create import PostCreateSerializer
 from apps.post.serializers.post_list import PostListSerializer
 from apps.core.pagination import PostPageNumberPagination
 from drf_spectacular.types import OpenApiTypes
+from .mixins import PostListMixin
 
 
-class PostAPIView(APIView):
+
+class PostAPIView(APIView, PostListMixin):
     """포스트 등록 및 전체 목록 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -56,32 +58,18 @@ class PostAPIView(APIView):
         ],
     )
     def get(self, request: Request):
-        # 1. URL에서 '?series=숫자' 값을 꺼내옵니다.
-        series_id_str = request.query_params.get("series")
-        series_id = (
-            int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        # 1. Mixin의 메서드를 호출하여 복잡했던 쿼리 파라미터 파싱 로직을 단 한 줄로 처리
+        filter_params = self.get_filter_params(request)
+
+        # 2. 서비스 레이어 함수를 호출할 때, 딕셔너리 언패킹(**)을 사용하여 인자를 매우 깔끔하게 전달
+        posts = get_global_posts(**filter_params)
+
+        # 3. Mixin의 페이지네이션 메서드를 호출하여 결과물(Response)을 바로 반환
+        return self.get_paginated_response(
+            queryset=posts,                      # 페이징할 대상 데이터
+            serializer_class=PostListSerializer, # 직렬화에 사용할 시리얼라이저 클래스
+            request=request                      # 현재 요청 객체
         )
-
-        # 2. URL에서 '?tag=문자열' 값을 꺼내옵니다.
-        tag_name = request.query_params.get("tag")
-
-        # 3. URL에서 '?search=검색어' 값을 꺼내옵니다.
-        search_keyword = request.query_params.get("search")
-
-        # 4. 서비스 레이어 호출 시 series_id와 tag_name을 함께 전달합니다.
-        posts = get_global_posts(
-            series_id=series_id, tag_name=tag_name, search_keyword=search_keyword
-        )
-
-        # 5. 페이지네이션 적용 후 반환
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(posts, request, view=self)
-
-        if page is not None:
-            serializer = PostListSerializer(page, many=True)
-            return paginator.get_paginated_response(serializer.data)
-
-        return Response(PostListSerializer(posts, many=True).data)
 
     @extend_schema(
         tags=["포스트"], summary="포스트 등록 API", request=PostCreateSerializer
@@ -103,7 +91,7 @@ class PostAPIView(APIView):
         )
 
 
-class MyPostAPIView(APIView):
+class MyPostAPIView(APIView, PostListMixin):
     """내 블로그(공개글만) 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticated]
@@ -140,36 +128,18 @@ class MyPostAPIView(APIView):
         # 1. User 타입 지정
         user = cast(User, request.user)
 
-        # 2. URL 파라미터에서 series 값을 꺼내옵니다.
-        series_id_str = request.query_params.get("series")
-        series_id = (
-            int(series_id_str) if series_id_str and series_id_str.isdigit() else None
+        # 2. Mixin을 통해 중복되던 쿼리 파라미터 파싱 로직을 한 줄로 대체합니다.
+        filter_params = self.get_filter_params(request)
+
+        # 3. 서비스 레이어 호출 시 작성자(user) 인자와 파싱된 파라미터(**filter_params)를 함께 전달합니다.
+        posts = get_my_published_posts(user=user, **filter_params)
+
+        # 4. 페이지네이션 처리 및 응답 반환 역시 Mixin을 활용하여 한 줄로 압축합니다.
+        return self.get_paginated_response(
+            queryset=posts,
+            serializer_class=PostListSerializer,
+            request=request
         )
-
-        # 3. URL 파라미터에서 tag 값을 꺼내옵니다.
-        tag_name = request.query_params.get("tag")
-
-        # 4. URL에서 '?search=검색어' 값을 꺼내옵니다.
-        search_keyword = request.query_params.get("search")
-
-        # 4. 서비스 레이어 호출 시 시리즈와 태그 조건 전달
-        posts = get_my_published_posts(
-            user=user,
-            series_id=series_id,
-            tag_name=tag_name,
-            search_keyword=search_keyword,
-        )
-
-        # 5. 페이지 네이션 적용 및 응답
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(posts, request, view=self)
-
-        if page is not None:
-            return paginator.get_paginated_response(
-                PostListSerializer(page, many=True).data
-            )
-
-        return Response(PostListSerializer(posts, many=True).data)
 
 
 class PostDetailAPIView(APIView):

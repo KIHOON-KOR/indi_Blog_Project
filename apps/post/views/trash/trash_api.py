@@ -12,13 +12,14 @@ from apps.post.services.trash.post_trash_service import (
     restore_trashed_post,
     hard_delete_post,
 )
+from apps.post.views.mixins import PostListMixin
 from apps.user.models import User
 from apps.post.serializers.post_list import PostListSerializer
 from apps.post.serializers.post_detail import PostDetailSerializer
 from apps.core.pagination import PostPageNumberPagination
 
 
-class TrashAPIView(APIView):
+class TrashAPIView(APIView, PostListMixin):
     """휴지통 목록 조회를 담당합니다."""
 
     permission_classes = [IsAuthenticated]
@@ -32,17 +33,12 @@ class TrashAPIView(APIView):
         posts = get_trashed_posts(user=user)
 
         # 3. 페이지네이션을 적용하여 응답
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(posts, request, view=self)
-
-        if page is not None:
-            serializer = PostListSerializer(
-                page, many=True, context={"request": request}
-            )
-            return paginator.get_paginated_response(serializer.data)
-
-        serializer = PostListSerializer(posts, many=True, context={"request": request})
-        return Response(serializer.data)
+        return self.get_paginated_response(
+            queryset=posts,
+            serializer_class=PostListSerializer,
+            request=request,
+            context={"request": request}
+        )
 
 
 class TrashManageAPIView(APIView):
